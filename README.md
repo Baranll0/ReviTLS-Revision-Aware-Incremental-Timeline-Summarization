@@ -15,10 +15,13 @@ revision-aware-tls/
 ├── app/
 │   └── streamlit_app.py             # Interactive demo & benchmark inspector UI
 ├── configs/
-│   └── default.yaml                 # Default config tuned for RTX 5070 (12 GB VRAM)
+│   └── default.yaml                 # Default config (Ollama + BAAI/bge-base-en-v1.5)
 ├── data/                            # Raw & processed corpora (ignored by git)
 ├── docs/
-│   └── architecture.md              # Technical design & gap analysis
+│   ├── architecture.md              # Technical design & gap analysis
+│   └── results.md                   # Experimental benchmark results & analysis
+├── outputs/
+│   └── bpoil_rev_eval.json          # Saved benchmark evaluation metrics
 ├── scripts/
 │   ├── download_datasets.ps1        # Downloads T17, Crisis, and Open-TLS
 │   ├── prepare_datasets.py          # Normalizes raw .jsonl.gz into chronological streams
@@ -37,60 +40,66 @@ revision-aware-tls/
 
 ---
 
-## RTX 5070 (12 GB VRAM) Setup Guide
+## Experimental Results (`T17/bpoil` + Revision Stress-Test)
 
-> **Note for GitHub:** `.gitignore` already excludes `data/raw/`, `data/processed/`, `data/revisions/`, and `outputs/`, so only code and configs are pushed. On the RTX 5070 machine, you will clone the repo and run `scripts/download_datasets.ps1`.
+Evaluated on an **NVIDIA GeForce RTX 5080** using `qwen2.5:7b-instruct-q4_K_M` (Ollama) and `BAAI/bge-base-en-v1.5` embeddings (full details in [`docs/results.md`](docs/results.md) and raw metrics in [`outputs/bpoil_rev_eval.json`](outputs/bpoil_rev_eval.json)):
 
-### 1. Clone & Create Python Environment
+| System | Date-F1 (↑) | Align-R1 (↑) | Align-R2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | RRA (↑) | SFLR (↓) | Time (s) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LLM-TLS (Topic)** | **0.600** | **0.086** | **0.019** | 0.410 | 0.152 | 0.000 | 1.000 | 125.1 |
+| **CHRONOS (Closed)** | 0.190 | 0.026 | 0.006 | 0.232 | 0.036 | **0.250** | **0.250** | **18.0** |
+| **ReviTLS (Ours)** | 0.500 | 0.071 | 0.010 | **0.605** | **0.225** | **0.250** | 0.750 | 480.0 |
 
-```bash
+---
+
+## Setup Guide (Windows PowerShell + CUDA GPU)
+
+> **Note for GitHub:** `.gitignore` excludes large raw/processed corpora (`data/raw/`, `data/processed/`, `data/revisions/`) while tracking evaluation JSON/Markdown summaries under `outputs/` and `docs/`.
+
+### 1. Clone & Create Python 3.12 Virtual Environment
+
+Use **Python 3.12** so pre-built wheels for `pyyaml` and CUDA PyTorch (`cu128`) install cleanly without requiring C++ Build Tools:
+
+```powershell
 git clone <YOUR_GITHUB_REPO_URL>
-cd revision-aware-tls
+cd ReviTLS-Revision-Aware-Incremental-Timeline-Summarization
 
-python -m venv .venv
-# Windows PowerShell:
-.venv\Scripts\Activate.ps1
-# Linux/macOS:
-# source .venv/bin/activate
+# Install Python 3.12 if not already installed:
+winget install -e --id Python.Python.3.12
 
-pip install --upgrade pip
+# Create and activate virtual environment:
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# Upgrade pip, install CUDA PyTorch, and install ReviTLS in editable mode:
+python -m pip install --upgrade pip
+pip install torch --index-url https://download.pytorch.org/whl/cu128
 pip install -e ".[dev,gpu,ui]"
 ```
 
-*(Optional, for official `tilse` scoring if needed: `pip install -e ".[eval]"`)*
+### 2. Verify Offline Tests & CUDA GPU
 
-### 2. Verify Offline Tests First (Sanity Check)
-
-```bash
+```powershell
 pytest
+python -c "import torch; print('CUDA:', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
 ```
 
-All unit and end-to-end mock tests should pass immediately without needing a GPU.
+### 3. Install & Pull Local LLM via Ollama
 
-### 3. Start Local LLM Server (Ollama on RTX 5070)
+Install [Ollama](https://ollama.com/) and pull `qwen2.5:7b-instruct-q4_K_M`:
 
-Install [Ollama](https://ollama.com/) and pull the recommended 4-bit 7B model (fits comfortably in 12 GB VRAM alongside the `BAAI/bge-base-en-v1.5` embedder):
-
-```bash
+```powershell
+irm https://ollama.com/install.ps1 | iex
+$env:Path += ";$env:LOCALAPPDATA\Programs\Ollama"
 ollama pull qwen2.5:7b-instruct-q4_K_M
-ollama serve
 ```
 
-Check `configs/default.yaml` to make sure `llm.base_url` (`http://localhost:11434/v1`) and `llm.model` (`qwen2.5:7b-instruct-q4_K_M`) match your running server.
-
-> **14B Ablation Tip:** If you want to test `qwen2.5:14b-instruct-q4_K_M` on a subset, set `embedding.device: "cpu"` in `configs/default.yaml` so the 14B model gets full 12 GB VRAM headroom.
+*(On Windows, Ollama automatically runs its background server on `http://localhost:11434/v1`.)*
 
 ### 4. Download & Prepare Benchmark Datasets
 
-On Windows PowerShell:
-
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\download_datasets.ps1
-```
-
-Normalize **T17** (9 topics) and **Crisis** (4 topics) into chronological `.jsonl` streams:
-
-```bash
 python scripts/prepare_datasets.py --source data/raw/t17 --output data/processed/t17
 python scripts/prepare_datasets.py --source data/raw/crisis --output data/processed/crisis
 ```
@@ -102,42 +111,28 @@ python scripts/prepare_datasets.py --source data/raw/crisis --output data/proces
 ### A. Quick Single-Topic Run + Revision Stress-Test (`T17/bpoil`)
 
 1. Generate the controlled revision benchmark (numeric, date, entity attribution, and retraction cases):
-   ```bash
+   ```powershell
    python scripts/build_revision_benchmark.py --stream data/processed/t17/bpoil.jsonl --output-dir data/revisions
    ```
 2. Evaluate **LLM-TLS**, **CHRONOS**, and **ReviTLS** side-by-side:
-   ```bash
-   python scripts/evaluate_benchmark.py \
-     --stream data/revisions/bpoil_stream.jsonl \
-     --ref-timelines data/raw/t17/bpoil/timelines.jsonl \
-     --revision-cases data/revisions/bpoil_cases.jsonl \
-     --output-json outputs/bpoil_rev_eval.json
+   ```powershell
+   python scripts/evaluate_benchmark.py --stream data/revisions/bpoil_stream.jsonl --ref-timelines data/raw/t17/bpoil/timelines.jsonl --revision-cases data/revisions/bpoil_cases.jsonl --output-json outputs/bpoil_rev_eval.json
    ```
 
 ### B. Full Dataset Batch Evaluation (`T17` & `Crisis`)
 
-Run all topics in a dataset (automatically filters articles to reference timeline spans and uses `l = avg(len(ref_dates))`):
-
-```bash
+```powershell
 # Full T17 (9 topics)
-python scripts/evaluate_benchmark.py \
-  --processed-dir data/processed/t17 \
-  --raw-dir data/raw/t17 \
-  --output-json outputs/t17_batch_eval.json
+python scripts/evaluate_benchmark.py --processed-dir data/processed/t17 --raw-dir data/raw/t17 --output-json outputs/t17_batch_eval.json
 
 # Full Crisis (4 topics)
-python scripts/evaluate_benchmark.py \
-  --processed-dir data/processed/crisis \
-  --raw-dir data/raw/crisis \
-  --output-json outputs/crisis_batch_eval.json
+python scripts/evaluate_benchmark.py --processed-dir data/processed/crisis --raw-dir data/raw/crisis --output-json outputs/crisis_batch_eval.json
 ```
 
 ### C. Run ReviTLS Alone on Any Stream
 
-```bash
-python scripts/run_pipeline.py \
-  --stream data/processed/t17/bpoil.jsonl \
-  --output outputs/bpoil_timeline.jsonl
+```powershell
+python scripts/run_pipeline.py --stream data/processed/t17/bpoil.jsonl --output outputs/bpoil_timeline.jsonl
 ```
 
 ---
@@ -146,6 +141,7 @@ python scripts/run_pipeline.py \
 
 Launch the Streamlit dashboard to step through incremental updates, inspect `REVISED` / `RETRACTED` audit logs, or view saved benchmark tables:
 
-```bash
+```powershell
+.\.venv\Scripts\Activate.ps1
 streamlit run app/streamlit_app.py
 ```

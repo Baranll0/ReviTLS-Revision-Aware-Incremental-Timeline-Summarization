@@ -17,7 +17,9 @@ data/processed/*
 !data/processed/.gitkeep
 data/revisions/*
 !data/revisions/.gitkeep
-outputs/
+outputs/*
+!outputs/*.json
+!outputs/*.md
 checkpoints/
 *.jsonl
 *.sqlite3
