@@ -1,0 +1,33 @@
+# ReviTLS Default Configuration (tuned for RTX 5070 12GB VRAM)
+
+llm:
+  # Works with Ollama (http://localhost:11434/v1), vLLM (http://localhost:8000/v1), or API
+  base_url: "http://localhost:11434/v1"
+  api_key: "ollama"
+  model: "qwen2.5:7b-instruct-q4_K_M"
+  temperature: 0.0
+  max_tokens: 1024
+
+embedding:
+  # Same family as LLM-TLS (Alibaba-NLP/gte-large-en-v1.5 or BAAI/bge-base-en-v1.5)
+  model_name: "BAAI/bge-base-en-v1.5"
+  device: "cuda"
+  normalize: true
+
+retrieval:
+  top_k_clusters: 10
+  # Unlike LLM-TLS's strict same-date filter, allow cross-date retrieval for late corrections
+  allow_cross_date: true
+  max_date_window_days: 90
+  similarity_threshold: 0.45
+
+verifier:
+  # Trigger CHRONOS-style self-questioning only on conflicts or incomplete 5W1H slots
+  enable_targeted_verification: true
+  max_verification_questions: 3
+  max_evidence_docs: 10
+
+timeline:
+  # Default fallback if topic-specific target l is not provided
+  default_num_dates: 20
+  exclude_retracted: true

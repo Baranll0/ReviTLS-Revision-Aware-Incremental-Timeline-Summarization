@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Data & Models
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/revisions/*
+!data/revisions/.gitkeep
+outputs/
+checkpoints/
+*.jsonl
+*.sqlite3
+chroma_db/
+
+# Environment & IDE
+.env
+.vscode/
+.idea/
+.DS_Store
