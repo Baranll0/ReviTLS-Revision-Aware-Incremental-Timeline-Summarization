@@ -145,3 +145,45 @@ Launch the Streamlit dashboard to step through incremental updates, inspect `REV
 .\.venv\Scripts\Activate.ps1
 streamlit run app/streamlit_app.py
 ```
+
+---
+
+## 📅 Experiment Execution Log & Command History (Günlük Deney Günlüğü)
+
+Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronolojik olarak tutulur. Diğer bilgisayardan bakarak doğrudan kopyalayıp çalıştırabilirsiniz:
+
+### 🔹 2026-11-12: İlk Kurulum & İlk Karşılaştırma Koşusu (Baseline Run)
+* **Amaç:** RTX 5080 üzerinde ilk ortam kurulumunu doğrulamak ve `bpoil` akışı üzerinde üç sistemi (`LLM-TLS`, `CHRONOS`, `ReviTLS`) ilk kez yarıştırmak.
+* **Çalıştırılan Komutlar:**
+  ```powershell
+  # 1. Ortam ve veri hazırlığı
+  powershell -ExecutionPolicy Bypass -File scripts\download_datasets.ps1
+  python scripts/prepare_datasets.py --source data/raw/t17 --output data/processed/t17
+  python scripts/build_revision_benchmark.py --stream data/processed/t17/bpoil.jsonl --output-dir data/revisions
+
+  # 2. İlk karşılaştırma koşusu
+  python scripts/evaluate_benchmark.py `
+    --stream data/revisions/bpoil_stream.jsonl `
+    --ref-timelines data/raw/t17/bpoil/timelines.jsonl `
+    --revision-cases data/revisions/bpoil_cases.jsonl `
+    --output-json outputs/bpoil_rev_eval.json
+  ```
+* **Çıkan Sonuç:** `ReviTLS` Concat-R1'de **0.6052** alarak `LLM-TLS`'e (+19.5 puan) ve `CHRONOS`'a (+37.4 puan) fark attı. `LLM-TLS` revizyonları sıfır çözebildi (`RRA = 0.00`, `SFLR = 1.00`). `ReviTLS` ise `RRA = 0.25`, `SFLR = 0.75` elde etti.
+
+---
+
+### 🔹 2026-11-13: Revizyon & Yalanlama İyileştirmesi (Purge & Retraction Optimization)
+* **Amaç:** `classifier.py` ayrımını netleştirerek ve `verifier.py` içindeki eski bilgileri temizleme kurallarını sıkılaştırarak `RRA` (Revizyon Doğruluğu) skorunu %25'ten yukarı çekmek, `SFLR` (Eski Bilgi Sızıntısı) oranını düşürmek.
+* **Çalıştırılacak Komutlar:**
+  ```powershell
+  # 1. En son iyileştirmeleri GitHub'dan çek
+  git pull origin main
+
+  # 2. Güncellenmiş ReviTLS ile bpoil stres-testini tekrar koş
+  python scripts/evaluate_benchmark.py `
+    --stream data/revisions/bpoil_stream.jsonl `
+    --ref-timelines data/raw/t17/bpoil/timelines.jsonl `
+    --revision-cases data/revisions/bpoil_cases.jsonl `
+    --output-json outputs/bpoil_rev_eval.json
+  ```
+* **Beklenen Etki:** Düzeltilen sayının tek başına özetlenmesi (eski 1.000 varil ifadesinin elenmesi) ve yalanlanan dedikoduların `RETRACTED` statüsüyle filtrelenmesi sayesinde `RRA`'nın artması ve `SFLR`'nin azalması.
