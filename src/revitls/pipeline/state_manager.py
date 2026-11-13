@@ -10,6 +10,7 @@ from revitls.schemas import (
     ExtractedEvent,
     RevisionAction,
     RevisionRecord,
+    RevisionType,
 )
 
 
@@ -55,7 +56,10 @@ class EventStateManager:
         is_retraction = (
             classification.revision_type == RevisionType.RETRACTION
             or (resolved_status == EventStatus.RETRACTED)
-            or any(w in event.summary.lower() for w in ("debunk", "retract", "false rumor", "false report", "no secondary"))
+            or any(
+                w in event.summary.lower()
+                for w in ("debunk", "false rumor", "false report", "no secondary", "reports were false")
+            )
         )
 
         if classification.action == RevisionAction.UPDATE_PROGRESS:

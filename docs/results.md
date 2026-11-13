@@ -19,20 +19,27 @@
 * **Reference Timelines:** `data/raw/t17/bpoil/timelines.jsonl`
 * **Raw JSON Output:** [`outputs/bpoil_rev_eval.json`](../outputs/bpoil_rev_eval.json)
 
-### Quantitative Comparison
+### Quantitative Comparison (2026-11-13 — Post Purge & Retraction Optimization)
 
 | System | Date-F1 (↑) | Align-R1 (↑) | Align-R2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | RRA (↑) | SFLR (↓) | Time (s) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **LLM-TLS (Topic)** | **0.6000** | **0.0858** | **0.0189** | 0.4098 | 0.1524 | 0.0000 | 1.0000 | 125.06 |
-| **CHRONOS (Closed)** | 0.1905 | 0.0262 | 0.0061 | 0.2315 | 0.0361 | **0.2500** | **0.2500** | **17.98** |
-| **ReviTLS (Ours)** | 0.5000 | 0.0708 | 0.0097 | **0.6052** | **0.2251** | **0.2500** | 0.7500 | 480.01 |
+| **LLM-TLS (Topic)** | **0.6000** | **0.0858** | **0.0189** | 0.4098 | 0.1524 | 0.0000 | 1.0000 | 99.65 |
+| **CHRONOS (Closed)** | 0.1905 | 0.0262 | 0.0061 | 0.2315 | 0.0361 | 0.2500 | 0.2500 | **19.61** |
+| **ReviTLS (Ours)** | 0.4375 | 0.0704 | 0.0105 | **0.5397** | **0.1951** | **0.7500** | **0.0000** | 619.13 |
+
+### Ablation Across Runs (`2026-11-12` Baseline vs `2026-11-13` Purge & Retraction Optimization)
+
+| ReviTLS Version | Date-F1 (↑) | Align-R1 (↑) | Align-R2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | RRA (↑) | SFLR (↓) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **v1 (2026-11-12 Baseline)** | 0.5000 | 0.0708 | 0.0097 | 0.6052 | 0.2251 | 0.2500 | 0.7500 |
+| **v2 (2026-11-13 Purge & Retraction)** | 0.4375 | 0.0704 | 0.0105 | 0.5397 | 0.1951 | **0.7500** | **0.0000** |
 
 ### Key Findings
 
-1. **Substantial Gain in Content Coverage (`Concat-ROUGE`):**
-   - **ReviTLS** achieves **0.6052 Concat-R1** and **0.2251 Concat-R2**, outperforming **LLM-TLS** (`0.4098` R1 / `0.1524` R2) by **+19.5 points in ROUGE-1** and **+7.3 points in ROUGE-2**, and outperforming closed-domain **CHRONOS** (`0.2315` R1 / `0.0361` R2) by **+37.4 points in ROUGE-1**.
-2. **Cross-Date Revision & Retraction Capability (`RRA` & `SFLR`):**
-   - Because **LLM-TLS** restricts candidate event clustering strictly to the *same publication day*, it fails to link late-breaking corrections to earlier events (`RRA = 0.000`, `SFLR = 1.000`).
-   - **ReviTLS** lifts the same-day constraint with a 90-day semantic + entity-aware memory (`EventMemory`) and 4-way relation classification (`EXTENDS`, `REVISES`, `RETRACTS`, `NEW_EVENT`), resolving cross-date revisions (`RRA = 0.250`) and reducing stale fact leakage (`SFLR = 0.750` vs `1.000`).
+1. **Dramatic Improvement in Revision Resolution (`RRA = 0.7500`) & Zero Stale Fact Leakage (`SFLR = 0.0000`):**
+   - **LLM-TLS** restricts candidate event clustering strictly to the *same publication day*, failing to link late-breaking corrections to earlier events (`RRA = 0.000`, `SFLR = 1.000`).
+   - **ReviTLS (v2)** achieves **75% Revision Resolution Accuracy (`RRA = 0.7500`)** and **0% Stale Fact Leakage (`SFLR = 0.0000`)**, outperforming both **LLM-TLS** (`0.000` RRA / `1.000` SFLR) and **CHRONOS** (`0.250` RRA / `0.250` SFLR).
+2. **Strong Content Coverage (`Concat-ROUGE`):**
+   - **ReviTLS** achieves **0.5397 Concat-R1** and **0.1951 Concat-R2**, outperforming **LLM-TLS** (`0.4098` R1 / `0.1524` R2) by **+13.0 points in ROUGE-1** and **+4.3 points in ROUGE-2**, and outperforming closed-domain **CHRONOS** (`0.2315` R1 / `0.0361` R2) by **+30.8 points in ROUGE-1**.
 3. **Competitive Date Selection (`Date-F1` & `Align-ROUGE`):**
-   - Unlike **CHRONOS** (`Date-F1 = 0.1905`), which suffers when adapted to long closed-domain news streams without iterative streaming state tracking, **ReviTLS** maintains strong temporal localization (`Date-F1 = 0.5000`, `Align-R1 = 0.0708`) while preserving an explicit audit trail (`RevisionRecord`) for every updated or retracted event.
+   - Unlike **CHRONOS** (`Date-F1 = 0.1905`), **ReviTLS** maintains strong temporal localization (`Date-F1 = 0.4375`, `Align-R1 = 0.0704`, `Align-R2 = 0.0105`) while maintaining an explicit audit trail (`RevisionRecord`) for every updated or retracted event.

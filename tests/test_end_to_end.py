@@ -15,7 +15,7 @@ from revitls.revisions.benchmark import inject_revision_scenarios
 class DeterministicBagEmbedder:
     """Lightweight deterministic embedder mapping key scenario tokens into fixed dimensions."""
 
-    VOCAB = ("macondo", "barrel", "oil", "hearing", "senate", "meridian", "valve", "glitch", "harbor", "pipeline")
+    VOCAB = ("macondo", "barrel", "oil", "bank", "hearing", "senate", "meridian", "valve", "glitch", "harbor", "pipeline")
 
     def encode(self, sentences: str | list[str], normalize_embeddings: bool = True) -> np.ndarray:
         def _vec(text: str) -> np.ndarray:
@@ -81,17 +81,27 @@ class DeterministicRevisionMockLLM:
         # 3. ReviTLS 4-way RevisionClassifier
         if "Classify the relation into exactly one action" in system_prompt:
             low = user_prompt.lower()
-            is_corr = any(w in low for w in ("revised", "correction", "retracted", "debunked", "rule out"))
+            inc_line = low.split("incoming summary:", 1)[-1].splitlines()[0]
+            is_corr = any(
+                w in inc_line
+                for w in ("revised", "correction", "retracted", "retraction", "debunked", "rule out", "correcting")
+            )
             if not is_corr:
-                if low.count("macondo") >= 2 or low.count("harbor") >= 2 or low.count("meridian") >= 2 or low.count("senate") >= 2:
+                if (
+                    low.count("macondo") >= 2
+                    or low.count("harbor") >= 2
+                    or low.count("meridian") >= 2
+                    or low.count("senate") >= 2
+                    or low.count("regulatory panel") >= 2
+                ):
                     return {"action": "CORROBORATE", "revision_type": None, "rationale": "Repeat report."}
                 return {"action": "NEW_EVENT", "revision_type": None, "rationale": "Distinct event."}
 
-            if "harbor terminal" in low:
+            if "harbor terminal" in inc_line:
                 return {"action": "REVISE_CONFLICT", "revision_type": "RETRACTION", "rationale": "Debunked rumor."}
-            if "senate" in low:
+            if "senate" in inc_line:
                 return {"action": "REVISE_CONFLICT", "revision_type": "DATE_CORRECTION", "rationale": "Date corrected."}
-            if "meridian" in low:
+            if "meridian" in inc_line:
                 return {"action": "REVISE_CONFLICT", "revision_type": "ENTITY_ATTRIBUTION", "rationale": "Cause updated."}
             return {"action": "REVISE_CONFLICT", "revision_type": "NUMERIC_FACT", "rationale": "Numeric revision."}
 
@@ -100,30 +110,32 @@ class DeterministicRevisionMockLLM:
             return {"queries": ["official correction report"]}
 
         # 5. TargetedVerifier evidence resolution
-        if "Decide the most accurate current truth" in user_prompt:
-            if "harbor terminal" in user_prompt.lower():
+        if "most accurate current truth" in user_prompt:
+            header = user_prompt.split("Supporting Evidence:")[0]
+            if "harbor terminal" in header.lower():
                 return {
                     "resolved_summary": "Authorities confirmed no pipeline incident occurred at Harbor Terminal.",
                     "resolved_date": None,
                     "status": "RETRACTED",
                     "rationale": "Official retraction.",
                 }
-            if "5,000 barrels" in user_prompt:
+            if "5,000 barrels" in header:
                 return {
                     "resolved_summary": "Federal scientists revised the Macondo well leak to 5,000 barrels per day.",
                     "resolved_date": None,
                     "status": "REVISED",
                     "rationale": "Supersedes 1,000-barrel estimate.",
                 }
-            if "valve maintenance error" in user_prompt:
+            if "valve maintenance error" in header:
                 return {
                     "resolved_summary": "Safety investigators confirmed a manual valve maintenance error caused the Meridian outage.",
                     "resolved_date": None,
                     "status": "REVISED",
                     "rationale": "Supersedes software glitch theory.",
                 }
-            dates = re.findall(r"\d{4}-\d{2}-\d{2}", user_prompt)
-            corrected = dates[-1] if dates else "2010-05-12"
+            inc_claim_line = header.split("Incoming Claim", 1)[-1]
+            dates = re.findall(r"took place on (\d{4}-\d{2}-\d{2})", inc_claim_line) or re.findall(r"\d{4}-\d{2}-\d{2}", inc_claim_line)
+            corrected = dates[0] if dates else "2010-05-02"
             return {
                 "resolved_summary": f"Senate Banking Committee hearing occurred on {corrected}.",
                 "resolved_date": corrected,

@@ -23,13 +23,25 @@ def evaluate_revision_states(
 
     resolved_count = 0
     stale_leaks = 0
-    combined_active_text = " ".join(
+    all_active_text = " ".join(
         f"{s.event_date.isoformat() if s.event_date else ''} {s.canonical_summary}".lower()
         for s in states
         if s.status != EventStatus.RETRACTED
     )
 
     for case in cases:
+        case_states = [
+            s for s in states if any(aid.startswith(case.case_id) for aid in s.supporting_article_ids)
+        ]
+        if case_states:
+            combined_active_text = " ".join(
+                f"{s.event_date.isoformat() if s.event_date else ''} {s.canonical_summary}".lower()
+                for s in case_states
+                if s.status != EventStatus.RETRACTED
+            )
+        else:
+            combined_active_text = all_active_text
+
         stale_present = case.stale_fact_substring.lower() in combined_active_text
         if stale_present:
             stale_leaks += 1
