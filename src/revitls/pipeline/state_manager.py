@@ -52,14 +52,25 @@ class EventStateManager:
         prev_summary = state.canonical_summary
         prev_date = state.event_date
 
+        is_retraction = (
+            classification.revision_type == RevisionType.RETRACTION
+            or (resolved_status == EventStatus.RETRACTED)
+            or any(w in event.summary.lower() for w in ("debunk", "retract", "false rumor", "false report", "no secondary"))
+        )
+
         if classification.action == RevisionAction.UPDATE_PROGRESS:
-            new_summary = resolved_summary or f"{state.canonical_summary} {event.summary}".strip()
-            new_date = resolved_date or state.event_date
-            state.status = resolved_status or EventStatus.ACTIVE
+            if is_retraction:
+                new_summary = resolved_summary or event.summary
+                new_date = resolved_date or state.event_date
+                state.status = EventStatus.RETRACTED
+            else:
+                new_summary = resolved_summary or f"{state.canonical_summary} {event.summary}".strip()
+                new_date = resolved_date or state.event_date
+                state.status = resolved_status or EventStatus.ACTIVE
         elif classification.action == RevisionAction.REVISE_CONFLICT:
             new_summary = resolved_summary or event.summary
             new_date = resolved_date or event.event_date or state.event_date
-            state.status = resolved_status or EventStatus.REVISED
+            state.status = EventStatus.RETRACTED if is_retraction else (resolved_status or EventStatus.REVISED)
         else:
             return state
 

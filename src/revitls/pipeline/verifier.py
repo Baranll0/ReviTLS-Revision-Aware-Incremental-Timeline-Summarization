@@ -6,9 +6,16 @@ from revitls.schemas import Article, EventState, ExtractedEvent
 
 
 QUESTIONER_SYSTEM_PROMPT = (
-    "You are an investigative news editor resolving a factual conflict or information gap "
-    "in a developing news timeline. Propose concise, targeted verification questions and "
-    "short search queries to check official or newer reports. Return valid JSON only."
+    "You are an investigative news editor resolving a factual conflict, revision, or retraction "
+    "in a developing news timeline.\n"
+    "CRITICAL RULES FOR resolved_summary:\n"
+    "1. State ONLY the verified, updated current truth. Completely purge and omit superseded numbers, "
+    "outdated dates, or false theories. NEVER echo or repeat the old superseded claim (e.g. write "
+    "'Federal scientists confirmed the Macondo well is leaking 5,000 barrels per day', do NOT write "
+    "'earlier 1,000-barrel estimate' or 'previously thought to be 1,000').\n"
+    "2. If an event is debunked, false, or retracted by authorities, set status to 'RETRACTED'.\n"
+    "3. If a date was corrected, put the exact new date in resolved_date (YYYY-MM-DD).\n"
+    "Return valid JSON only."
 )
 
 
@@ -57,9 +64,10 @@ class TargetedVerifier:
             f"Previous State ({state.event_date}): {state.canonical_summary}\n"
             f"Incoming Claim ({incoming.event_date}, pub {incoming.publish_date}): {incoming.summary}\n"
             f"Supporting Evidence:\n{evidence_block or 'None'}\n\n"
-            "Decide the most accurate current truth, prioritizing official corrections and newer "
-            "verified reports. Return JSON with keys: resolved_summary (string), "
-            "resolved_date (YYYY-MM-DD or null), status (ACTIVE|REVISED|RETRACTED), rationale (string)."
+            "Synthesize the single most accurate current truth.\n"
+            "CRITICAL: Do NOT mention or repeat the old, superseded, or debunked numbers/dates in resolved_summary. "
+            "If an earlier rumor is debunked or refuted, set status to 'RETRACTED'. "
+            "Return JSON: {\"resolved_summary\": \"...\", \"resolved_date\": \"YYYY-MM-DD or null\", \"status\": \"ACTIVE|REVISED|RETRACTED\", \"rationale\": \"...\"}."
         )
         default_payload = {
             "resolved_summary": incoming.summary,
