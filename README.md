@@ -198,4 +198,28 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
 * **Önceki Koşu (12.11) vs Yeni Koşu (13.11) Değerlendirmesi:**
   - **RRA (Revizyon Çözüm Doğruluğu ↑):** `0.250` (%25) ➔ **`0.750` (%75)** seviyesine yükseldi (3 kat artış, tüm rakipleri geride bıraktı).
   - **SFLR (Eski/Hatalı Bilgi Sızıntısı ↓):** `0.750` (%75) ➔ **`0.000` (%0)** seviyesine indi (eski/yanlış bilgilerin tamamı temizlendi).
+
+---
+
+### 🔹 Çoklu Model Kıyaslaması (Model Ablation: Llama-3.1-8B & Qwen2.5-14B)
+RTX 5080 (16 GB VRAM) üzerinde farklı modelleri yarıştırmak için hazır config dosyaları:
+```powershell
+# Alternatif Model 1: Llama-3.1-8B (Meta Ailesi — Çapraz Mimari Doğrulaması)
+ollama pull llama3.1:8b-instruct-q4_K_M
+python scripts/evaluate_benchmark.py `
+  --config configs/llama3_8b.yaml `
+  --stream data/revisions/bpoil_stream.jsonl `
+  --ref-timelines data/raw/t17/bpoil/timelines.jsonl `
+  --revision-cases data/revisions/bpoil_cases.jsonl `
+  --output-json outputs/bpoil_llama3_8b_eval.json
+
+# Alternatif Model 2: Qwen2.5-14B (Ölçekleme Ablasyonu — 7B vs 14B)
+ollama pull qwen2.5:14b-instruct-q4_K_M
+python scripts/evaluate_benchmark.py `
+  --config configs/qwen_14b.yaml `
+  --stream data/revisions/bpoil_stream.jsonl `
+  --ref-timelines data/raw/t17/bpoil/timelines.jsonl `
+  --revision-cases data/revisions/bpoil_cases.jsonl `
+  --output-json outputs/bpoil_qwen14b_eval.json
+```
   - **Concat-R1 / R2:** **0.540 / 0.195** ile hem `LLM-TLS` (`0.410` / `0.152`) hem de `CHRONOS` (`0.232` / `0.036`) önünde açık ara liderliğini korudu.
