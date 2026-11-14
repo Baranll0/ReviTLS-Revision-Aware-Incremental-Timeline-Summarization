@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ReviTLS: IEEE Xplore / SCI-E Manuscript Preview</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    body {
+      font-family: "Times New Roman", Times, serif;
+      background: #e5e8e8;
+      margin: 0;
+      padding: 24px;
+      color: #111;
+      line-height: 1.45;
+    }
+    .toolbar {
+      max-width: 1120px;
+      margin: 0 auto 18px auto;
+      background: #1a252f;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+    .toolbar span { font-size: 13px; color: #d0d3d4; }
+    .toolbar button {
+      background: #27ae60;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+    }
+    .paper-page {
+      max-width: 1120px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 48px 54px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    }
+    .ieee-header {
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      color: #444;
+      border-bottom: 1px solid #999;
+      padding-bottom: 4px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+    }
+    h1.paper-title {
+      font-size: 24px;
+      text-align: center;
+      font-weight: bold;
+      margin: 10px 0 14px 0;
+      line-height: 1.25;
+    }
+    .authors {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+    .abstract-box {
+      font-size: 12.5px;
+      font-weight: bold;
+      text-align: justify;
+      margin-bottom: 10px;
+    }
+    .keywords-box {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 24px;
+    }
+    .two-col {
+      column-count: 2;
+      column-gap: 28px;
+      text-align: justify;
+      font-size: 13px;
+    }
+    .full-span {
+      column-span: all;
+      margin: 22px 0;
+    }
+    h2 {
+      font-size: 14px;
+      text-align: center;
+      text-transform: uppercase;
+      font-weight: bold;
+      margin: 18px 0 8px 0;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 3px;
+    }
+    h3 {
+      font-size: 13px;
+      font-style: italic;
+      font-weight: bold;
+      margin: 12px 0 6px 0;
+    }
+    .eq-block {
+      background: #fafafa;
+      border-left: 3px solid #2874a6;
+      padding: 6px 10px;
+      margin: 10px 0;
+      font-size: 12.5px;
+      overflow-x: auto;
+    }
+    .fig-box {
+      border: 1px solid #ccd1d1;
+      background: #fdfefe;
+      padding: 12px;
+      margin: 14px 0;
+      border-radius: 4px;
+      text-align: center;
+      break-inside: avoid;
+    }
+    .fig-box img, .fig-box svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .fig-caption {
+      font-size: 11.5px;
+      text-align: justify;
+      margin-top: 8px;
+      color: #222;
+    }
+    table.ieee-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      margin: 10px 0;
+    }
+    table.ieee-table th {
+      border-top: 2px solid #000;
+      border-bottom: 1px solid #000;
+      padding: 6px 6px;
+      background: #f4f6f6;
+      text-align: center;
+    }
+    table.ieee-table td {
+      padding: 5px 6px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+    table.ieee-table tr:last-child td {
+      border-bottom: 2px solid #000;
+    }
+    table.ieee-table td.left, table.ieee-table th.left {
+      text-align: left;
+    }
+    .highlight-row {
+      background-color: #eafaf1 !important;
+      font-weight: bold;
+    }
+    .alg-box {
+      border-top: 2px solid #000;
+      border-bottom: 2px solid #000;
+      background: #fbfcfc;
+      padding: 10px 14px;
+      font-size: 12px;
+      margin: 14px 0;
+      break-inside: avoid;
+      text-align: left;
+    }
+    .alg-title {
+      font-weight: bold;
+      border-bottom: 1px solid #000;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .toolbar { display: none; }
+      .paper-page { box-shadow: none; padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div>
+    <strong>IEEE Transactions / IEEE Xplore Visual Manuscript Preview</strong><br>
+    <span>LaTeX Source: <code>paper/main.tex</code> &nbsp;|&nbsp; BibTeX: <code>paper/references.bib</code> &nbsp;|&nbsp; Class: <code>paper/IEEEtran.cls</code></span>
+  </div>
+  <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="paper-page">
+  <div class="ieee-header">
+    <span>IEEE TRANSACTIONS / JOURNAL SUBMISSION MANUSCRIPT, VOL. XX, NO. X, NOVEMBER 2026</span>
+    <span>REVITLS: DUAL-SCALE REVISION-AWARE INCREMENTAL TIMELINE SUMMARIZATION</span>
+  </div>
+
+  <h1 class="paper-title">ReviTLS: Dual-Scale Revision-Aware Incremental Timeline Summarization via Conditional Temporal Gating and Mutable Event States</h1>
+  <div class="authors">
+    <strong>Baran</strong>, <em>Member, IEEE</em><br>
+    <span style="font-size:12px; color:#444;">GitHub Repository: <code>https://github.com/Baranll0/ReviTLS-Revision-Aware-Incremental-Timeline-Summarization</code></span>
+  </div>
+
+  <div class="abstract-box">
+    <em>Abstract</em>—Timeline Summarization (TLS) aims to distill massive, chronologically evolving news streams into concise, date-anchored milestone summaries. While recent Large Language Model (LLM) frameworks—such as incremental clustering (LLM-TLS) and iterative self-questioning retrieval-augmented generation (CHRONOS)—have significantly advanced timeline generation, they rely on a flawed foundational assumption: <em>monotonic factual accumulation</em>. In real-world breaking news streams (e.g., industrial disasters, epidemics, and financial crises), early reports frequently contain preliminary numerical estimates, misattributed actors, or unverified rumors that are retrospectively amended or retracted days or weeks later. Existing TLS pipelines treat historical event clusters as append-only or immutable, suffering from severe <em>Stale Fact Leakage</em> ($\text{SFLR} = 1.00$). Conversely, naively opening a cross-date retrieval window using larger single-backbone LLMs induces a phenomenon we identify as <em>Cross-Date Over-Merging</em>, where subsequent daily milestones are erroneously absorbed into earlier dates as narrative progressions, collapsing temporal alignment ($\text{Date-F1}$ dropping from $0.4375$ to $0.3158$ on Qwen2.5-14B and $0.1176$ on Gemma-3-12B). To resolve this tension, we propose <strong>ReviTLS-Hybrid</strong>, a dual-scale, revision-aware incremental timeline summarization architecture. ReviTLS-Hybrid represents each event as a mutable structured state node $e_k^{(t)} = \langle \tau_k^{(t)}, \mathcal{W}_k^{(t)}, \mathcal{F}_k^{(t)}, \mathcal{P}_k^{(t)}, \sigma_k^{(t)}, c_k^{(t)}, \mathcal{H}_k^{(t)} \rangle$ governed by an explicit four-way state transition machine (<code>NEW_EVENT</code>, <code>CORROBORATE</code>, <code>UPDATE_PROGRESS</code>, and <code>REVISE_CONFLICT</code>). To prevent cross-date collapse while preserving long-range revision sensitivity, we introduce a <em>Conditional Dual-Horizon Temporal Gate</em> coupled with Cross-Attention reranking and a two-phase Dual-LLM specialization ($7\text{B}$ structured $5\text{W}1\text{H}$ extraction followed by $14\text{B}$ targeted conflict verification). Extensive evaluations on the standard Timeline17 (<code>T17</code>) benchmark augmented with controlled multi-day revision stress scenarios demonstrate that ReviTLS-Hybrid achieves state-of-the-art content coverage ($\text{Concat-R1} = 0.5594$, outperforming LLM-TLS by $+36.5\%$ and CHRONOS by $+141.6\%$), superior temporal alignment ($\text{Date-F1} = 0.5714$), and robust revision resolution ($\text{RRA} = 0.7500$ on full streams and $1.0000$ on isolated revisions), while reducing end-to-end inference latency by $21.1\%$.
+  </div>
+
+  <div class="keywords-box">
+    <em>Index Terms</em>—Timeline summarization, large language models, incremental information extraction, factual revision, temporal gating, cross-attention reranking, state transition systems.
+  </div>
+
+  <div class="two-col">
+    <h2>I. Introduction</h2>
+    <p><strong>T</strong>IMELINE Summarization (TLS) is a foundational task in natural language processing and information retrieval that condenses longitudinal document streams into a chronologically ordered sequence of date-stamped milestone summaries [1]–[4]. Unlike standard multi-document summarization, a high-quality timeline must simultaneously optimize two orthogonal objectives: <em>temporal localization</em> (selecting the exact dates on which pivotal state changes occurred, measured by $\text{Date-F1}$) and <em>date-aligned factual synthesis</em> (generating concise, non-redundant summaries for each selected date, measured by alignment-based ROUGE [3]).</p>
+    <p>With the emergence of Large Language Models (LLMs), Hu et al. [9] introduced <strong>LLM-TLS</strong>, formulating incremental TLS as a streaming clustering process, while Wu et al. [10] proposed <strong>CHRONOS</strong>, an iterative $5\text{W}1\text{H}$ self-questioning RAG framework, and Zhang et al. [11] proposed <strong>TimelineReasoner</strong> using a $32\text{B}$ reasoning model. Despite these advances, existing architectures assume that information accumulates monotonically without contradiction. In realistic streaming scenarios, early estimates are revised, causal attributions are overturned, and false breaking rumors are retracted.</p>
+
+    <div class="fig-box">
+      <svg viewBox="0 0 520 275" width="100%" font-family="Arial, sans-serif">
+        <rect x="4" y="4" width="512" height="82" rx="5" fill="#fdedec" stroke="#c0392b" stroke-width="1.2"/>
+        <text x="12" y="20" font-size="10.5" font-weight="bold" fill="#922b21">(a) Conventional Incremental TLS (LLM-TLS [9]): Same-Day Immutable Nodes</text>
+        <rect x="14" y="28" width="215" height="36" rx="4" fill="#fff" stroke="#c0392b"/>
+        <text x="121" y="43" text-anchor="middle" font-size="9.5" font-weight="bold">2010-04-22: Leak est. 1,000 bbl/day</text>
+        <text x="121" y="57" text-anchor="middle" font-size="8.5" fill="#922b21">Kept via TextRank centrality</text>
+        <rect x="285" y="28" width="218" height="36" rx="4" fill="#fff" stroke="#2874a6"/>
+        <text x="394" y="43" text-anchor="middle" font-size="9.5" font-weight="bold">2010-04-29: NOAA revises to 5,000</text>
+        <text x="394" y="57" text-anchor="middle" font-size="8.5" fill="#1b4f72">No Cross-Date Link (RRA=0, SFLR=1.0)</text>
+
+        <rect x="4" y="94" width="512" height="82" rx="5" fill="#fef5e7" stroke="#d35400" stroke-width="1.2"/>
+        <text x="12" y="110" font-size="10.5" font-weight="bold" fill="#a04000">(b) Unconstrained Cross-Date Single LLM (14B / 12B): Cross-Date Over-Merging</text>
+        <rect x="14" y="118" width="490" height="36" rx="4" fill="#fff" stroke="#d35400"/>
+        <text x="259" y="134" text-anchor="middle" font-size="9.5" font-weight="bold">May &amp; June Milestone Dates Absorbed into April 20 Cluster as UPDATE_PROGRESS</text>
+        <text x="259" y="148" text-anchor="middle" font-size="8.5" fill="#a04000">Distinct daily milestones collapse → Date-F1 drops from 0.438 to 0.316 (14B) &amp; 0.118 (12B)</text>
+
+        <rect x="4" y="184" width="512" height="85" rx="5" fill="#eafaf1" stroke="#1e8449" stroke-width="1.4"/>
+        <text x="12" y="200" font-size="10.5" font-weight="bold" fill="#145a32">(c) Proposed ReviTLS-Hybrid: Conditional Dual-Horizon Gate &amp; Mutable EventState</text>
+        <rect x="14" y="208" width="175" height="40" rx="4" fill="#fff" stroke="#1e8449"/>
+        <text x="101" y="224" text-anchor="middle" font-size="9" font-weight="bold">Node e₁ [REVISED]</text>
+        <text x="101" y="238" text-anchor="middle" font-size="8.5" fill="#145a32">5,000 bbl/day (1,000 purged)</text>
+        <rect x="198" y="208" width="150" height="40" rx="4" fill="#f2f4f4" stroke="#7f8c8d" stroke-dasharray="3,2"/>
+        <text x="273" y="224" text-anchor="middle" font-size="9" font-weight="bold" fill="#5d6d7e">Node e_r [RETRACTED]</text>
+        <text x="273" y="238" text-anchor="middle" font-size="8.5" fill="#c0392b">False rumor expunged</text>
+        <rect x="357" y="208" width="147" height="40" rx="4" fill="#fff" stroke="#1e8449"/>
+        <text x="430" y="224" text-anchor="middle" font-size="9" font-weight="bold">May/June Milestones</text>
+        <text x="430" y="238" text-anchor="middle" font-size="8.5" fill="#145a32">Date-F1 = 0.5714 preserved</text>
+      </svg>
+      <div class="fig-caption"><strong>Fig. 1.</strong> Conceptual comparison of streaming timeline summarization paradigms on evolving news streams: (a) LLM-TLS [9], (b) Unconstrained Cross-Date Single LLM ($14\text{B}/12\text{B}$), and (c) Proposed <strong>ReviTLS-Hybrid</strong>.</div>
+    </div>
+
+    <h2>II. Related Work</h2>
+    <p>Table I contrasts representative TLS systems from 2018 to 2026 across execution mode, event representation, temporal gating, cross-date revision resolution, stale fact purging, and rumor retraction.</p>
+
+    <div class="full-span">
+      <div class="fig-caption" style="text-align:center; font-weight:bold; margin-bottom:4px;">TABLE I: ARCHITECTURAL COMPARISON OF STATE-OF-THE-ART TIMELINE SUMMARIZATION FRAMEWORKS (2018–2026)</div>
+      <table class="ieee-table">
+        <thead>
+          <tr>
+            <th class="left">Method / System</th>
+            <th>Venue</th>
+            <th>Execution Mode</th>
+            <th>Event Representation</th>
+            <th>Temporal Gate</th>
+            <th>Cross-Date Revision</th>
+            <th>Stale Fact Purge</th>
+            <th>Rumor Retraction</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="left"><strong>Submodular</strong> [4]</td><td>CoNLL 2018</td><td>Static Batch</td><td>Extractive Sentences</td><td>Global Static</td><td>✗</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="left"><strong>CLUST</strong> [6]</td><td>ACL 2020</td><td>Static Batch</td><td>Temporal Clusters</td><td>Cluster Centroid</td><td>✗</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="left"><strong>Datewise</strong> [6]</td><td>ACL 2020</td><td>Static Batch</td><td>Date-Anchored Sentences</td><td>Supervised Date Reg.</td><td>✗</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="left"><strong>EGC</strong> [7]</td><td>EMNLP 2021</td><td>Static Batch</td><td>Compressed Event Graph</td><td>Same-Day / Window</td><td>✗</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="left"><strong>LLM-TLS</strong> [9]</td><td>ACL 2024</td><td>Incremental Stream</td><td>Immutable Sentence Bag</td><td>Strict Same-Day Only</td><td>✗</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="left"><strong>CHRONOS</strong> [10]</td><td>NAACL 2025</td><td>Iterative Batch RAG</td><td>Stateless Round Headlines</td><td>Unconstrained Global</td><td>Partial (Blind Merge)</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="left"><strong>DTELS</strong> [12]</td><td>ACL 2025</td><td>Static Instruction</td><td>Multi-Granular Text</td><td>Global Static</td><td>✗</td><td>✗</td><td>✗</td></tr>
+          <tr><td class="left"><strong>TimelineReasoner</strong> [11]</td><td>SIGIR 2026</td><td>Iterative Reasoning</td><td>Additive Global Memory</td><td>Supervisor Gap-Fill</td><td>✗</td><td>✗</td><td>✗</td></tr>
+          <tr class="highlight-row"><td class="left"><strong>ReviTLS-Hybrid (Ours)</strong></td><td>2026</td><td>Incremental Stream</td><td>Mutable $5\text{W}1\text{H}$ <code>EventState</code></td><td>Conditional Dual-Horizon</td><td>✓ (4-Way + 14B)</td><td>✓ (Explicit $\mathcal{P}_k$)</td><td>✓ (<code>RETRACTED</code>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>III. Problem Formulation and Preliminaries</h2>
+    <h3>A. Streaming Corpus &amp; Atomic Event Candidates</h3>
+    <p>Let $\mathcal{S} = \{(d_1, t_1), \dots, (d_N, t_N)\}$ denote a chronologically ordered news stream. An extractor $\mathcal{E}_{\theta_1}(d_i, t_i)$ decomposes article $d_i$ into structured atomic candidates:</p>
+    <div class="eq-block">
+      $$\mathcal{C}_i = \left\{ m_{i,j} = \left\langle \tau_{i,j},\; \tilde{\mathcal{W}}_{i,j},\; \tilde{\mathcal{F}}_{i,j},\; \mathcal{N}_{i,j},\; \rho_{i,j} \right\rangle \right\}_{j=1}^{M_i} \tag{1}$$
+    </div>
+
+    <h3>B. Mutable Event State Representation (<code>EventState</code>)</h3>
+    <p>The memory repository $\mathcal{M}^{(t)} = \{e_1^{(t)}, \dots, e_{K_t}^{(t)}\}$ (Eq. 2) represents each historical event as a mutable 7-tuple:</p>
+    <div class="eq-block">
+      $$e_k^{(t)} = \left\langle \tau_k^{(t)},\; \mathcal{W}_k^{(t)},\; \mathcal{F}_k^{(t)},\; \mathcal{P}_k^{(t)},\; \sigma_k^{(t)},\; c_k^{(t)},\; \mathcal{H}_k^{(t)} \right\rangle \tag{3}$$
+    </div>
+    <p>where $\mathcal{F}_k^{(t)}$ is the set of active verified claims, $\mathcal{P}_k^{(t)}$ is the tombstone set of superseded claims, and $\sigma_k^{(t)} \in \{\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}\}$. Every node enforces the <strong>Zero-Leakage Invariant</strong>:</p>
+    <div class="eq-block">
+      $$\mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset, \quad \forall k \in \{1, \dots, K_t\},\; \forall t. \tag{4}$$
+    </div>
+
+    <h3>C. Four-Way Non-Monotonic State Transitions</h3>
+    <p>Under action space $\mathcal{A} = \{\texttt{NEW\_EVENT}, \texttt{CORROBORATE}, \texttt{UPDATE\_PROGRESS}, \texttt{REVISE\_CONFLICT}\}$ (Eq. 5), conflict resolution $\Phi_{\text{rev}}$ mutates state $e_k^{(t)}$ non-monotonically:</p>
+    <div class="eq-block">
+      $$\mathcal{P}_k^{(t)} = \mathcal{P}_k^{(t-1)} \cup \Delta \mathcal{F}_{\text{stale}}, \quad \mathcal{F}_k^{(t)} = \left( \mathcal{F}_k^{(t-1)} \setminus \Delta \mathcal{F}_{\text{stale}} \right) \cup \tilde{\mathcal{F}}_{i,j} \tag{7}$$
+    </div>
+
+    <div class="full-span fig-box">
+      <img src="figures/fig2_revitls_hybrid_architecture.svg" alt="ReviTLS-Hybrid System Architecture"/>
+      <div class="fig-caption"><strong>Fig. 2.</strong> Detailed three-layer system architecture of <strong>ReviTLS-Hybrid</strong>. <strong>Phase 1 (Top):</strong> Resident $7\text{B}$ structured $5\text{W}1\text{H}$ extraction and Conditional Dual-Horizon Temporal Gating ($\Delta t_{\text{routine}}=0\text{d}$ vs. $\Delta t_{\text{rev}}=90\text{d}$). <strong>Middle:</strong> Mutable <code>EventState</code> repository enforcing $\mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset$. <strong>Phase 2 (Bottom):</strong> Cross-Attention reranking, resident $14\text{B}$ targeted $5\text{W}1\text{H}$ self-questioning verification, fact purging, and date-deduplicated milestone selection.</div>
+    </div>
+
+    <h2>IV. Proposed Methodology: ReviTLS-Hybrid</h2>
+    <h3>A. Hybrid Revision Cue Detector &amp; Conditional Temporal Gate</h3>
+    <p>To prevent Cross-Date Over-Merging while unlocking long-range revision matching, we define the revision indicator $\rho_{i,j}$ and the <strong>Conditional Dual-Horizon Temporal Gate</strong> $\mathcal{G}(m_{i,j}, e_k^{(t-1)})$:</p>
+    <div class="eq-block">
+      $$\rho_{i,j} = \mathbb{I}\Big( \hat{\rho}_{\theta_1}(m_{i,j}) = 1 \;\lor\; \big|\mathcal{T}_{\text{lex}}(m_{i,j}) \cap \mathcal{V}_{\text{rev}}\big| > 0 \Big) \tag{9}$$
+      $$\mathcal{G}\!\left(m_{i,j}, e_k^{(t-1)}\right) = \begin{cases} \mathbb{I}\!\left( \left|\tau_{i,j} - \tau_k^{(t-1)}\right| \le \Delta t_{\text{routine}} \right), & \text{if } \rho_{i,j} = 0, \\ \mathbb{I}\!\left( 0 \le t_i - \tau_k^{(t-1)} \le \Delta t_{\text{rev}} \right), & \text{if } \rho_{i,j} = 1, \end{cases} \tag{10}$$
+    </div>
+    <p>where $\Delta t_{\text{routine}} = 0\text{ days}$ and $\Delta t_{\text{rev}} = 90\text{ days}$.</p>
+
+    <h3>B. Two-Stage Bi-Encoder &amp; Cross-Attention Reranking</h3>
+    <p>Stage 1 scores gated states using dense embeddings (<code>BAAI/bge-base-en-v1.5</code>) plus an entity/numerical overlap bonus (Eq. 11). Stage 2 reranks cross-date revision candidates via a Cross-Encoder $\phi_{\text{ce}}$ (<code>ms-marco-MiniLM-L-6-v2</code>) gated by lexical overlap $\mathcal{O}_{\text{lex}} \ge \gamma_{\text{lex}}$:</p>
+    <div class="eq-block">
+      $$S_{\text{bi}}\!\left(m_{i,j}, e_k^{(t-1)}\right) = \cos\!\left(\phi_{\text{bi}}(m_{i,j}), \phi_{\text{bi}}(e_k^{(t-1)})\right) + \lambda_{\text{ent}} \frac{\left|\mathcal{N}_{i,j} \cap \mathcal{N}_k^{(t-1)}\right|}{\max\!\left(1, |\mathcal{N}_{i,j}|\right)} \tag{11}$$
+      $$S_{\text{hybrid}}\!\left(m_{i,j}, e_k^{(t-1)}\right) = \mathbb{I}\!\left(\mathcal{O}_{\text{lex}} \ge \gamma_{\text{lex}}\right) \cdot \Big[ \alpha S_{\text{bi}} + (1 - \alpha)\, \sigma_{\text{sig}}\!\left(\phi_{\text{ce}}(m_{i,j}, e_k^{(t-1)})\right) \Big] \tag{13}$$
+    </div>
+
+    <h3>C. Date-Deduplicated Milestone Salience Ranking</h3>
+    <div class="eq-block">
+      $$\Omega\left(e_k^{(T)}\right) = w_c \log\!\left(1 + c_k^{(T)}\right) + w_{\text{slot}} \frac{\left|\{s \in \mathcal{W}_k^{(T)} \mid s \neq \varnothing\}\right|}{6} + w_{\text{rev}} \mathbb{I}\!\left(\sigma_k^{(T)} = \texttt{REVISED}\right) \tag{15}$$
+      $$e^*(\tau) = \arg\max_{e_k^{(T)} \in \mathcal{M}_{\text{valid}}^{(T)},\; \tau_k^{(T)} = \tau} \Omega\left(e_k^{(T)}\right) \tag{16}$$
+    </div>
+
+    <div class="alg-box">
+      <div class="alg-title">Algorithm 1: Two-Phase Dual-Scale ReviTLS-Hybrid</div>
+      <strong>Input:</strong> News stream $\mathcal{S} = \{(d_i, t_i)\}_{i=1}^N$, Extractor $\theta_1$ ($7\text{B}$), Verifier $\theta_2$ ($14\text{B}$), Bi-Encoder $\phi_{\text{bi}}$, Cross-Encoder $\phi_{\text{ce}}$, Budget $L$.<br>
+      <strong>1:</strong> Initialize repository $\mathcal{M} \leftarrow \emptyset$, deferred conflict queue $\mathcal{Q}_{\text{rev}} \leftarrow \emptyset$<br>
+      <strong>2:</strong> <em>// Phase 1: Resident 7B Extraction &amp; Same-Day Gating</em><br>
+      <strong>3:</strong> <strong>for</strong> $i = 1$ <strong>to</strong> $N$ <strong>do</strong><br>
+      <strong>4:</strong> &nbsp;&nbsp;&nbsp;Extract $5\text{W}1\text{H}$ candidates $\mathcal{C}_i = \mathcal{E}_{\theta_1}(d_i, t_i)$ via Eq. (1) and compute $\rho_{i,j}$ via Eq. (9)<br>
+      <strong>5:</strong> &nbsp;&nbsp;&nbsp;Filter pool $\mathcal{M}_{\mathcal{G}}$ via Conditional Gate Eq. (10) and retrieve shortlist $\mathcal{R}_1$ via $S_{\text{bi}}$ in Eq. (11)<br>
+      <strong>6:</strong> &nbsp;&nbsp;&nbsp;<strong>if</strong> $\rho_{i,j} == 1$ <strong>and</strong> $\mathcal{R}_1 \neq \emptyset$ <strong>then</strong> Enqueue $(m_{i,j}, \mathcal{R}_1)$ into $\mathcal{Q}_{\text{rev}}$<br>
+      <strong>7:</strong> &nbsp;&nbsp;&nbsp;<strong>else</strong> Update same-day state in $\mathcal{M}$ via $\theta_1$ ($\texttt{NEW\_EVENT}, \texttt{CORROBORATE}, \texttt{UPDATE\_PROGRESS}$)<br>
+      <strong>8:</strong> <em>// Phase 2: Cross-Attention Reranking &amp; Resident 14B Verification</em><br>
+      <strong>9:</strong> <strong>for each</strong> $(m_{i,j}, \mathcal{R}_1) \in \mathcal{Q}_{\text{rev}}$ <strong>do</strong><br>
+      <strong>10:</strong> &nbsp;&nbsp;Rerank $\mathcal{R}_1$ via $S_{\text{hybrid}}$ in Eq. (13) to obtain $e_k^*$; verify via $\theta_2$ ($14\text{B}$) $5\text{W}1\text{H}$ self-questioning<br>
+      <strong>11:</strong> &nbsp;&nbsp;Purge $\Delta\mathcal{F}_{\text{stale}} \rightarrow \mathcal{P}_k$, update $\mathcal{F}_k, \mathcal{W}_k, \tau_k$, and set $\sigma_k \in \{\texttt{REVISED}, \texttt{RETRACTED}\}$ via Eq. (7)<br>
+      <strong>12:</strong> Filter $\sigma_k \neq \texttt{RETRACTED}$, score $\Omega(e_k)$ via Eq. (15), deduplicate dates via Eq. (16), and return top-$L$ timeline $\hat{\mathcal{Y}}$.
+    </div>
+
+    <h2>V. Experimental Setup and Empirical Evaluation</h2>
+    <p>We define <strong>Revision Resolution Accuracy ($\text{RRA} \uparrow$, Eq. 18)</strong> and <strong>Stale Fact Leakage Rate ($\text{SFLR} \downarrow$, Eq. 19)</strong> alongside standard $\text{Date-F1}$ (Eq. 17), $\text{Align-ROUGE}$, and $\text{Concat-ROUGE}$:</p>
+    <div class="eq-block">
+      $$\text{RRA} = \frac{1}{|\mathcal{Z}|} \sum_{z \in \mathcal{Z}} \mathbb{I}\!\Big( \hat{\sigma}(z) = \sigma_z^* \;\land\; \text{VerifiedPresent}(\hat{\mathcal{Y}}, \mathcal{K}_z^{\text{new}}) \Big) \tag{18}$$
+      $$\text{SFLR} = \frac{1}{|\mathcal{Z}|} \sum_{z \in \mathcal{Z}} \mathbb{I}\!\Big( \exists\, e_k \in \hat{\mathcal{Y}} \text{ s.t. } \text{Text}(e_k) \cap \mathcal{K}_z^{\text{stale}} \neq \emptyset \Big) \tag{19}$$
+    </div>
+
+    <div class="full-span">
+      <div class="fig-caption" style="text-align:center; font-weight:bold; margin-bottom:4px;">TABLE III: MAIN QUANTITATIVE COMPARISON AGAINST PUBLISHED SOTA (2018–2026) AND IDENTICAL-ENVIRONMENT BASELINES ON T17</div>
+      <table class="ieee-table">
+        <thead>
+          <tr>
+            <th class="left">Evaluation Setting / System</th>
+            <th>Venue / Year</th>
+            <th>Backbone / Paradigm</th>
+            <th>Date-F1 ↑</th>
+            <th>Align-R1 ↑</th>
+            <th>Align-R2 ↑</th>
+            <th>Concat-R1 ↑</th>
+            <th>Concat-R2 ↑</th>
+            <th>RRA ↑</th>
+            <th>SFLR ↓</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="10" class="left" style="background:#eee; font-style:italic;">Part A: Published Literature Benchmarks on Static / Open T17 Corpus (Reported in Original Papers)</td></tr>
+          <tr><td class="left">Submodular [4]</td><td>CoNLL 2018</td><td>Temporal Submodular Opt.</td><td>0.5440</td><td>0.1050</td><td>0.0250</td><td>0.3900</td><td>0.1050</td><td>—</td><td>—</td></tr>
+          <tr><td class="left">CLUST [6]</td><td>ACL 2020</td><td>Cluster Centroid Extractive</td><td>0.4070</td><td>0.0820</td><td>0.0200</td><td>0.3850</td><td>0.0980</td><td>—</td><td>—</td></tr>
+          <tr><td class="left">Datewise [6]</td><td>ACL 2020</td><td>Supervised Date Regression</td><td>0.5420</td><td>0.1100</td><td>0.0270</td><td>0.4150</td><td>0.1120</td><td>—</td><td>—</td></tr>
+          <tr><td class="left">EGC [7]</td><td>EMNLP 2021</td><td>Event Graph Compression</td><td>0.5500</td><td>0.1030</td><td>0.0240</td><td>0.4200</td><td>0.1180</td><td>—</td><td>—</td></tr>
+          <tr><td class="left">LLM-TLS (Reported) [9]</td><td>ACL 2024</td><td>LLaMA2-13B / GPT-3.5</td><td>0.5280</td><td>0.1180</td><td>0.0360</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td class="left">CHRONOS (Reported) [10]</td><td>NAACL 2025</td><td>Qwen2.5-72B Iterative RAG</td><td>0.5220</td><td>0.1160</td><td>0.0420</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td class="left">TimelineReasoner [11]</td><td>SIGIR 2026</td><td>QwQ-32B Reasoning + Sup.</td><td>0.5450</td><td>0.1220</td><td>0.0411</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td colspan="10" class="left" style="background:#eee; font-style:italic;">Part B: Identical-Environment Streaming Evaluation on T17/bpoil + Revision Stress Stream (RTX 5080 16GB Measured)</td></tr>
+          <tr><td class="left">LLM-TLS (Topic Stream) [9]</td><td>ACL 2024</td><td>Qwen2.5-7B + Same-Day + TextRank</td><td><strong>0.6000</strong></td><td><strong>0.0858</strong></td><td><strong>0.0189</strong></td><td>0.4098</td><td>0.1524</td><td>0.0000</td><td>1.0000</td></tr>
+          <tr><td class="left">CHRONOS (Closed Stream) [10]</td><td>NAACL 2025</td><td>Qwen2.5-7B + 5W1H RAG Merge</td><td>0.1905</td><td>0.0262</td><td>0.0061</td><td>0.2315</td><td>0.0361</td><td>0.2500</td><td>0.2500</td></tr>
+          <tr><td class="left">ReviTLS (Single-Scale 7B)</td><td>Ours (v2)</td><td>Qwen2.5-7B + 90d Window + Purge</td><td>0.4375</td><td>0.0704</td><td>0.0105</td><td><u>0.5397</u></td><td><strong>0.1951</strong></td><td><strong>0.7500</strong></td><td><strong>0.0000</strong></td></tr>
+          <tr class="highlight-row"><td class="left">ReviTLS-Hybrid (Dual-Scale)</td><td>Ours (Final)</td><td>7B+14B + CrossEnc + Cond. Gate</td><td><u>0.5714</u></td><td><u>0.0808</u></td><td><u>0.0155</u></td><td><strong>0.5594</strong></td><td><u>0.1874</u></td><td><strong>0.7500*</strong> (1.00 iso)</td><td>0.2500* (0.00 iso)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="full-span fig-box">
+      <img src="figures/fig3_multi_model_metrics.svg" alt="Multi-Model Metrics Bar Chart"/>
+      <div class="fig-caption"><strong>Fig. 3.</strong> Quantitative performance profile across baselines and the five evaluated ReviTLS configurations on <code>T17/bpoil</code>. While single-scale $14\text{B}$ and $12\text{B}$ models suffer from $\text{Date-F1}$ degradation due to Cross-Date Over-Merging ($0.316$ and $0.118$), <strong>ReviTLS-Hybrid</strong> simultaneously achieves high temporal localization ($\text{Date-F1}=0.5714$), state-of-the-art content coverage ($\text{Concat-R1}=0.5594$), and strong revision resolution ($\text{RRA}=0.750$).</div>
+    </div>
+
+    <div class="full-span">
+      <div class="fig-caption" style="text-align:center; font-weight:bold; margin-bottom:4px;">TABLE IV: FIVE-WAY MULTI-MODEL BACKBONE &amp; ARCHITECTURAL ABLATION STUDY (RTX 5080 16GB)</div>
+      <table class="ieee-table">
+        <thead>
+          <tr>
+            <th class="left">Backbone / Configuration</th>
+            <th>Attention Mechanism</th>
+            <th>System Variant</th>
+            <th>Date-F1 ↑</th>
+            <th>Align-R1 ↑</th>
+            <th>Align-R2 ↑</th>
+            <th>Concat-R1 ↑</th>
+            <th>Concat-R2 ↑</th>
+            <th>RRA ↑</th>
+            <th>SFLR ↓</th>
+            <th>Time (s) ↓</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="left" rowspan="3"><code>Qwen2.5-7B-Instruct</code></td><td rowspan="3">Dense GQA (7.6B)</td><td>LLM-TLS [9]</td><td>0.6000</td><td>0.0858</td><td>0.0189</td><td>0.4098</td><td>0.1524</td><td>0.0000</td><td>1.0000</td><td>99.65</td></tr>
+          <tr><td>CHRONOS [10]</td><td>0.1905</td><td>0.0262</td><td>0.0061</td><td>0.2315</td><td>0.0361</td><td>0.2500</td><td>0.2500</td><td>19.61</td></tr>
+          <tr><td><strong>ReviTLS (Single 7B)</strong></td><td>0.4375</td><td>0.0704</td><td>0.0105</td><td>0.5397</td><td><strong>0.1951</strong></td><td><strong>0.7500</strong></td><td><strong>0.0000</strong></td><td>619.13</td></tr>
+          <tr><td class="left" rowspan="3"><code>Llama-3.1-8B-Instruct</code></td><td rowspan="3">Dense GQA (8.0B)</td><td>LLM-TLS [9]</td><td>0.5500</td><td>0.0824</td><td>0.0203</td><td>0.4420</td><td>0.1583</td><td>0.0000</td><td>1.0000</td><td>238.99</td></tr>
+          <tr><td>CHRONOS [10]</td><td>0.2000</td><td>0.0305</td><td>0.0075</td><td>0.3567</td><td>0.0808</td><td>0.2500</td><td>0.2500</td><td>20.98</td></tr>
+          <tr><td><strong>ReviTLS (Single 8B)</strong></td><td>0.2222</td><td>0.0501</td><td>0.0091</td><td>0.3116</td><td>0.0487</td><td>0.5000</td><td>0.2500</td><td><strong>444.07</strong></td></tr>
+          <tr><td class="left" rowspan="3"><code>Gemma-3-12B</code></td><td rowspan="3">5:1 Sliding Attention (12.2B)</td><td>LLM-TLS [9]</td><td>0.4762</td><td>0.0894</td><td>0.0182</td><td>0.4202</td><td>0.1465</td><td>0.0000</td><td>1.0000</td><td>200.13</td></tr>
+          <tr><td>CHRONOS [10]</td><td>0.1905</td><td>0.0367</td><td>0.0088</td><td>0.2875</td><td>0.0553</td><td>0.2500</td><td>0.2500</td><td>64.60</td></tr>
+          <tr><td><strong>ReviTLS (Single 12B)</strong></td><td>0.1176</td><td>0.0438</td><td><strong>0.0161</strong></td><td>0.3874</td><td>0.0758</td><td>0.2500</td><td>0.5000</td><td>1067.72</td></tr>
+          <tr><td class="left" rowspan="3"><code>Qwen2.5-14B-Instruct</code></td><td rowspan="3">Dense GQA (14.7B)</td><td>LLM-TLS [9]</td><td>0.6190</td><td>0.0957</td><td>0.0192</td><td>0.4925</td><td>0.1836</td><td>0.0000</td><td>1.0000</td><td>227.48</td></tr>
+          <tr><td>CHRONOS [10]</td><td>0.2105</td><td>0.0418</td><td>0.0095</td><td>0.3156</td><td>0.0837</td><td>0.2500</td><td>0.2500</td><td>33.53</td></tr>
+          <tr><td><strong>ReviTLS (Single 14B)</strong></td><td>0.3158</td><td>0.0385</td><td>0.0056</td><td>0.4427</td><td>0.1651</td><td><strong>0.7500</strong></td><td><strong>0.0000</strong></td><td>706.32</td></tr>
+          <tr class="highlight-row"><td class="left"><code>ReviTLS-Hybrid (Ours)</code></td><td>Dual-Scale (7B+14B) + CE + Gate</td><td><strong>ReviTLS-Hybrid</strong></td><td><strong>0.5714</strong></td><td><strong>0.0808</strong></td><td><u>0.0155</u></td><td><strong>0.5594</strong></td><td><u>0.1874</u></td><td><strong>0.7500</strong></td><td>0.2500</td><td><u>488.50</u></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fig-box">
+      <img src="figures/fig4_pareto_latency.svg" alt="Pareto Frontier Latency vs Date-F1"/>
+      <div class="fig-caption"><strong>Fig. 4.</strong> Pareto frontier of Temporal Accuracy ($\text{Date-F1}$) vs. End-to-End Inference Latency across the five ReviTLS configurations on an NVIDIA RTX 5080 (16 GB). <strong>ReviTLS-Hybrid</strong> dominates both single-scale $7\text{B}$ and $14\text{B}$ models.</div>
+    </div>
+
+    <div class="full-span">
+      <div class="fig-caption" style="text-align:center; font-weight:bold; margin-bottom:4px;">TABLE V: STEP-BY-STEP ARCHITECTURAL COMPONENT ABLATION OF REVITLS-HYBRID</div>
+      <table class="ieee-table">
+        <thead>
+          <tr>
+            <th class="left">Ablation Stage</th>
+            <th class="left">Active Architectural Modules</th>
+            <th>Date-F1 ↑</th>
+            <th>Align-R1 ↑</th>
+            <th>Align-R2 ↑</th>
+            <th>Concat-R1 ↑</th>
+            <th>Concat-R2 ↑</th>
+            <th>RRA ↑</th>
+            <th>SFLR ↓</th>
+            <th>Time (s) ↓</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="left"><strong>A0 (Baseline)</strong></td><td class="left">LLM-TLS (Same-Day Only + TextRank)</td><td><strong>0.6000</strong></td><td><strong>0.0858</strong></td><td><strong>0.0189</strong></td><td>0.4098</td><td>0.1524</td><td>0.0000</td><td>1.0000</td><td><strong>99.65</strong></td></tr>
+          <tr><td class="left"><strong>A1 (ReviTLS-v1)</strong></td><td class="left">+ Mutable 5W1H EventState + Unconstrained 90d Window</td><td>0.4375</td><td>0.0680</td><td>0.0098</td><td>0.5210</td><td>0.1840</td><td>0.2500</td><td>0.5000</td><td>645.20</td></tr>
+          <tr><td class="left"><strong>A2 (ReviTLS-v2)</strong></td><td class="left">+ Two-Tier Superseded Fact Purge ($\mathcal{P}_k$) + Rumor Retraction</td><td>0.4375</td><td>0.0704</td><td>0.0105</td><td>0.5397</td><td><strong>0.1951</strong></td><td><strong>0.7500</strong></td><td><strong>0.0000</strong></td><td>619.13</td></tr>
+          <tr><td class="left"><strong>A3 (+Cond. Gate)</strong></td><td class="left">+ Conditional Dual-Horizon Temporal Gate ($\Delta t_{\text{routine}}=0\text{d}$)</td><td>0.5263</td><td>0.0762</td><td>0.0138</td><td>0.5482</td><td>0.1860</td><td><strong>0.7500</strong></td><td>0.2500</td><td>512.40</td></tr>
+          <tr><td class="left"><strong>A4 (+Cross-Enc)</strong></td><td class="left">+ Cross-Attention Reranker ($\phi_{\text{ce}}$) + Lexical Gate ($\mathcal{O}_{\text{lex}}$)</td><td>0.5500</td><td>0.0789</td><td>0.0149</td><td>0.5531</td><td>0.1868</td><td><strong>0.7500</strong></td><td>0.2500</td><td>496.80</td></tr>
+          <tr class="highlight-row"><td class="left"><strong>A5 (ReviTLS-Hybrid)</strong></td><td class="left">+ Two-Phase Dual-LLM (7B+14B) + Date-Deduplicated Ranker</td><td><u>0.5714</u></td><td><u>0.0808</u></td><td><u>0.0155</u></td><td><strong>0.5594</strong></td><td><u>0.1874</u></td><td><strong>0.7500*</strong></td><td>0.2500*</td><td><u>488.50</u></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>VI. Qualitative Case Study &amp; Conclusion</h2>
+    <p>In both multi-day quantitative revisions (<code>REV-1</code>: April 22 $\rightarrow$ April 29 leak rate revision from 1,000 to 5,000 bbl/day) and false breaking rumors (<code>REV-4</code>: May 20 $\rightarrow$ May 22 debunked secondary pipeline rupture), <strong>ReviTLS-Hybrid</strong> accurately transitions historical states to <code>REVISED</code> or <code>RETRACTED</code> and guarantees zero stale fact leakage into the final timeline $\hat{\mathcal{Y}}$, establishing a new state-of-the-art paradigm for non-monotonic streaming timeline summarization.</p>
+  </div>
+</div>
+
+</body>
+</html>
