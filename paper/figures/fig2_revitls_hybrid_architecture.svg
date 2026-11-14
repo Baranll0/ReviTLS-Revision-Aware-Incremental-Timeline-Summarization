@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="100%" height="100%" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2c3e50"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#6c3483"/>
+    </marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#117864"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="600" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a252f">ReviTLS-Hybrid: Dual-Scale Revision-Aware Incremental TLS Architecture</text>
+
+  <!-- PHASE 1 BANNER -->
+  <rect x="20" y="48" width="1160" height="190" rx="8" fill="#f4f8fb" stroke="#2980b9" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="35" y="70" font-size="13" font-weight="bold" fill="#1f618d">PHASE 1: Resident 7B Structured 5W1H Extraction &amp; Conditional Dual-Horizon Temporal Gating (Qwen2.5-7B + BGE Bi-Encoder)</text>
+
+  <!-- Stream Box -->
+  <rect x="35" y="105" width="145" height="80" rx="6" fill="#eaecee" stroke="#2c3e50" stroke-width="1.8"/>
+  <text x="107" y="132" text-anchor="middle" font-size="12" font-weight="bold" fill="#1a252f">News Stream S</text>
+  <text x="107" y="152" text-anchor="middle" font-size="11" fill="#34495e">Article (d_i, t_i)</text>
+  <text x="107" y="170" text-anchor="middle" font-size="10" fill="#5d6d7e">Chronological Input</text>
+
+  <!-- 7B Extractor -->
+  <rect x="215" y="95" width="205" height="100" rx="6" fill="#ebf5fb" stroke="#2874a6" stroke-width="1.8"/>
+  <text x="317" y="120" text-anchor="middle" font-size="12" font-weight="bold" fill="#1b4f72">Qwen2.5-7B Extractor (θ₁)</text>
+  <text x="317" y="140" text-anchor="middle" font-size="11" fill="#2c3e50">• 5W1H Slots W̃_{i,j}</text>
+  <text x="317" y="158" text-anchor="middle" font-size="11" fill="#2c3e50">• Entities &amp; Numbers N_{i,j}</text>
+  <text x="317" y="176" text-anchor="middle" font-size="11" fill="#2c3e50">• Event Date τ_{i,j} ≤ t_i</text>
+
+  <!-- Diamond Revision Gate -->
+  <polygon points="535,90 625,145 535,200 445,145" fill="#fef5e7" stroke="#d35400" stroke-width="1.8"/>
+  <text x="535" y="138" text-anchor="middle" font-size="11" font-weight="bold" fill="#a04000">Revision Cue?</text>
+  <text x="535" y="155" text-anchor="middle" font-size="11" fill="#a04000">ρ_{i,j} = 1 (Eq. 9)</text>
+
+  <!-- Strict Same-Day Gate -->
+  <rect x="680" y="82" width="230" height="65" rx="6" fill="#ebf5fb" stroke="#2874a6" stroke-width="1.8"/>
+  <text x="795" y="104" text-anchor="middle" font-size="12" font-weight="bold" fill="#1b4f72">Strict Same-Day Gate (ρ = 0)</text>
+  <text x="795" y="122" text-anchor="middle" font-size="11" fill="#2c3e50">|τ_{i,j} - τ_k| = 0 Days (Eq. 10)</text>
+  <text x="795" y="138" text-anchor="middle" font-size="10" fill="#1f618d">BGE Bi-Encoder + Entity Bonus S_bi</text>
+
+  <!-- 90-Day Revision Gate -->
+  <rect x="680" y="160" width="230" height="65" rx="6" fill="#fef9e7" stroke="#b7950b" stroke-width="1.8"/>
+  <text x="795" y="182" text-anchor="middle" font-size="12" font-weight="bold" fill="#7d6608">90-Day Revision Gate (ρ = 1)</text>
+  <text x="795" y="200" text-anchor="middle" font-size="11" fill="#2c3e50">0 ≤ t_i - τ_k ≤ 90 Days (Eq. 10)</text>
+  <text x="795" y="216" text-anchor="middle" font-size="10" fill="#7d6608">Enqueue Shortlist R_1 → Queue Q_rev</text>
+
+  <!-- Routine Transitions -->
+  <rect x="950" y="82" width="215" height="68" rx="6" fill="#e8f8f5" stroke="#117864" stroke-width="1.8"/>
+  <text x="1057" y="103" text-anchor="middle" font-size="12" font-weight="bold" fill="#0e6251">Routine Transitions (θ₁)</text>
+  <text x="1057" y="121" text-anchor="middle" font-size="11" fill="#1a252f">• NEW_EVENT (Create Node)</text>
+  <text x="1057" y="138" text-anchor="middle" font-size="11" fill="#1a252f">• CORROBORATE / PROGRESS</text>
+
+  <!-- Phase 1 Arrows -->
+  <line x1="180" y1="145" x2="215" y2="145" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="420" y1="145" x2="445" y2="145" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="600" y1="125" x2="680" y2="114" stroke="#2874a6" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="640" y="110" text-anchor="middle" font-size="10" font-weight="bold" fill="#1b4f72">No (0)</text>
+  <line x1="600" y1="165" x2="680" y2="192" stroke="#d35400" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="640" y="192" text-anchor="middle" font-size="10" font-weight="bold" fill="#a04000">Yes (1)</text>
+  <line x1="910" y1="115" x2="950" y2="115" stroke="#117864" stroke-width="2" marker-end="url(#arrow-teal)"/>
+
+  <!-- MIDDLE BANNER: MUTABLE EVENTSTATE REPOSITORY -->
+  <rect x="20" y="255" width="1160" height="82" rx="8" fill="#e8f6f3" stroke="#117864" stroke-width="2"/>
+  <text x="40" y="280" font-size="13" font-weight="bold" fill="#0b5345">MUTABLE EVENTSTATE REPOSITORY M^(t) = {e_1^(t), e_2^(t), ..., e_K^(t)}   —   Internal 7-Tuple Representation (Eq. 3):</text>
+  <text x="40" y="303" font-size="12" fill="#1a252f">e_k^(t) = ⟨ τ_k (Mutable Event Date),  W_k (5W1H Slots),  F_k (Active Verified Facts),  P_k (Purged Tombstone Facts),  σ_k ∈ {ACTIVE, REVISED, RETRACTED},  c_k (Support),  H_k (Audit Log) ⟩</text>
+  <text x="40" y="324" font-size="12" font-weight="bold" fill="#922b21">Zero-Leakage Invariant (Eq. 4):   F_k^(t) ∩ P_k^(t) = ∅   (All superseded numbers, misattributions, and retracted claims are permanently blocked from summary synthesis)</text>
+
+  <!-- Arrow from Routine Transitions to Memory -->
+  <line x1="1057" y1="150" x2="1057" y2="255" stroke="#117864" stroke-width="2.2" marker-end="url(#arrow-teal)"/>
+
+  <!-- PHASE 2 BANNER -->
+  <rect x="20" y="355" width="1160" height="245" rx="8" fill="#faf5ff" stroke="#7d3c98" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="35" y="378" font-size="13" font-weight="bold" fill="#5b2c6f">PHASE 2: Cross-Attention Reranking, Resident 14B Conflict Verification, Fact Purging &amp; Milestone Selection (Qwen2.5-14B)</text>
+
+  <!-- Cross-Encoder Box -->
+  <rect x="35" y="425" width="210" height="95" rx="6" fill="#f5eef8" stroke="#7d3c98" stroke-width="1.8"/>
+  <text x="140" y="450" text-anchor="middle" font-size="12" font-weight="bold" fill="#4a235a">Cross-Encoder Reranker</text>
+  <text x="140" y="470" text-anchor="middle" font-size="11" fill="#2c3e50">ms-marco-MiniLM-L-6-v2</text>
+  <text x="140" y="488" text-anchor="middle" font-size="11" fill="#2c3e50">+ Lexical Gate O_lex ≥ 0.12</text>
+  <text x="140" y="506" text-anchor="middle" font-size="10" fill="#6c3483">Hybrid Score S_hybrid (Eq. 13)</text>
+
+  <!-- 14B 4-Way Classifier -->
+  <rect x="280" y="425" width="205" height="95" rx="6" fill="#f5eef8" stroke="#7d3c98" stroke-width="1.8"/>
+  <text x="382" y="450" text-anchor="middle" font-size="12" font-weight="bold" fill="#4a235a">Qwen2.5-14B Classifier (θ₂)</text>
+  <text x="382" y="470" text-anchor="middle" font-size="11" fill="#2c3e50">4-Way Transition Action a ∈ A:</text>
+  <text x="382" y="488" text-anchor="middle" font-size="10" fill="#2c3e50">NEW / CORROBORATE /</text>
+  <text x="382" y="504" text-anchor="middle" font-size="10" font-weight="bold" fill="#6c3483">UPDATE_PROGRESS / REVISE</text>
+
+  <!-- Targeted 5W1H Verifier -->
+  <rect x="520" y="425" width="220" height="95" rx="6" fill="#f5eef8" stroke="#7d3c98" stroke-width="1.8"/>
+  <text x="630" y="450" text-anchor="middle" font-size="12" font-weight="bold" fill="#4a235a">Targeted 5W1H Verifier (θ₂)</text>
+  <text x="630" y="470" text-anchor="middle" font-size="11" fill="#2c3e50">• Self-Questioning {q_1, q_2, q_3}</text>
+  <text x="630" y="488" text-anchor="middle" font-size="11" fill="#2c3e50">• Provenance Evidence Check</text>
+  <text x="630" y="506" text-anchor="middle" font-size="10" fill="#6c3483">Outputs ΔF_stale &amp; F_verified (Eq. 14)</text>
+
+  <!-- State Mutation REVISED -->
+  <rect x="775" y="395" width="205" height="82" rx="6" fill="#e8f8f5" stroke="#117864" stroke-width="1.8"/>
+  <text x="877" y="416" text-anchor="middle" font-size="12" font-weight="bold" fill="#0e6251">Fact Purge &amp; Mutation</text>
+  <text x="877" y="434" text-anchor="middle" font-size="11" fill="#1a252f">P_k ← P_k ∪ ΔF_stale</text>
+  <text x="877" y="451" text-anchor="middle" font-size="11" fill="#1a252f">F_k ← (F_k \ ΔF_stale) ∪ F_new</text>
+  <text x="877" y="468" text-anchor="middle" font-size="11" font-weight="bold" fill="#117864">Status σ_k ← REVISED</text>
+
+  <!-- Rumor Expungement RETRACTED -->
+  <rect x="775" y="495" width="205" height="75" rx="6" fill="#f2f4f4" stroke="#7f8c8d" stroke-width="1.8" stroke-dasharray="5,3"/>
+  <text x="877" y="518" text-anchor="middle" font-size="12" font-weight="bold" fill="#5d6d7e">Rumor Expungement</text>
+  <text x="877" y="536" text-anchor="middle" font-size="11" fill="#2c3e50">Core w_what Debunked</text>
+  <text x="877" y="554" text-anchor="middle" font-size="11" font-weight="bold" fill="#c0392b">Status σ_k ← RETRACTED</text>
+
+  <!-- Final Milestone Ranker -->
+  <rect x="1015" y="410" width="150" height="125" rx="6" fill="#d4efdf" stroke="#1e8449" stroke-width="2.2"/>
+  <text x="1090" y="435" text-anchor="middle" font-size="12" font-weight="bold" fill="#145a32">Date-Deduplicated</text>
+  <text x="1090" y="452" text-anchor="middle" font-size="12" font-weight="bold" fill="#145a32">Milestone Ranker</text>
+  <text x="1090" y="474" text-anchor="middle" font-size="10" fill="#1a252f">1. Filter σ_k ≠ RETRACTED</text>
+  <text x="1090" y="492" text-anchor="middle" font-size="10" fill="#1a252f">2. Score Ω(e_k) (Eq. 15)</text>
+  <text x="1090" y="510" text-anchor="middle" font-size="10" fill="#1a252f">3. Per-Date Argmax (Eq. 16)</text>
+  <text x="1090" y="527" text-anchor="middle" font-size="11" font-weight="bold" fill="#145a32">Output Timeline Ŷ</text>
+
+  <!-- Phase 2 Arrows -->
+  <path d="M 795 225 L 795 245 L 140 245 L 140 425" fill="none" stroke="#6c3483" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <line x1="245" y1="472" x2="280" y2="472" stroke="#6c3483" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <line x1="485" y1="472" x2="520" y2="472" stroke="#6c3483" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <line x1="740" y1="455" x2="775" y2="436" stroke="#117864" stroke-width="2" marker-end="url(#arrow-teal)"/>
+  <line x1="740" y1="490" x2="775" y2="532" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="877" y1="395" x2="877" y2="337" stroke="#117864" stroke-width="2" marker-end="url(#arrow-teal)"/>
+  <line x1="980" y1="436" x2="1015" y2="465" stroke="#117864" stroke-width="2" marker-end="url(#arrow-teal)"/>
+  <line x1="1090" y1="337" x2="1090" y2="410" stroke="#117864" stroke-width="2.2" marker-end="url(#arrow-teal)"/>
+</svg>

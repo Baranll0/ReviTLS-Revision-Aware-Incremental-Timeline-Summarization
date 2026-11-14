@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 440" width="100%" height="100%" font-family="Arial, Helvetica, sans-serif">
+  <defs>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e8449"/>
+    </marker>
+  </defs>
+  <rect width="760" height="440" fill="#ffffff"/>
+  <text x="380" y="28" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a252f">Pareto Frontier: Temporal Accuracy (Date-F1) vs. Inference Latency on RTX 5080</text>
+
+  <!-- Axes: X from 400s (x=90) to 1100s (x=700) => 610px / 700s = 0.8714 px/s -->
+  <!-- Y from 0.00 (y=370) to 0.65 (y=55) => 315px / 0.65 = 484.6 px/unit -->
+  <line x1="90" y1="55" x2="90" y2="370" stroke="#2c3e50" stroke-width="1.5"/>
+  <line x1="90" y1="370" x2="710" y2="370" stroke="#2c3e50" stroke-width="1.5"/>
+
+  <!-- Y Grid -->
+  <line x1="90" y1="322" x2="710" y2="322" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="82" y="326" text-anchor="end" font-size="11" fill="#5d6d7e">0.10</text>
+  <line x1="90" y1="273" x2="710" y2="273" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="82" y="277" text-anchor="end" font-size="11" fill="#5d6d7e">0.20</text>
+  <line x1="90" y1="225" x2="710" y2="225" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="82" y="229" text-anchor="end" font-size="11" fill="#5d6d7e">0.30</text>
+  <line x1="90" y1="176" x2="710" y2="176" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="82" y="180" text-anchor="end" font-size="11" fill="#5d6d7e">0.40</text>
+  <line x1="90" y1="128" x2="710" y2="128" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="82" y="132" text-anchor="end" font-size="11" fill="#5d6d7e">0.50</text>
+  <line x1="90" y1="79" x2="710" y2="79" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="82" y="83" text-anchor="end" font-size="11" fill="#5d6d7e">0.60</text>
+
+  <!-- X Grid -->
+  <line x1="177" y1="55" x2="177" y2="370" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="177" y="390" text-anchor="middle" font-size="11" fill="#5d6d7e">500s</text>
+  <line x1="264" y1="55" x2="264" y2="370" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="264" y="390" text-anchor="middle" font-size="11" fill="#5d6d7e">600s</text>
+  <line x1="351" y1="55" x2="351" y2="370" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="351" y="390" text-anchor="middle" font-size="11" fill="#5d6d7e">700s</text>
+  <line x1="438" y1="55" x2="438" y2="370" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="438" y="390" text-anchor="middle" font-size="11" fill="#5d6d7e">800s</text>
+  <line x1="525" y1="55" x2="525" y2="370" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="525" y="390" text-anchor="middle" font-size="11" fill="#5d6d7e">900s</text>
+  <line x1="612" y1="55" x2="612" y2="370" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="612" y="390" text-anchor="middle" font-size="11" fill="#5d6d7e">1000s</text>
+  <line x1="700" y1="55" x2="700" y2="370" stroke="#d5dbdb" stroke-dasharray="4,4"/><text x="700" y="390" text-anchor="middle" font-size="11" fill="#5d6d7e">1100s</text>
+
+  <text x="400" y="420" text-anchor="middle" font-size="12" font-weight="bold" fill="#2c3e50">End-to-End Inference Latency on NVIDIA RTX 5080 16GB (Seconds) ↓</text>
+  <text x="25" y="215" text-anchor="middle" font-size="12" font-weight="bold" fill="#2c3e50" transform="rotate(-90 25,215)">Temporal Accuracy (Date-F1) ↑</text>
+
+  <!-- Trajectory Arrows to ReviTLS-Hybrid -->
+  <line x1="281" y1="158" x2="175" y2="98" stroke="#1e8449" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+  <line x1="357" y1="217" x2="177" y2="100" stroke="#1e8449" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-green)"/>
+
+  <!-- Points -->
+  <!-- Llama-3.1-8B: (444.07s -> x=128, 0.2222 -> y=262) -->
+  <circle cx="128" cy="262" r="7" fill="#e67e22" stroke="#1a252f" stroke-width="1.5"/>
+  <text x="140" y="266" font-size="11" font-weight="bold" fill="#a04000">Llama-3.1-8B (444s, Date-F1=0.222)</text>
+
+  <!-- Gemma-3-12B: (1067.72s -> x=672, 0.1176 -> y=313) -->
+  <polygon points="672,304 680,319 664,319" fill="#c0392b" stroke="#1a252f" stroke-width="1.5"/>
+  <text x="655" y="315" text-anchor="end" font-size="11" font-weight="bold" fill="#922b21">Gemma-3-12B (1068s, Date-F1=0.118)</text>
+
+  <!-- Qwen2.5-14B: (706.32s -> x=357, 0.3158 -> y=217) -->
+  <rect x="350" y="210" width="14" height="14" fill="#8e44ad" stroke="#1a252f" stroke-width="1.5"/>
+  <text x="372" y="222" font-size="11" font-weight="bold" fill="#5b2c6f">Qwen2.5-14B Single (706s, Date-F1=0.316)</text>
+
+  <!-- Qwen2.5-7B: (619.13s -> x=281, 0.4375 -> y=158) -->
+  <polygon points="281,149 290,158 281,167 272,158" fill="#2874a6" stroke="#1a252f" stroke-width="1.5"/>
+  <text x="296" y="162" font-size="11" font-weight="bold" fill="#1b4f72">Qwen2.5-7B Single (619s, Date-F1=0.438)</text>
+
+  <!-- ReviTLS-Hybrid: (488.50s -> x=167, 0.5714 -> y=93) -->
+  <circle cx="167" cy="93" r="10" fill="#27ae60" stroke="#145a32" stroke-width="2"/>
+  <text x="184" y="90" font-size="12" font-weight="bold" fill="#145a32">ReviTLS-Hybrid (Ours: 7B+14B+CE+Gate)</text>
+  <text x="184" y="106" font-size="11" font-weight="bold" fill="#1e8449">488.5s (-21.1% faster) | Date-F1 = 0.5714 (+30.6%)</text>
+</svg>

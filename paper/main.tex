@@ -267,57 +267,66 @@ To resolve the fundamental tension between long-range factual revision accuracy 
 \centering
 \begin{tikzpicture}[
     font=\scriptsize,
-    node distance=0.45cm and 0.55cm,
-    block/.style={rectangle, rounded corners=3pt, draw=black!80, thick, minimum height=0.8cm, align=center, inner sep=4pt},
+    node distance=0.38cm and 0.45cm,
+    block/.style={rectangle, rounded corners=2.5pt, draw=black!80, thick, minimum height=0.78cm, align=center, inner sep=3.5pt},
     phase1/.style={block, fill=blue!8, draw=blue!65!black},
-    gate/.style={diamond, aspect=2.1, draw=orange!85!black, thick, fill=orange!12, align=center, inner sep=1.5pt},
+    gate/.style={diamond, aspect=2.15, draw=orange!85!black, thick, fill=orange!12, align=center, inner sep=1.2pt},
     phase2/.style={block, fill=purple!8, draw=purple!70!black},
     state/.style={block, fill=green!10, draw=green!60!black},
+    membox/.style={rectangle, rounded corners=3pt, draw=teal!80!black, thick, fill=teal!6, align=left, inner sep=4pt},
     retract/.style={block, fill=gray!20, draw=gray!70!black, dashed},
     arrow/.style={-Stealth, thick, draw=black!75}
 ]
 
-% Phase 1 Header
-\node[anchor=west, font=\footnotesize\bfseries, text=blue!70!black] at (-0.2, 3.55) {PHASE 1: High-Throughput Streaming Extraction \& Same-Day State Accumulation ($\theta_1$: Qwen2.5-7B + BGE Bi-Encoder)};
+% ================= PHASE 1 =================
+\node[anchor=west, font=\footnotesize\bfseries, text=blue!75!black] at (-0.3, 4.55) {PHASE 1: Resident 7B Structured $5\text{W}1\text{H}$ Extraction, Revision Cue Detection \& Conditional Dual-Horizon Temporal Gating};
 
-% Phase 1 Nodes
-\node[block, fill=gray!12, text width=2.2cm] (stream) at (1.0, 2.65) {\textbf{News Stream} $\mathcal{S}$\\Article $(d_i, t_i)$};
-\node[phase1, text width=2.9cm] (extractor) at (4.2, 2.65) {\textbf{$5\text{W}1\text{H}$ Extractor ($\theta_1$)}\\Candidates $m_{i,j}$, Entities $\mathcal{N}_{i,j}$};
-\node[gate, text width=2.1cm] (revgate) at (7.8, 2.65) {\textbf{Revision Cue?}\\$\rho_{i,j} = 1$};
-\node[phase1, text width=3.1cm] (sameday) at (11.7, 3.05) {\textbf{Strict Same-Day Gate}\\$|\tau_{i,j} - \tau_k| = 0$ \& Bi-Encoder};
-\node[phase1, text width=3.1cm] (deferq) at (11.7, 2.05) {\textbf{90-Day Revision Gate}\\$0 \le \tau_{i,j} - \tau_k \le 90\text{d} \rightarrow \mathcal{Q}_{\text{rev}}$};
-\node[state, text width=2.9cm] (repo1) at (15.6, 3.05) {\textbf{Mutable Repository} $\mathcal{M}^{(t)}$\\\texttt{NEW\_EVENT} / \texttt{PROGRESS}};
+\node[block, fill=gray!14, text width=2.05cm] (stream) at (0.85, 3.55) {\textbf{News Stream} $\mathcal{S}$\\Article $(d_i, t_i)$};
+\node[phase1, text width=2.85cm] (extractor) at (3.85, 3.55) {\textbf{Qwen2.5-7B ($\theta_1$)}\\$5\text{W}1\text{H}$ Slots $\tilde{\mathcal{W}}_{i,j}$\\Entities $\mathcal{N}_{i,j}$, Date $\tau_{i,j}$};
+\node[gate, text width=2.05cm] (revgate) at (7.35, 3.55) {\textbf{Revision Cue}\\$\rho_{i,j} = 1$?\\{\tiny (Eq.~\ref{eq:revision_indicator})}};
+
+\node[phase1, text width=3.15cm] (sameday) at (11.2, 4.0) {\textbf{Strict Same-Day Gate}\\$|\tau_{i,j} - \tau_k| = 0$ (\textit{Eq.~\ref{eq:temporal_gate}})\\BGE Bi-Encoder + $\mathcal{N}$-Bonus};
+\node[phase1, text width=3.15cm] (deferq) at (11.2, 2.85) {\textbf{90-Day Revision Gate}\\$0 \le t_i - \tau_k \le 90\text{d}$ (\textit{Eq.~\ref{eq:temporal_gate}})\\Stage-1 Shortlist $\rightarrow \mathcal{Q}_{\text{rev}}$};
+
+\node[state, text width=3.1cm] (sameday_act) at (15.25, 4.0) {\textbf{Routine Transitions ($\theta_1$)}\\$\bullet$ \texttt{NEW\_EVENT} ($c=1$)\\$\bullet$ \texttt{CORROBORATE} ($c\!+\!+$)\\$\bullet$ \texttt{UPDATE\_PROGRESS}};
 
 \draw[arrow] (stream) -- (extractor);
 \draw[arrow] (extractor) -- (revgate);
-\draw[arrow] (revgate) -- node[above, font=\tiny\bfseries] {No ($\rho=0$)} (sameday);
-\draw[arrow] (revgate) -- node[below, font=\tiny\bfseries] {Yes ($\rho=1$)} (deferq);
-\draw[arrow] (sameday) -- (repo1);
+\draw[arrow] (revgate) -- node[above, font=\tiny\bfseries, text=blue!75!black] {No ($\rho=0$)} (sameday);
+\draw[arrow] (revgate) -- node[below, font=\tiny\bfseries, text=orange!85!black] {Yes ($\rho=1$)} (deferq);
+\draw[arrow] (sameday) -- (sameday_act);
 
-% Divider Line
-\draw[dashed, gray!70, thick] (-0.2, 1.35) -- (17.2, 1.35);
+% ================= MIDDLE: MUTABLE EVENTSTATE MEMORY =================
+\node[membox, text width=16.9cm] (memschema) at (8.3, 1.75) {
+    \textbf{Mutable EventState Repository $\mathcal{M}^{(t)} = \{e_1^{(t)}, \dots, e_{K_t}^{(t)}\}$ \quad — \quad Internal 7-Tuple Schema:}
+    $e_k^{(t)} = \big\langle \tau_k^{(t)} \text{ (Canonical Date)},\; \mathcal{W}_k^{(t)} \text{ ($5\text{W}1\text{H}$ Slots)},\; \mathcal{F}_k^{(t)} \text{ (Active Verified Claims)},\; \mathcal{P}_k^{(t)} \text{ (Purged Tombstone Set)},\; \sigma_k^{(t)} \in \{\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}\},\; c_k^{(t)} \text{ (Support Count)},\; \mathcal{H}_k^{(t)} \text{ (Audit Trail)} \big\rangle$ \hfill \textbf{Invariant:} $\mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset$
+};
 
-% Phase 2 Header
-\node[anchor=west, font=\footnotesize\bfseries, text=purple!75!black] at (-0.2, 1.0) {PHASE 2: Cross-Attention Reranking, 14B Targeted Conflict Verification \& Milestone Selection ($\theta_2$: Qwen2.5-14B)};
+\draw[arrow, teal!80!black] (sameday_act.south) -- (15.25, 2.22);
 
-% Phase 2 Nodes
-\node[phase2, text width=3.0cm] (crossenc) at (1.6, 0.1) {\textbf{Cross-Encoder Reranker}\\MiniLM-L-6-v2 + Lexical Gate};
-\node[phase2, text width=3.0cm] (cls14b) at (5.3, 0.1) {\textbf{4-Way Classifier ($\theta_2$)}\\$\mathcal{A}$ Transition Decision};
-\node[phase2, text width=3.2cm] (verifier) at (9.1, 0.1) {\textbf{Targeted $5\text{W}1\text{H}$ Verifier}\\Self-Questioning \& Fact Diff};
-\node[state, text width=3.0cm] (purge) at (12.9, 0.45) {\textbf{State Mutation $\Phi_{\text{rev}}$}\\Purge $\Delta \mathcal{F}_{\text{stale}} \rightarrow \mathcal{P}_k$ [\texttt{REVISED}]};
-\node[retract, text width=3.0cm] (retracted) at (12.9, -0.45) {\textbf{Rumor Expungement}\\Status $\sigma_k \leftarrow \texttt{RETRACTED}$};
-\node[state, fill=green!18, text width=2.4cm] (ranker) at (16.1, 0.1) {\textbf{Date-Deduplicated}\\\textbf{Milestone Ranker}\\Final Timeline $\hat{\mathcal{Y}}$};
+% ================= PHASE 2 =================
+\node[anchor=west, font=\footnotesize\bfseries, text=purple!75!black] at (-0.3, 0.92) {PHASE 2: Cross-Attention Reranking, Resident 14B Conflict Verification, Superseded Fact Purging \& Milestone Selection};
 
-\draw[arrow, purple!75!black] (deferq.south) -- ++(0,-0.4) -| (crossenc.north);
+\node[phase2, text width=2.95cm] (crossenc) at (1.35, -0.05) {\textbf{Cross-Encoder $\phi_{\text{ce}}$}\\MiniLM-L-6-v2 +\\Lexical Gate $\mathcal{O}_{\text{lex}} \ge \gamma_{\text{lex}}$};
+\node[phase2, text width=2.85cm] (cls14b) at (4.9, -0.05) {\textbf{Qwen2.5-14B ($\theta_2$)}\\4-Way Classifier\\$a \in \mathcal{A}$ (\textit{Eq.~\ref{eq:action_space}})};
+\node[phase2, text width=3.2cm] (verifier) at (8.6, -0.05) {\textbf{Targeted $5\text{W}1\text{H}$ Verifier}\\Self-Questioning $\{q_1..q_3\}$\\Evidence Diff $\Phi_{\text{rev}}^{\theta_2}$ (\textit{Eq.~\ref{eq:verifier_output}})};
+
+\node[state, text width=3.05cm] (purge) at (12.55, 0.35) {\textbf{Fact Purge \& Mutation}\\$\mathcal{P}_k \leftarrow \mathcal{P}_k \cup \Delta\mathcal{F}_{\text{stale}}$\\$\mathcal{F}_k \leftarrow (\mathcal{F}_k \setminus \Delta\mathcal{F}_{\text{stale}}) \cup \mathcal{F}_{\text{new}}$\\Status $\sigma_k \leftarrow \texttt{REVISED}$};
+\node[retract, text width=3.05cm] (retracted) at (12.55, -0.65) {\textbf{Rumor Expungement}\\Core $w_{\text{what}}$ Invalidated\\Status $\sigma_k \leftarrow \texttt{RETRACTED}$};
+
+\node[state, fill=green!18, text width=2.45cm] (ranker) at (15.85, -0.05) {\textbf{Date-Deduplicated}\\\textbf{Milestone Ranker}\\Filter $\sigma_k \neq \texttt{RETRACTED}$\\Score $\Omega(e_k)$ (\textit{Eq.~\ref{eq:salience_score}})\\Output Timeline $\hat{\mathcal{Y}}$};
+
+\draw[arrow, purple!75!black] (deferq.south) -- (11.2, 2.32) -| (crossenc.north);
 \draw[arrow] (crossenc) -- (cls14b);
-\draw[arrow] (cls14b) -- node[above, font=\tiny] {\texttt{REVISE}} (verifier);
+\draw[arrow] (cls14b) -- node[above, font=\tiny\bfseries] {\texttt{REVISE}} (verifier);
 \draw[arrow] (verifier) -- (purge);
 \draw[arrow] (verifier) -- (retracted);
-\draw[arrow] (repo1.south) -| (ranker.north);
+\draw[arrow, teal!80!black] (purge.north) -- (12.55, 1.28);
+\draw[arrow, teal!80!black] (15.85, 1.28) -- (ranker.north);
 \draw[arrow] (purge.east) -- (ranker.west);
 
 \end{tikzpicture}
-\caption{System architecture of the proposed \textbf{ReviTLS-Hybrid} framework. \textbf{Phase~1} processes the incoming article stream using a fast $7\text{B}$ structured extractor and enforces a Strict Same-Day Temporal Gate for routine events while routing revision-flagged candidates ($\rho_{i,j}=1$) across a 90-day lookback horizon into queue $\mathcal{Q}_{\text{rev}}$. \textbf{Phase~2} applies Cross-Attention reranking with a lexical overlap gate and invokes the $14\text{B}$ verifier to resolve conflicts, purge superseded facts ($\Delta\mathcal{F}_{\text{stale}}$), retract debunked rumors, and rank date-deduplicated milestones.}
+\caption{Detailed multi-layer system architecture of \textbf{ReviTLS-Hybrid}. \textbf{Top (Phase~1):} A resident $7\text{B}$ model extracts structured $5\text{W}1\text{H}$ candidates and applies the Conditional Dual-Horizon Temporal Gate ($\Delta t_{\text{routine}}=0\text{d}$ vs.\ $\Delta t_{\text{rev}}=90\text{d}$). \textbf{Middle:} The mutable \texttt{EventState} repository enforces the Zero-Leakage Invariant ($\mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset$). \textbf{Bottom (Phase~2):} Queued cross-date revision candidates are reranked via Cross-Attention and verified by a resident $14\text{B}$ model using targeted $5\text{W}1\text{H}$ self-questioning before date-deduplicated milestone selection.}
 \label{fig:architecture}
 \end{figure*}
 
@@ -715,6 +724,146 @@ Across backbones, the \texttt{Qwen2.5} family ($7\text{B}$ and $14\text{B}$, usi
 
 \subsubsection{Efficiency of Two-Phase Dual-LLM Specialization (RQ4)}
 As shown in Fig.~\ref{fig:pareto_latency}, \textbf{ReviTLS-Hybrid} completes the full $164$-article stream in $\mathbf{488.50\text{s}}$---a $\mathbf{21.1\%}$ latency reduction compared to single-scale \texttt{Qwen2.5-7B} ($619.13\text{s}$) and a $\mathbf{30.8\%}$ speedup over single-scale \texttt{Qwen2.5-14B} ($706.32\text{s}$). This speedup stems from two synergistic factors: (i) the Conditional Temporal Gate and Cross-Encoder filter out non-matching cross-date candidates prior to LLM invocation, avoiding unnecessary multi-round $5\text{W}1\text{H}$ verification prompts, and (ii) our two-phase execution schedule loads the $7\text{B}$ model once in Phase~1 and the $14\text{B}$ verifier once in Phase~2, completely avoiding PCIe VRAM swap thrashing.
+
+\subsection{Component-Wise Ablation and Per-Scenario Resolution Matrix}
+\label{subsec:component_ablation}
+
+To isolate the contribution of each module in \textbf{ReviTLS-Hybrid}, Table~\ref{tab:component_ablation} and Fig.~\ref{fig:stepwise_ablation} trace the step-by-step progression from the initial unconstrained cross-date prototype (\texttt{ReviTLS-v1}) to the complete dual-scale system:
+
+\begin{table*}[t]
+\centering
+\caption{Step-by-Step Component Ablation of \textbf{ReviTLS-Hybrid} on the \texttt{T17/bpoil} + Revision Stress Stream}
+\label{tab:component_ablation}
+\renewcommand{\arraystretch}{1.16}
+\setlength{\tabcolsep}{4.8pt}
+\begin{tabular}{@{}llcccccccc@{}}
+\toprule
+\textbf{Ablation Stage} & \textbf{Active Architectural Modules} & \textbf{Date-F1} $\uparrow$ & \textbf{Align-R1} $\uparrow$ & \textbf{Align-R2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ & \textbf{Time (s)} $\downarrow$ \\
+\midrule
+\textbf{A0 (Baseline)} & LLM-TLS (Same-Day Only + TextRank) & \textbf{0.6000} & \textbf{0.0858} & \textbf{0.0189} & 0.4098 & 0.1524 & 0.0000 & 1.0000 & \textbf{99.65} \\
+\textbf{A1 (\texttt{ReviTLS-v1})} & + Mutable $5\text{W}1\text{H}$ \texttt{EventState} + Unconstrained 90d Window & 0.4375 & 0.0680 & 0.0098 & 0.5210 & 0.1840 & 0.2500 & 0.5000 & 645.20 \\
+\textbf{A2 (\texttt{ReviTLS-v2})} & + Two-Tier Superseded Fact Purge ($\mathcal{P}_k$) + Rumor Retraction & 0.4375 & 0.0704 & 0.0105 & 0.5397 & \textbf{0.1951} & \textbf{0.7500} & \textbf{0.0000} & 619.13 \\
+\textbf{A3 (+Cond.\ Gate)} & + Conditional Dual-Horizon Temporal Gate ($\Delta t_{\text{routine}}=0\text{d}$) & 0.5263 & 0.0762 & 0.0138 & 0.5482 & 0.1860 & \textbf{0.7500} & 0.2500 & 512.40 \\
+\textbf{A4 (+Cross-Enc)} & + Cross-Attention Reranker ($\phi_{\text{ce}}$) + Lexical Gate ($\mathcal{O}_{\text{lex}}$) & 0.5500 & 0.0789 & 0.0149 & 0.5531 & 0.1868 & \textbf{0.7500} & 0.2500 & 496.80 \\
+\textbf{A5 (\texttt{ReviTLS-Hybrid})} & + Two-Phase Dual-LLM ($7\text{B}+14\text{B}$) + Date-Dedup Ranker & \underline{0.5714} & \underline{0.0808} & \underline{0.0155} & \textbf{0.5594} & \underline{0.1874} & \textbf{0.7500}$^{\dagger}$ & 0.2500$^{\dagger}$ & \underline{488.50} \\
+\bottomrule
+\multicolumn{10}{@{}l}{\scriptsize $^{\dagger}$Reaches $\textbf{RRA} = \textbf{1.0000}$ and $\textbf{SFLR} = \textbf{0.0000}$ on the isolated 4-scenario revision suite.}
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.96\columnwidth,
+    height=4.8cm,
+    ymin=0.0, ymax=0.88,
+    symbolic x coords={A0:LLM-TLS, A1:v1-90d, A2:+Purge, A3:+Gate, A4:+CrossEnc, A5:Hybrid},
+    xtick=data,
+    x tick label style={font=\tiny\bfseries, rotate=18, anchor=east},
+    y tick label style={font=\scriptsize},
+    ylabel={Metric Score},
+    ylabel style={font=\scriptsize\bfseries},
+    legend style={at={(0.5,1.15)}, anchor=south, legend columns=3, font=\tiny, draw=gray!60},
+    grid=both,
+    grid style={dashed, gray!35}
+]
+\addplot[thick, mark=*, color=blue!80!black] coordinates {
+    (A0:LLM-TLS, 0.6000) (A1:v1-90d, 0.4375) (A2:+Purge, 0.4375) (A3:+Gate, 0.5263) (A4:+CrossEnc, 0.5500) (A5:Hybrid, 0.5714)
+};
+\addplot[thick, mark=square*, color=teal!80!black] coordinates {
+    (A0:LLM-TLS, 0.4098) (A1:v1-90d, 0.5210) (A2:+Purge, 0.5397) (A3:+Gate, 0.5482) (A4:+CrossEnc, 0.5531) (A5:Hybrid, 0.5594)
+};
+\addplot[thick, mark=triangle*, color=orange!85!black] coordinates {
+    (A0:LLM-TLS, 0.0000) (A1:v1-90d, 0.2500) (A2:+Purge, 0.7500) (A3:+Gate, 0.7500) (A4:+CrossEnc, 0.7500) (A5:Hybrid, 0.7500)
+};
+\legend{$\text{Date-F1} \uparrow$, $\text{Concat-R1} \uparrow$, $\text{RRA} \uparrow$}
+\end{axis}
+\end{tikzpicture}
+\caption{Step-by-step ablation trajectory from baseline \texttt{A0} to full \textbf{ReviTLS-Hybrid} (\texttt{A5}). Adding Two-Tier Fact Purging (\texttt{A2}) jumps $\text{RRA}$ from $0.25$ to $0.75$, while the Conditional Temporal Gate (\texttt{A3}), Cross-Encoder (\texttt{A4}), and Dual-LLM Date-Deduplicated Ranker (\texttt{A5}) progressively recover $\text{Date-F1}$ from $0.4375$ to $0.5714$.}
+\label{fig:stepwise_ablation}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    font=\tiny,
+    cell/.style={rectangle, draw=black!60, minimum width=1.08cm, minimum height=0.44cm, align=center},
+    pass/.style={cell, fill=green!22, font=\tiny\bfseries, text=green!40!black},
+    part/.style={cell, fill=yellow!25, font=\tiny\bfseries, text=orange!70!black},
+    fail/.style={cell, fill=red!18, font=\tiny\bfseries, text=red!70!black},
+    hdr/.style={cell, fill=gray!20, font=\tiny\bfseries}
+]
+% Headers
+\node[hdr, minimum width=2.5cm] at (0, 0) {System / Variant};
+\node[hdr] at (1.9, 0) {\texttt{REV-1}\\Numeric};
+\node[hdr] at (3.02, 0) {\texttt{REV-2}\\Temporal};
+\node[hdr] at (4.14, 0) {\texttt{REV-3}\\Causal};
+\node[hdr] at (5.26, 0) {\texttt{REV-4}\\Retract};
+
+% Rows
+\node[cell, minimum width=2.5cm, align=left] at (0, -0.46) {LLM-TLS (ACL'24)};
+\node[fail] at (1.9, -0.46) {Leak $\times$};
+\node[fail] at (3.02, -0.46) {Miss $\times$};
+\node[fail] at (4.14, -0.46) {Leak $\times$};
+\node[fail] at (5.26, -0.46) {Kept $\times$};
+
+\node[cell, minimum width=2.5cm, align=left] at (0, -0.92) {CHRONOS (NAACL'25)};
+\node[pass] at (1.9, -0.92) {Fixed $\checkmark$};
+\node[fail] at (3.02, -0.92) {Miss $\times$};
+\node[fail] at (4.14, -0.92) {Miss $\times$};
+\node[fail] at (5.26, -0.92) {Kept $\times$};
+
+\node[cell, minimum width=2.5cm, align=left] at (0, -1.38) {ReviTLS (Gemma-12B)};
+\node[pass] at (1.9, -1.38) {Fixed $\checkmark$};
+\node[fail] at (3.02, -1.38) {Miss $\times$};
+\node[fail] at (4.14, -1.38) {Leak $\times$};
+\node[fail] at (5.26, -1.38) {Leak $\times$};
+
+\node[cell, minimum width=2.5cm, align=left] at (0, -1.84) {ReviTLS (Llama-8B)};
+\node[pass] at (1.9, -1.84) {Fixed $\checkmark$};
+\node[fail] at (3.02, -1.84) {Miss $\times$};
+\node[pass] at (4.14, -1.84) {Fixed $\checkmark$};
+\node[fail] at (5.26, -1.84) {Leak $\times$};
+
+\node[cell, minimum width=2.5cm, align=left] at (0, -2.30) {ReviTLS (Qwen-7B/14B)};
+\node[pass] at (1.9, -2.30) {Purged $\checkmark$};
+\node[part] at (3.02, -2.30) {No-Leak};
+\node[pass] at (4.14, -2.30) {Purged $\checkmark$};
+\node[pass] at (5.26, -2.30) {Expunged $\checkmark$};
+
+\node[cell, fill=green!8, minimum width=2.5cm, align=left, font=\tiny\bfseries] at (0, -2.76) {ReviTLS-Hybrid (Full)};
+\node[pass] at (1.9, -2.76) {Purged $\checkmark$};
+\node[pass] at (3.02, -2.76) {Fixed$^{\ast}$ $\checkmark$};
+\node[pass] at (4.14, -2.76) {Purged $\checkmark$};
+\node[pass] at (5.26, -2.76) {Expunged $\checkmark$};
+\end{tikzpicture}
+\caption{Per-scenario resolution matrix across the four non-monotonic revision classes (\texttt{REV-1} to \texttt{REV-4}). Green ($\checkmark$) indicates successful cross-date linking and stale fact purging/retraction; Red ($\times$) indicates failure or stale fact leakage ($^{\ast}$resolved on isolated suite; background date collision on full stream).}
+\label{fig:revision_matrix}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Summary of Hyperparameters and Model Specifications in \textbf{ReviTLS-Hybrid}}
+\label{tab:hyperparameters}
+\renewcommand{\arraystretch}{1.12}
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Module / Symbol} & \textbf{Parameter Description} & \textbf{Value / Setting} \\
+\midrule
+$\theta_1$ (Phase 1) & Fast $5\text{W}1\text{H}$ Extractor LLM & \texttt{qwen2.5:7b-instruct-q4\_K\_M} \\
+$\theta_2$ (Phase 2) & Targeted Conflict Verifier LLM & \texttt{qwen2.5:14b-instruct-q4\_K\_M} \\
+$\phi_{\text{bi}}$ & Stage-1 Dense Bi-Encoder & \texttt{BAAI/bge-base-en-v1.5} ($768$-d) \\
+$\phi_{\text{ce}}$ & Stage-2 Cross-Encoder Reranker & \texttt{ms-marco-MiniLM-L-6-v2} \\
+$\Delta t_{\text{routine}}, \Delta t_{\text{rev}}$ & Dual-Horizon Gate Windows & $0\text{ days}$ (routine), $90\text{ days}$ (rev) \\
+$\lambda_{\text{ent}}, \gamma_{\text{bi}}$ & Entity Bonus \& Bi-Encoder Threshold & $\lambda_{\text{ent}} = 0.15,\; \gamma_{\text{bi}} = 0.55$ \\
+$\alpha, \gamma_{\text{lex}}$ & Hybrid Rerank Weight \& Lexical Gate & $\alpha = 0.45,\; \gamma_{\text{lex}} = 0.12$ \\
+$Q_{\max}, D_{\max}$ & Verification Questions \& Evidence Docs & $Q_{\max} = 3,\; D_{\max} = 10$ \\
+$w_c, w_{\text{slot}}, w_{\text{rev}}$ & Milestone Salience Weights (Eq.~\ref{eq:salience_score}) & $0.55,\; 0.30,\; 0.15$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Qualitative Case Study and Discussion}
 \label{sec:casestudy}
