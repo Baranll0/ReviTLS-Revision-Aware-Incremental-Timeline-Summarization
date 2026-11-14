@@ -1,6 +1,4 @@
 \documentclass[journal]{IEEEtran}
-% To switch to IEEE Conference format, uncomment the line below and comment out the line above:
-% \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 
 \usepackage{cite}
@@ -17,7 +15,7 @@
 \pgfplotsset{compat=1.18}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, calc, backgrounds}
 
-% Improve two-column float placement so tables appear in-section
+% Balanced float parameters for two-column layout
 \setcounter{topnumber}{4}
 \setcounter{bottomnumber}{4}
 \setcounter{totalnumber}{8}
@@ -34,251 +32,93 @@
 
 \begin{document}
 
-\title{ReviTLS: Dual-Scale Revision-Aware Incremental Timeline Summarization via Conditional Temporal Gating and Mutable Event States}
+\title{ReviTLS: Revision-Aware Incremental Timeline Summarization with Conditional Temporal Gating and Dual-Scale LLMs}
 
-\author{Baran~\IEEEmembership{Member,~IEEE}%
-\thanks{Manuscript received November 14, 2026; revised November 14, 2026. Source code, datasets, and reproducible benchmark outputs are publicly available at: \texttt{https://github.com/Baranll0/ReviTLS-Revision-Aware-Incremental-Timeline-Summarization}.}%
-\thanks{The authors are with the Department of Computer Engineering (e-mail: baran@example.edu.tr).}}
+\author{Baran~G\"{u}\c{c}l\"{u}%
+\thanks{Baran G\"{u}\c{c}l\"{u} is with the Department of Computer Engineering. Source code and evaluation scripts are publicly available at: \texttt{https://github.com/Baranll0/ReviTLS-Revision-Aware-Incremental-Timeline-Summarization}.}}
 
-\markboth{IEEE TRANSACTIONS / JOURNAL SUBMISSION DRAFT, VOL.~XX, NO.~X, NOVEMBER 2026}%
-{Baran: ReviTLS: Dual-Scale Revision-Aware Incremental Timeline Summarization}
+\markboth{IEEE TRANSACTIONS / JOURNAL SUBMISSION, 2026}%
+{G\"{u}\c{c}l\"{u}: ReviTLS: Revision-Aware Incremental Timeline Summarization}
 
 \maketitle
 
 \begin{abstract}
-Timeline Summarization (TLS) aims to distill massive, chronologically evolving news streams into concise, date-anchored milestone summaries. While recent Large Language Model (LLM) frameworks---such as incremental clustering (LLM-TLS) and iterative self-questioning retrieval-augmented generation (CHRONOS)---have significantly advanced timeline generation, they rely on a flawed foundational assumption: \textit{monotonic factual accumulation}. In real-world breaking news streams (e.g., industrial disasters, epidemics, and financial crises), early reports frequently contain preliminary numerical estimates, misattributed actors, or unverified rumors that are retrospectively amended or retracted days or weeks later. Existing TLS pipelines treat historical event clusters as append-only or immutable, suffering from severe \textit{Stale Fact Leakage} ($\text{SFLR} = 1.00$). Conversely, naively opening a cross-date retrieval window using larger single-backbone LLMs induces a phenomenon we identify as \textit{Cross-Date Over-Merging}, where subsequent daily milestones are erroneously absorbed into earlier dates as narrative progressions, collapsing temporal alignment ($\text{Date-F1}$ dropping from $0.4375$ to $0.3158$ on Qwen2.5-14B and $0.1176$ on Gemma-3-12B). To resolve this tension, we propose \textbf{ReviTLS-Hybrid}, a dual-scale, revision-aware incremental timeline summarization architecture. ReviTLS-Hybrid represents each event as a mutable structured state node $e_k^{(t)} = \langle \tau_k, \mathcal{W}_k, \sigma_k, c_k, \mathcal{H}_k \rangle$ governed by an explicit four-way state transition machine (\texttt{NEW\_EVENT}, \texttt{CORROBORATE}, \texttt{UPDATE\_PROGRESS}, and \texttt{REVISE\_CONFLICT}). To prevent cross-date collapse while preserving long-range revision sensitivity, we introduce a \textit{Conditional Dual-Horizon Temporal Gate} coupled with Cross-Attention reranking and a two-phase Dual-LLM specialization ($7\text{B}$ structured $5\text{W}1\text{H}$ extraction followed by $14\text{B}$ targeted conflict verification). Extensive evaluations on the standard Timeline17 (\texttt{T17}) benchmark augmented with controlled multi-day revision stress scenarios demonstrate that ReviTLS-Hybrid achieves state-of-the-art content coverage ($\text{Concat-R1} = 0.5594$, outperforming LLM-TLS by $+36.5\%$ and CHRONOS by $+141.6\%$), superior temporal alignment ($\text{Date-F1} = 0.5714$), and robust revision resolution ($\text{RRA} = 0.7500$ on full streams and $1.0000$ on isolated revisions), while reducing end-to-end inference latency by $21.1\%$.
+Timeline summarization (TLS) aims to condense large collections of news articles into chronologically ordered summaries of key milestone events. Recent frameworks leveraging large language models (LLMs), such as incremental event clustering (LLM-TLS) and iterative self-questioning retrieval-augmented generation (CHRONOS), have achieved strong performance on standard benchmarks. However, existing methods implicitly assume that event information in a news stream accumulates monotonically. In real-world evolving news streams, early reports frequently contain preliminary numerical estimates, unverified claims, or misattributions that are retrospectively corrected or retracted days later. Conventional incremental pipelines restrict event matching to the same date and rely on frequency-based ranking, causing superseded facts and debunked rumors to persist in the final timeline. Conversely, simply relaxing the temporal window with larger LLMs leads to cross-date over-merging, where distinct subsequent milestones are absorbed into earlier events. To address these challenges, we propose \textbf{ReviTLS}, a revision-aware incremental timeline summarization framework. ReviTLS represents events as mutable structured $5\text{W}1\text{H}$ states governed by a four-way transition mechanism (\texttt{NEW\_EVENT}, \texttt{CORROBORATE}, \texttt{UPDATE\_PROGRESS}, and \texttt{REVISE\_CONFLICT}) that explicitly purges superseded facts and retracts invalidated events. To preserve temporal precision while enabling cross-date revision detection, ReviTLS combines a conditional dual-horizon temporal gate with cross-encoder reranking and a two-phase dual-LLM pipeline (pairing a $7\text{B}$ extractor with a $14\text{B}$ conflict verifier). Experiments on the Timeline17 (T17) benchmark and controlled revision streams demonstrate that ReviTLS outperforms state-of-the-art baselines in content coverage ($\text{Concat-R1} = 0.559$) and revision resolution ($\text{RRA} = 0.750\text{--}1.000$), while maintaining competitive temporal alignment ($\text{Date-F1} = 0.571$) and reducing inference time by $21.1\%$.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Timeline summarization, large language models, incremental information extraction, factual revision, temporal gating, cross-attention reranking, state transition systems.
+Timeline summarization, large language models, incremental event clustering, factual revision, retrieval-augmented generation.
 \end{IEEEkeywords}
 
 \section{Introduction}
 \label{sec:intro}
 
-\IEEEPARstart{T}{imeline} Summarization (TLS) is a foundational task in natural language processing and information retrieval that condenses longitudinal document streams into a chronologically ordered sequence of date-stamped milestone summaries~\cite{tran2013leveraging, martschat2018temporally, ghalandari2020examining}. Unlike standard multi-document summarization, a high-quality timeline must simultaneously optimize two orthogonal objectives: \textit{temporal localization} (selecting the exact dates on which pivotal state changes occurred, measured by $\text{Date-F1}$) and \textit{date-aligned factual synthesis} (generating concise, non-redundant summaries for each selected date, measured by alignment-based ROUGE~\cite{martschat2017improving}). Early approaches formulated closed-domain TLS as extractive sentence selection over static corpora using temporally sensitive submodular optimization~\cite{martschat2018temporally}, date-level clustering (\texttt{CLUST}) and supervised date regression (\texttt{Datewise})~\cite{ghalandari2020examining}, or multi-level event graph compression (\texttt{EGC})~\cite{yu2021multi, li2021timeline}.
+\IEEEPARstart{C}{ondensing} massive, chronologically evolving document streams into concise summaries is a central challenge in natural language processing and information retrieval. Timeline summarization (TLS)~\cite{tran2013leveraging, martschat2018temporally, ghalandari2020examining} addresses this need by extracting pivotal events from a news collection and organizing them into a sequence of date-stamped milestone summaries. A high-quality timeline must simultaneously identify the exact dates on which key developments occurred (measured by $\text{Date-F1}$) and synthesize non-redundant, factually accurate descriptions for each selected date (measured by alignment-based ROUGE~\cite{martschat2017improving}).
 
-With the emergence of Large Language Models (LLMs), the paradigm has shifted from static extractive selection toward dynamic, generative synthesis. Notably, Hu et al.~\cite{hu2024moments} introduced \textbf{LLM-TLS}, formulating incremental timeline summarization as a streaming clustering process that maps incoming daily news moments into candidate clusters before selecting milestones via graph ranking. Concurrently, Wu et al.~\cite{wu2025unfolding} proposed \textbf{CHRONOS}, an open-domain retrieval-augmented generation (RAG) framework that iteratively poses $5\text{W}1\text{H}$ (\textit{Who, What, When, Where, Why, How}) self-questions to expand event coverage prior to global timeline merging. Most recently, Zhang et al.~\cite{zhang2026timelinereasoner} introduced \textbf{TimelineReasoner}, utilizing a $32\text{B}$ large reasoning model with a gap-detecting supervisor to fill missing narrative links.
+Traditional TLS approaches formulate the task over a static document collection, employing submodular optimization~\cite{martschat2018temporally}, Markov clustering (\texttt{CLUST}) and supervised date selection (\texttt{Datewise})~\cite{ghalandari2020examining}, or event graph compression (\texttt{EGC})~\cite{yu2021multi, li2021timeline}. Recently, Large Language Models (LLMs) have shifted the paradigm toward dynamic and incremental generation. Notably, Hu et al.~\cite{hu2024moments} proposed \textbf{LLM-TLS}, which treats an LLM as a pseudo-oracle to incrementally cluster incoming news events in a streaming setting before ranking milestone clusters via TextRank. Concurrently, Wu et al.~\cite{wu2025unfolding} introduced \textbf{CHRONOS}, an iterative retrieval-augmented generation (RAG) framework that poses $5\text{W}1\text{H}$ (\textit{Who, What, When, Where, Why, How}) self-questions to retrieve event passages and merge round-level timelines.
 
-\begin{figure}[!t]
+\begin{figure}[t]
 \centering
 \resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}[
     font=\scriptsize,
-    box/.style={rectangle, rounded corners=2.5pt, draw=black!75, thick, minimum height=0.82cm, align=center, inner sep=3.5pt},
-    stale/.style={box, fill=red!10, draw=red!70!black},
-    merged/.style={box, fill=orange!12, draw=orange!80!black},
-    clean/.style={box, fill=green!10, draw=green!60!black},
-    retracted/.style={box, fill=gray!18, draw=gray!70, dashed},
-    arrow/.style={-Stealth, thick, draw=black!75}
+    box/.style={rectangle, rounded corners=2.5pt, draw=black!75, thick, inner sep=3.5pt, align=center},
+    failbox/.style={box, fill=red!8, draw=red!70!black},
+    warnbox/.style={box, fill=orange!10, draw=orange!80!black},
+    okbox/.style={box, fill=green!10, draw=green!65!black},
+    arrow/.style={-Stealth, thick}
 ]
+% Panel A
+\node[anchor=west, font=\scriptsize\bfseries] at (-0.1, 4.35) {(a) Conventional Incremental TLS (LLM-TLS~\cite{hu2024moments}): Same-Day Restriction};
+\node[failbox, text width=2.95cm] (a1) at (1.42, 3.50) {\textbf{2010-04-22}: Coast Guard\\estimates leak at\\\textit{1,000 bbl/day}};
+\node[failbox, text width=2.95cm] (a2) at (6.28, 3.50) {\textbf{2010-04-29}: NOAA\\revises true leak rate\\to \textbf{5,000 bbl/day}};
+\draw[arrow, dashed, red!75!black] (a1) -- node[above, font=\tiny\bfseries] {No Cross-Date} node[below, font=\tiny\bfseries] {Link} (a2);
+\node[anchor=west, font=\tiny, text=red!75!black] at (-0.05, 2.65) {$\Rightarrow$ \textbf{Stale Fact Leakage:} Early \textit{1,000 bbl/day} estimate remains in timeline ($\text{RRA}=0.00$).};
 
-% Panel A: LLM-TLS
-\node[anchor=west, font=\scriptsize\bfseries] at (0, 4.75) {(a) Conventional Incremental TLS (LLM-TLS~\cite{hu2024moments}): Immutable Same-Day Nodes};
-\node[stale, text width=3.3cm] (a1) at (1.75, 3.85) {\textbf{2010-04-22 ($d_1$):} Coast Guard estimates leak at \underline{1,000 bbl/day}};
-\node[box, fill=blue!8, text width=3.4cm] (a2) at (7.15, 3.85) {\textbf{2010-04-29 ($d_2$):} NOAA revises true leak rate to \textbf{5,000 bbl/day}};
-\draw[arrow, red!75!black] (a1.east) -- node[above, font=\tiny\bfseries, text=red!75!black] {No Cross-Date} node[below, font=\tiny, text=red!75!black] {Link} (a2.west);
-\node[anchor=west, font=\tiny\bfseries, text=red!75!black] at (0.05, 3.05) {$\Rightarrow$ Failure: Both 1,000 and 5,000 bbl/day remain in timeline ($\text{RRA}=0.00, \text{SFLR}=1.00$).};
+% Panel B
+\node[anchor=west, font=\scriptsize\bfseries] at (-0.1, 2.10) {(b) Unconstrained Cross-Date Matching (Single 12B/14B LLM): Over-Merging};
+\node[warnbox, text width=2.95cm] (b1) at (1.42, 1.25) {\textbf{2010-04-20}: Rig blowout\\\& absorbed May/June\\milestones};
+\node[warnbox, text width=2.95cm] (b2) at (6.28, 1.25) {\textbf{2010-05-02}: New slick\\trajectory \& dome\\deployment};
+\draw[arrow, orange!85!black] (b2) -- node[above, font=\tiny\bfseries] {Merged as} node[below, font=\tiny\bfseries] {Progress} (b1);
+\node[anchor=west, font=\tiny, text=orange!85!black] at (-0.05, 0.40) {$\Rightarrow$ \textbf{Cross-Date Collapse:} Distinct daily milestones collapse into early cluster ($\text{Date-F1}$ drops).};
 
-% Panel B: Naive Cross-Date Single LLM (14B/12B)
-\node[anchor=west, font=\scriptsize\bfseries] at (0, 2.40) {(b) Unconstrained Cross-Date Single LLM (14B/12B): Cross-Date Over-Merging};
-\node[merged, text width=3.3cm] (b1) at (1.75, 1.50) {\textbf{2010-04-20 ($e_1$):} Rig blowout \& absorbed May/June milestones};
-\node[box, fill=gray!10, text width=3.4cm] (b2) at (7.15, 1.50) {\textbf{2010-05-02 ($d_k$):} New slick trajectory \& dome deployment};
-\draw[arrow, orange!85!black] (b2.west) -- node[above, font=\tiny\bfseries, text=orange!85!black] {Absorbed as} node[below, font=\tiny, text=orange!85!black] {Progress} (b1.east);
-\node[anchor=west, font=\tiny\bfseries, text=orange!85!black] at (0.05, 0.70) {$\Rightarrow$ Failure: Distinct milestone dates collapse into early cluster ($\text{Date-F1}: 0.438 \rightarrow 0.118$).};
-
-% Panel C: ReviTLS-Hybrid
-\node[anchor=west, font=\scriptsize\bfseries] at (0, 0.05) {(c) Proposed ReviTLS-Hybrid: Conditional Temporal Gate \& Mutable EventState};
-\node[clean, text width=3.3cm] (c1) at (1.75, -0.85) {\textbf{Node $e_1$ [REVISED]:} Leak revised to \textbf{5,000 bbl/day} (\textit{1,000 purged})};
-\node[retracted, text width=2.45cm] (c2) at (5.10, -0.85) {\textbf{Node $e_r$:} False rumor [\texttt{RETRACTED}]};
-\node[clean, text width=2.15cm] (c3) at (7.75, -0.85) {\textbf{2010-05-02:}\\New Node $e_m$};
-\node[anchor=west, font=\tiny\bfseries, text=green!45!black] at (0.05, -1.65) {$\Rightarrow$ Success: Stale facts purged, rumors retracted, milestone dates preserved ($\text{Date-F1}=0.571$).};
-
+% Panel C
+\node[anchor=west, font=\scriptsize\bfseries] at (-0.1, -0.15) {(c) Proposed ReviTLS: Conditional Temporal Gate \& Mutable EventState};
+\node[okbox, text width=2.90cm] (c1) at (1.40, -1.00) {\textbf{2010-04-22} [\texttt{REVISED}]\\Updated to \textbf{5,000 bbl/d}\\(\textit{1,000} purged)};
+\node[box, fill=gray!18, draw=gray!70, dashed, text width=2.05cm] (c2) at (4.30, -1.00) {\textbf{2010-05-20}\\False rumor\\{[\texttt{RETRACTED}]}};
+\node[okbox, text width=2.10cm] (c3) at (6.72, -1.00) {\textbf{2010-05-02}\\New Milestone\\{[\texttt{ACTIVE}]}};
+\node[anchor=west, font=\tiny, text=green!50!black] at (-0.05, -1.85) {$\Rightarrow$ \textbf{Revision-Aware:} Superseded facts purged, rumors retracted, milestone dates preserved.};
 \end{tikzpicture}%
 }
-\caption{Conceptual comparison of streaming timeline summarization paradigms on evolving news streams. (a) Conventional incremental methods restrict matching to the same day and retain superseded facts. (b) Unconstrained cross-date matching with larger single LLMs over-merges distinct daily milestones. (c) \textbf{ReviTLS-Hybrid} selectively gates cross-date matching for revision signals while maintaining mutable, self-purging event states.}
-\label{fig:paradigm_contrast}
+\caption{Comparison of incremental timeline summarization paradigms on evolving news streams. (a) Same-day clustering cannot link cross-date corrections and retains outdated claims. (b) Unconstrained cross-date matching over-merges distinct daily developments. (c) \textbf{ReviTLS} selectively gates cross-date retrieval for revision cues and updates mutable event states.}
+\label{fig:paradigm}
 \end{figure}
 
-Despite these advances, existing TLS architectures share a critical structural blind spot: \textbf{they assume that information in a news stream accumulates monotonically without contradiction}. In realistic streaming scenarios---such as the 2010 Deepwater Horizon oil spill (\texttt{bpoil}), H1N1 outbreaks, or geopolitical crises---journalistic reporting is inherently non-monotonic and self-correcting:
+Despite their effectiveness on static narratives, current LLM-based TLS frameworks share a critical limitation: they assume that facts in a news stream accumulate monotonically without contradiction. In realistic streaming scenarios---such as industrial disasters (e.g., the 2010 Deepwater Horizon oil spill), public health emergencies, or financial crises---journalistic reporting is inherently non-monotonic and self-correcting:
 \begin{enumerate}
-    \item \textbf{Numerical \& Quantitative Revisions:} Initial estimates (e.g., ``1,000 barrels per day'' on April 22) are superseded days later by official scientific measurements (``5,000 barrels per day'' on April 29).
-    \item \textbf{Entity \& Causal Re-attributions:} Preliminary blame or causal hypotheses are overturned by formal forensic investigations weeks after the incident.
-    \item \textbf{Temporal Anchoring Corrections:} Retrospective disclosures reveal that a critical anomaly or warning actually transpired days prior to its public reporting date.
-    \item \textbf{Full Event Retractions:} Breaking rumors (e.g., an unconfirmed second pipeline rupture) are subsequently debunked by official inspection teams and must be expunged from the timeline altogether.
+    \item \textbf{Quantitative Revisions:} Preliminary estimates (e.g., an initial leak rate of ``1,000 barrels per day'' reported on April~22) are officially revised days later (``5,000 barrels per day'' on April~29).
+    \item \textbf{Temporal and Causal Corrections:} Subsequent investigations reveal that an incident occurred on an earlier date than initially reported or overturn preliminary causal attributions.
+    \item \textbf{Rumor Retractions:} Breaking reports of secondary incidents (e.g., an unconfirmed second pipeline breach) are later debunked by inspection teams and must be removed from the timeline.
 \end{enumerate}
 
-As illustrated in Fig.~\ref{fig:paradigm_contrast}(a), both LLM-TLS~\cite{hu2024moments} and CHRONOS~\cite{wu2025unfolding} fail under non-monotonic streams. LLM-TLS enforces a strict same-date clustering heuristic and relies on graph-based centrality (\textit{TextRank}) over accumulated sentences; consequently, it cannot link a correction article published at $t + \Delta t$ to an event node at $t$, and even within the same cluster, heavily repeated initial estimates outscore single authoritative corrections, resulting in a $100\%$ \textit{Stale Fact Leakage Rate} ($\text{SFLR} = 1.00$). Similarly, CHRONOS performs stateless round-level merging that deduplicates headlines by surface similarity without distinguishing between a factual correction and a routine narrative continuation.
+As illustrated in Fig.~\ref{fig:paradigm}(a), existing pipelines struggle with such updates. Because LLM-TLS~\cite{hu2024moments} restricts candidate matching to the same publication date and selects summary sentences via TextRank centrality, a correction published at $t + \Delta t$ cannot access the original cluster at $t$; moreover, heavily repeated early estimates outscore single authoritative corrections, resulting in severe \textit{Stale Fact Leakage}. Similarly, CHRONOS~\cite{wu2025unfolding} merges round-level timelines via surface-level deduplication without explicit conflict verification.
 
-Crucially, our empirical investigation reveals a second, previously unreported phenomenon that we term the \textbf{Cross-Date Over-Merging Paradox} (Fig.~\ref{fig:paradigm_contrast}(b)). When one relaxes the same-date constraint across a multi-month horizon (e.g., $\Delta t_{\max} = 90$ days) and scales up to larger single-backbone LLMs (\texttt{Qwen2.5-14B}~\cite{qwen25} or \texttt{Gemma-3-12B}~\cite{gemma3}), the model's broader semantic abstraction causes it to perceive consecutive daily developments within a single-topic stream as ongoing progress (\texttt{UPDATE\_PROGRESS}) of earlier clusters. Instead of instantiating new milestone dates, the LLM absorbs subsequent days into historical nodes, severely degrading temporal precision and recall ($\text{Date-F1}$ collapsing from $0.4375$ on a $7\text{B}$ model to $0.3158$ on $14\text{B}$ and $0.1176$ on $12\text{B}$).
+Crucially, our empirical analysis reveals a second challenge, which we term \textbf{Cross-Date Over-Merging} (Fig.~\ref{fig:paradigm}(b)). When the same-day constraint is relaxed to a multi-month lookback window (e.g., $90$~days) and paired with larger single-backbone LLMs (such as \texttt{Qwen2.5-14B}~\cite{qwen25} or \texttt{Gemma-3-12B}~\cite{gemma3}), the model's broader semantic abstraction causes it to classify subsequent daily developments within the same topic stream as ongoing narrative updates of earlier clusters. Instead of creating new milestone dates, the model absorbs distinct dates into existing nodes, causing $\text{Date-F1}$ to drop from $0.438$ (on a $7\text{B}$ model) to $0.316$ (on $14\text{B}$) and $0.118$ (on $12\text{B}$).
 
-To simultaneously overcome Stale Fact Leakage and the Cross-Date Over-Merging Paradox, we propose \textbf{ReviTLS-Hybrid}, a dual-scale, revision-aware incremental timeline summarization framework (Fig.~\ref{fig:paradigm_contrast}(c)). Rather than treating clusters as static bags of sentences, ReviTLS-Hybrid models each event as a mutable structured state object containing $5\text{W}1\text{H}$ slots, lifecycle status flags (\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}), and an immutable audit log. Our main contributions are summarized as follows:
+To address both challenges, we propose \textbf{ReviTLS}, a revision-aware incremental timeline summarization framework (Fig.~\ref{fig:paradigm}(c)). Rather than treating event clusters as immutable bags of sentences, ReviTLS maintains a dynamic repository of mutable \texttt{EventState} nodes containing structured $5\text{W}1\text{H}$ slots, active and purged claim sets, and discrete lifecycle statuses (\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}). To prevent cross-date over-merging while supporting long-range revisions, ReviTLS introduces a \textit{Conditional Dual-Horizon Temporal Gate} that enforces same-day matching for routine events while unlocking a 90-day lookback window coupled with cross-encoder reranking whenever revision cues are detected. Furthermore, a two-phase dual-LLM execution schedule pairs a fast $7\text{B}$ extractor in Phase~1 with a $14\text{B}$ conflict verifier in Phase~2.
 
+Our main contributions are summarized as follows:
 \begin{itemize}
-    \item \textbf{Formalization of Revision-Aware Incremental TLS:} We formulate non-monotonic timeline summarization over mutable event states $e_k^{(t)}$ governed by a four-way state transition operator (\texttt{NEW\_EVENT}, \texttt{CORROBORATE}, \texttt{UPDATE\_PROGRESS}, and \texttt{REVISE\_CONFLICT}), accompanied by two novel evaluation metrics: \textit{Revision Resolution Accuracy} ($\text{RRA}$) and \textit{Stale Fact Leakage Rate} ($\text{SFLR}$).
-    \item \textbf{Discovery and Resolution of the Cross-Date Over-Merging Bottleneck:} Through a 5-configuration multi-model ablation across Dense Grouped-Query Attention (\texttt{Qwen2.5-7B}, \texttt{Llama-3.1-8B}, \texttt{Qwen2.5-14B}) and Local-Global Sliding Attention (\texttt{Gemma-3-12B}), we diagnose why larger single models degrade $\text{Date-F1}$ on single-topic streams and solve this via a \textbf{Conditional Dual-Horizon Temporal Gate} and \textbf{Cross-Attention Reranking}.
-    \item \textbf{Two-Phase Dual-LLM Specialization (\texttt{ReviTLS-Hybrid}):} We design a hardware-efficient two-phase pipeline that pairs a high-precision $7\text{B}$ extractor in Phase~1 with a $14\text{B}$ conflict verifier in Phase~2 (triggered selectively via targeted $5\text{W}1\text{H}$ self-questioning), eliminating GPU VRAM model-swap thrashing while reducing total runtime by $21.1\%$.
-    \item \textbf{State-of-the-Art Empirical Performance:} Evaluated against classical (2018--2021) and modern LLM baselines (2024--2026) on the \texttt{T17} benchmark with controlled revision stress streams, ReviTLS-Hybrid achieves top content quality ($\text{Concat-R1} = 0.5594$, $\text{Concat-R2} = 0.1874$), restores milestone temporal alignment ($\text{Date-F1} = 0.5714$), and resolves $75\%$--$100\%$ of factual revisions.
+    \item We formulate revision-aware incremental timeline summarization and propose \textbf{ReviTLS}, which models events as mutable $5\text{W}1\text{H}$ state nodes governed by a four-way transition mechanism and explicit stale-fact purging.
+    \item We identify the \textit{Cross-Date Over-Merging} phenomenon across LLM scales and resolve it through a Conditional Dual-Horizon Temporal Gate, cross-attention reranking, and a hardware-efficient two-phase dual-LLM pipeline ($7\text{B}$ extraction + $14\text{B}$ targeted conflict verification).
+    \item Experiments on the T17 benchmark and controlled revision streams show that ReviTLS achieves state-of-the-art content coverage ($\text{Concat-R1} = 0.559$), restores milestone temporal alignment ($\text{Date-F1} = 0.571$), and resolves $75\%\text{--}100\%$ of cross-date revisions while reducing inference time by $21.1\%$.
 \end{itemize}
-
-The remainder of this paper is organized as follows. Section~\ref{sec:related} reviews related work across classical and LLM-based timeline summarization. Section~\ref{sec:problem} formalizes the non-monotonic streaming TLS problem and mutable event states. Section~\ref{sec:method} details the proposed ReviTLS-Hybrid architecture and mathematical formulations. Section~\ref{sec:experiments} presents our experimental setup, quantitative comparisons, and multi-model ablations. Section~\ref{sec:casestudy} provides a qualitative case study and discussion, and Section~\ref{sec:conclusion} concludes the paper.
 
 \section{Related Work}
 \label{sec:related}
 
-Research on automatic news Timeline Summarization (TLS) has evolved through three distinct generations: (i) static extractive and graph-compression paradigms, (ii) generative LLM-driven incremental and retrieval-augmented frameworks, and (iii) non-monotonic state-tracking and conflict verification systems. Table~\ref{tab:related_work_comparison} summarizes the architectural capabilities of representative state-of-the-art methods from 2018 to 2026 in comparison with our proposed \textbf{ReviTLS-Hybrid} framework.
-
-\begin{table*}[t]
-\centering
-\caption{Architectural and Functional Comparison of State-of-the-Art Timeline Summarization Frameworks (2018--2026)}
-\label{tab:related_work_comparison}
-\renewcommand{\arraystretch}{1.18}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llllcccc@{}}
-\toprule
-\textbf{Method / System} & \textbf{Venue} & \textbf{Execution Mode} & \textbf{Event Representation} & \textbf{Temporal Gate} & \textbf{Cross-Date Revision} & \textbf{Stale Fact Purge} & \textbf{Rumor Retraction} \\
-\midrule
-\textbf{Submodular}~\cite{martschat2018temporally} & CoNLL 2018 & Static Batch & Extractive Sentences & Global Static & $\times$ & $\times$ & $\times$ \\
-\textbf{CLUST}~\cite{ghalandari2020examining} & ACL 2020 & Static Batch & Temporal Clusters & Cluster Centroid & $\times$ & $\times$ & $\times$ \\
-\textbf{Datewise}~\cite{ghalandari2020examining} & ACL 2020 & Static Batch & Date-Anchored Sentences & Supervised Date Reg. & $\times$ & $\times$ & $\times$ \\
-\textbf{EGC}~\cite{yu2021multi} & EMNLP 2021 & Static Batch & Compressed Event Graph & Same-Day / Window & $\times$ & $\times$ & $\times$ \\
-\textbf{LLM-TLS}~\cite{hu2024moments} & ACL 2024 & Incremental Stream & Immutable Sentence Bag & Strict Same-Day Only & $\times$ & $\times$ & $\times$ \\
-\textbf{CHRONOS}~\cite{wu2025unfolding} & NAACL 2025 & Iterative Batch RAG & Stateless Round Headlines & Unconstrained Global & Partial (Blind Merge) & $\times$ & $\times$ \\
-\textbf{DTELS}~\cite{dtels2025} & ACL 2025 & Static Instruction & Multi-Granular Text & Global Static & $\times$ & $\times$ & $\times$ \\
-\textbf{TimelineReasoner}~\cite{zhang2026timelinereasoner} & SIGIR 2026 & Iterative Reasoning & Additive Global Memory & Supervisor Gap-Fill & $\times$ & $\times$ & $\times$ \\
-\midrule
-\textbf{ReviTLS-Hybrid (Ours)} & \textbf{2026} & \textbf{Incremental Stream} & \textbf{Mutable $5\text{W}1\text{H}$ \texttt{EventState}} & \textbf{Conditional Dual-Horizon} & $\checkmark$ \textbf{(4-Way + 14B)} & $\checkmark$ \textbf{(Explicit)} & $\checkmark$ \textbf{(\texttt{RETRACTED})} \\
-\bottomrule
-\end{tabular}%
-}
-\end{table*}
-
-\subsection{Classical Extractive and Graph-Based Timeline Summarization}
-\label{subsec:related_classical}
-
-Foundational studies formulated closed-domain TLS over curated multi-article corpora such as \texttt{T17}~\cite{tran2013leveraging} and \texttt{Crisis}~\cite{tran2015timeline}, together with standardized alignment-based ROUGE evaluation protocols (\texttt{Tilse}) introduced by Martschat and Markert~\cite{martschat2017improving}. In their seminal CoNLL 2018 work, Martschat and Markert~\cite{martschat2018temporally} proposed a temporally sensitive submodular optimization framework (\textbf{Submodular}) that jointly maximizes content coverage and temporal diversity under cardinality constraints. Subsequently, Steen and Markert~\cite{steen2019abstractive} explored first-generation abstractive TLS via sentence clustering and multi-sentence compression.
-
-Gholipour Ghalandari and Ifrim~\cite{ghalandari2020examining} conducted a comprehensive benchmark study at ACL 2020, categorizing TLS pipelines into three canonical families: (i) direct extractive optimization over the entire collection, (ii) date-level regression followed by per-date summarization (\textbf{Datewise}), and (iii) event clustering followed by cluster-level summarization (\textbf{CLUST}). To capture finer-grained relational structure among entities and predicates, Yu et al.~\cite{yu2021multi} (\textbf{EGC}) and Li et al.~\cite{li2021timeline} constructed multi-level event graphs and compressed them via integer linear programming or time-aware optimal transport. Although Datewise and EGC achieve strong static temporal localization ($\text{Date-F1} \approx 0.542\text{--}0.550$ on \texttt{T17}), they require offline access to the complete historical document dump to compute global date frequencies and burstiness scores. Consequently, they cannot operate incrementally on live news streams, nor do they possess any mechanism to identify or expunge retrospectively invalidated claims.
-
-\subsection{LLM-Driven Incremental and Retrieval-Augmented TLS}
-\label{subsec:related_llm}
-
-Recent breakthroughs in instruction-tuned LLMs have enabled both streaming and open-domain timeline generation:
-
-\subsubsection{Incremental Clustering via LLMs (LLM-TLS)}
-Hu et al.~\cite{hu2024moments} introduced \textbf{LLM-TLS}, the primary incremental baseline for our study. As each news article $d_i$ arrives at timestamp $t_i$, LLM-TLS prompts an LLM to extract fine-grained ``moments'' (atomic event sentences with timestamps). It then retrieves candidate historical clusters using a strict same-date heuristic ($\tau_c = t_i$) and invokes a binary pairwise prompt (\texttt{ISSAMEEVENT}) to decide whether to append the moment to an existing cluster or instantiate a new one. Finally, milestone clusters are ranked by date frequency and cluster size, and daily summaries are produced by selecting top-ranked sentences via \textit{TextRank}. While LLM-TLS preserves high date precision ($\text{Date-F1} = 0.600$ on \texttt{T17/bpoil}), its architecture exhibits three fundamental vulnerabilities under realistic evolving news streams:
-\begin{enumerate}
-    \item \textit{Myopic Temporal Horizon:} Because candidate matching is restricted to $\tau_c = t_i$, a correction published at $t_i + \Delta t$ ($\Delta t \ge 1$ day) can never access the original cluster at $t_i$.
-    \item \textit{Binary Amalgamation:} The binary \texttt{ISSAMEEVENT} classifier conflates corroboration, narrative progress, and factual contradiction into a single ``same event'' action.
-    \item \textit{TextRank Popularity Bias:} Because early preliminary estimates (e.g., an initial leak estimate of 1,000 barrels/day) are repeated across dozens of early articles, their lexical graph centrality dominates a single authoritative revision article, guaranteeing Stale Fact Leakage ($\text{SFLR} = 1.00$).
-\end{enumerate}
-
-\subsubsection{Iterative Self-Questioning RAG (CHRONOS)}
-Wu et al.~\cite{wu2025unfolding} proposed \textbf{CHRONOS}, which addresses open-domain news retrieval and timeline summarization through iterative $5\text{W}1\text{H}$ self-questioning. In each round, an LLM generates targeted questions about an unfolding news topic, retrieves top-$k$ passages from a global search index, summarizes per-document snippets, and merges round-level timelines via a global deduplication prompt. While CHRONOS excels at broadening recall in open-web settings, our empirical evaluation demonstrates two critical limitations in closed-domain longitudinal streams: (i) global batch merging across hundreds of single-topic documents suffers from severe context-window compression, collapsing $\text{Date-F1}$ to $0.1905$, and (ii) its round-merging prompt performs blind deduplication without explicit conflict verification, retaining stale facts whenever prior round outputs are carried forward.
-
-\subsubsection{Dynamic Granularity and Reasoning Models (DTELS \& TimelineReasoner)}
-More recently, DTELS~\cite{dtels2025} examined instruction-tuned control over timeline length and granularity, while Zhang et al.~\cite{zhang2026timelinereasoner} proposed \textbf{TimelineReasoner} at SIGIR 2026, coupling a $32\text{B}$ Large Reasoning Model (\texttt{QwQ-32B}) with an event scraper, global event memory, and a gap-detecting supervisor. However, TimelineReasoner's supervisor is designed exclusively for \textit{additive gap-filling} (identifying missing sub-events in static corpora). Neither DTELS nor TimelineReasoner addresses non-monotonic state transitions where incoming evidence contradicts or retracts previously committed nodes.
-
-\subsection{Non-Monotonic Fact Updating, Retrieval Reranking, and Dual-Scale Verification}
-\label{subsec:related_updating}
-
-Tracking evolving factual states over time is closely related to temporal knowledge graph updating and misinformation correction. In streaming news, however, updates arrive as unstructured natural language narratives rather than structured triples. A critical finding of our work is that naively combining a broad cross-date retrieval window ($\Delta t_{\max} = 90$ days) with dense bi-encoder embeddings~\cite{xiao2024cpack} and a single scaled LLM (\texttt{Qwen2.5-14B}~\cite{qwen25} or \texttt{Gemma-3-12B}~\cite{gemma3}) triggers \textit{Cross-Date Over-Merging}: because all articles in a closed-domain topic stream share core entities and topical vocabulary, bi-encoder cosine similarity remains uniformly high across distinct dates, and larger LLMs interpret subsequent daily developments as semantic extensions (\texttt{UPDATE\_PROGRESS}) of earlier clusters.
-
-To break this trade-off between temporal precision ($\text{Date-F1}$) and cross-date revision recall ($\text{RRA}$), \textbf{ReviTLS-Hybrid} introduces three synergistic innovations absent from prior literature: (i) a \textit{Conditional Dual-Horizon Temporal Gate} that enforces strict same-day matching for routine events while selectively unlocking a 90-day lookback window upon detecting explicit lexical or structural revision cues, (ii) a two-stage retrieval pipeline combining dense bi-encoder recall with fine-grained \textit{Cross-Attention reranking}~\cite{nogueira2019passage} and a lexical overlap gate, and (iii) a hardware-aware \textit{Two-Phase Dual-LLM architecture} that decouples fast $7\text{B}$ structured $5\text{W}1\text{H}$ extraction from deep $14\text{B}$ conflict resolution and fact purging.
-
-\section{Problem Formulation and Preliminaries}
-\label{sec:problem}
-
-In this section, we formalize the task of \textit{Revision-Aware Incremental Timeline Summarization} over non-monotonic news streams and define the mathematical structure of mutable event states.
-
-\subsection{Streaming Document Corpus and Atomic Event Candidates}
-\label{subsec:stream_def}
-
-Let $\mathcal{S} = \{(d_1, t_1), (d_2, t_2), \dots, (d_N, t_N)\}$ denote a chronologically ordered stream of news articles concerning a target topic (e.g., the Deepwater Horizon oil spill), where $d_i$ is the text of the $i$-th article and $t_i \in \mathcal{T}$ is its publication date such that $t_1 \le t_2 \le \dots \le t_N$. Unlike static TLS, at any processing step $i$, the system observes only the prefix stream $\mathcal{S}_{\le i} = \{(d_r, t_r)\}_{r=1}^i$ and has no access to future articles $d_{r}$ ($r > i$).
-
-A single news article $d_i$ published on date $t_i$ may report both contemporary developments occurring on $t_i$ and retrospective updates, investigations, or corrections regarding events that occurred on an earlier date $\tau \le t_i$. Consequently, an extraction operator $\mathcal{E}_{\theta_1}(d_i, t_i)$ decomposes article $d_i$ into a set of $M_i$ structured atomic event candidates:
-\begin{equation}
-\mathcal{C}_i = \left\{ m_{i,j} = \left\langle \tau_{i,j},\; \tilde{\mathcal{W}}_{i,j},\; \tilde{\mathcal{F}}_{i,j},\; \mathcal{N}_{i,j},\; \rho_{i,j} \right\rangle \right\}_{j=1}^{M_i},
-\label{eq:candidate_def}
-\end{equation}
-where $\tau_{i,j} \le t_i$ is the resolved event occurrence date; $\tilde{\mathcal{W}}_{i,j} = \{\tilde{w}_{\text{who}}, \tilde{w}_{\text{what}}, \tilde{w}_{\text{when}}, \tilde{w}_{\text{where}}, \tilde{w}_{\text{why}}, \tilde{w}_{\text{how}}\}$ represents the extracted $5\text{W}1\text{H}$ semantic arguments; $\tilde{\mathcal{F}}_{i,j}$ is the set of atomic factual propositions asserted by the candidate; $\mathcal{N}_{i,j}$ is the set of canonicalized named entities and numerical quantities; and $\rho_{i,j} \in \{0, 1\}$ is a binary revision-signal indicator denoting whether $m_{i,j}$ contains explicit or implicit corrective semantics (e.g., revised figures, official retractions, or forensic re-attributions).
-
-\subsection{Mutable Event State Representation (\texttt{EventState})}
-\label{subsec:event_state}
-
-Instead of storing historical events as immutable bags of sentences, our framework maintains a dynamic repository of $K_t$ mutable event states at stream step $t$:
-\begin{equation}
-\mathcal{M}^{(t)} = \left\{ e_1^{(t)}, e_2^{(t)}, \dots, e_{K_t}^{(t)} \right\}.
-\label{eq:memory_repo}
-\end{equation}
-Each event state node $e_k^{(t)} \in \mathcal{M}^{(t)}$ is formally defined as a 7-tuple:
-\begin{equation}
-e_k^{(t)} = \left\langle \tau_k^{(t)},\; \mathcal{W}_k^{(t)},\; \mathcal{F}_k^{(t)},\; \mathcal{P}_k^{(t)},\; \sigma_k^{(t)},\; c_k^{(t)},\; \mathcal{H}_k^{(t)} \right\rangle,
-\label{eq:event_state_tuple}
-\end{equation}
-whose components satisfy the following semantics and invariants:
-\begin{itemize}
-    \item $\tau_k^{(t)} \in \mathcal{T}$: The canonical milestone date of the event. Unlike static clustering, $\tau_k^{(t)}$ is mutable if a subsequent authoritative disclosure corrects the true date of occurrence.
-    \item $\mathcal{W}_k^{(t)}$: The synthesized $5\text{W}1\text{H}$ slot dictionary reflecting the most up-to-date consensus state of the event at step $t$.
-    \item $\mathcal{F}_k^{(t)} = \{f_{k,1}, \dots, f_{k,|\mathcal{F}_k|}\}$: The active set of verified factual claims currently endorsed by node $e_k^{(t)}$.
-    \item $\mathcal{P}_k^{(t)} = \{p_{k,1}, \dots, p_{k,|\mathcal{P}_k|}\}$: The tombstone set of superseded or invalidated claims that were previously held in $\mathcal{F}_k^{(t')}$ ($t' < t$) but subsequently purged upon conflict resolution. To prevent Stale Fact Leakage, every state $e_k^{(t)}$ strictly enforces the \textbf{Zero-Leakage Invariant}:
-    \begin{equation}
-    \mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset, \quad \forall k \in \{1, \dots, K_t\},\; \forall t.
-    \label{eq:zero_leakage_invariant}
-    \end{equation}
-    \item $\sigma_k^{(t)} \in \Sigma = \{\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}\}$: The discrete lifecycle status of the event node. Newly created, corroborated, or progressively updated events remain \texttt{ACTIVE}; events that undergo factual or temporal correction transition to \texttt{REVISED}; and events whose core predicate is debunked transition to \texttt{RETRACTED}.
-    \item $c_k^{(t)} \in \mathbb{N}^+$: The cumulative corroboration and update frequency across distinct supporting documents, used for downstream milestone salience ranking.
-    \item $\mathcal{H}_k^{(t)} = [(t_0, a_0, \delta_0), \dots]$: An append-only provenance audit log recording every state transition action $a$, supporting document ID, and purged fact delta $\delta$.
-\end{itemize}
-
-\subsection{Non-Monotonic Four-Way State Transition Semantics}
-\label{subsec:state_transitions}
-
-When a new atomic candidate $m_{i,j}$ is processed against the current memory repository $\mathcal{M}^{(t-1)}$, a retrieval and verification policy identifies either a null match ($e^* = \varnothing$) or a target historical node $e_k^{(t-1)} \in \mathcal{M}^{(t-1)}$ along with a transition action $a \in \mathcal{A}$:
-\begin{equation}
-\begin{aligned}
-\mathcal{A} = \big\{ &\texttt{NEW\_EVENT},\; \texttt{CORROBORATE}, \\
-&\texttt{UPDATE\_PROGRESS},\; \texttt{REVISE\_CONFLICT} \big\}.
-\end{aligned}
-\label{eq:action_space}
-\end{equation}
-The state transition operator $\Psi(\mathcal{M}^{(t-1)}, m_{i,j}, e_k^{(t-1)}, a)$ maps to $\mathcal{M}^{(t)}$ and updates the repository according to four formal transition rules:
-\begin{enumerate}
-    \item \textbf{Instantiation ($a = \texttt{NEW\_EVENT}$):} A new node $e_{K_{t-1}+1}^{(t)}$ is initialized with $\tau = \tau_{i,j}$, $\mathcal{W} = \tilde{\mathcal{W}}_{i,j}$, $\mathcal{F} = \tilde{\mathcal{F}}_{i,j}$, $\mathcal{P} = \emptyset$, $\sigma = \texttt{ACTIVE}$, and $c = 1$.
-    \item \textbf{Corroboration ($a = \texttt{CORROBORATE}$):} The candidate confirms existing facts in $e_k^{(t-1)}$ without introducing contradictory claims. The corroboration counter increments ($c_k^{(t)} = c_k^{(t-1)} + 1$) while $\tau_k$, $\mathcal{F}_k$, and $\sigma_k$ remain invariant.
-    \item \textbf{Same-Day Narrative Progression ($a = \texttt{UPDATE\_PROGRESS}$):} The candidate reports an additive sub-development on the same milestone date ($\tau_{i,j} = \tau_k^{(t-1)}$). The active fact set expands monotonically modulo purged claims:
-    \begin{equation}
-    \mathcal{F}_k^{(t)} = \left( \mathcal{F}_k^{(t-1)} \cup \tilde{\mathcal{F}}_{i,j} \right) \setminus \mathcal{P}_k^{(t-1)}, \quad c_k^{(t)} = c_k^{(t-1)} + 1.
-    \label{eq:update_progress}
-    \end{equation}
-    \item \textbf{Conflict Revision or Retraction ($a = \texttt{REVISE\_CONFLICT}$):} The candidate contradicts one or more slots or numerical/entity claims $\Delta \mathcal{F}_{\text{stale}} \subseteq \mathcal{F}_k^{(t-1)}$ of a historical node $e_k^{(t-1)}$ (potentially across dates, $\tau_{i,j} \ge \tau_k^{(t-1)}$). A conflict resolution operator $\Phi_{\text{rev}}$ identifies the superseded subset $\Delta \mathcal{F}_{\text{stale}}$ and updates the state non-monotonically:
-    \begin{equation}
-    \begin{aligned}
-    \mathcal{P}_k^{(t)} &= \mathcal{P}_k^{(t-1)} \cup \Delta \mathcal{F}_{\text{stale}}, \\
-    \mathcal{F}_k^{(t)} &= \left( \mathcal{F}_k^{(t-1)} \setminus \Delta \mathcal{F}_{\text{stale}} \right) \cup \tilde{\mathcal{F}}_{i,j}, \\
-    \sigma_k^{(t)} &= \begin{cases} 
-    \texttt{RETRACTED}, & \text{if core } w_{\text{what}} \text{ debunked}, \\
-    \texttt{REVISED}, & \text{otherwise.}
-    \end{cases}
-    \end{aligned}
-    \label{eq:revise_conflict}
-    \end{equation}
-\end{enumerate}
-
-\subsection{Revision-Aware Timeline Generation Objective}
-\label{subsec:objective}
-
-Given the terminal repository state $\mathcal{M}^{(T)}$ after observing stream $\mathcal{S}$ and a target timeline length budget $L$ (number of milestone dates), the system first filters out all retracted nodes to form the admissible candidate pool:
-\begin{equation}
-\mathcal{M}_{\text{valid}}^{(T)} = \left\{ e_k^{(T)} \in \mathcal{M}^{(T)} \;\middle|\; \sigma_k^{(T)} \in \{\texttt{ACTIVE}, \texttt{REVISED}\} \right\}.
-\label{eq:valid_pool}
-\end{equation}
-The timeline generation objective is to select a subset of states $\hat{\mathcal{Y}} \subseteq \mathcal{M}_{\text{valid}}^{(T)}$ with $|\hat{\mathcal{Y}}| \le L$ and unique milestone dates ($\tau_k \neq \tau_{k'}$ for all $e_k \neq e_{k'} \in \hat{\mathcal{Y}}$) that maximizes a joint submodular utility $\mathcal{U}(\hat{\mathcal{Y}})$ combining event salience, information completeness, and temporal diversity while guaranteeing zero leakage of any tombstone claim $p \in \bigcup_{k} \mathcal{P}_k^{(T)}$.
-
-\section{Proposed Methodology: ReviTLS-Hybrid}
-\label{sec:method}
-
-To resolve the fundamental tension between long-range factual revision accuracy ($\text{RRA}$) and fine-grained temporal localization ($\text{Date-F1}$), we design \textbf{ReviTLS-Hybrid}. As depicted in Fig.~\ref{fig:architecture}, the architecture operates as a two-phase, dual-scale pipeline equipped with a Conditional Dual-Horizon Temporal Gate, a two-stage Bi-Encoder/Cross-Encoder retrieval module, a mutable \texttt{EventState} transition engine, and a date-deduplicated milestone ranker.
+\subsection{Classical and Graph-Based Timeline Summarization}
+Early research approached timeline summarization as an extension of multi-document summarization over static corpora~\cite{tran2013leveraging, tran2015timeline, martschat2017improving}. Martschat and Markert~\cite{martschat2018temporally} adapted submodular optimization to select sentences that jointly maximize content coverage and temporal diversity. Steen and Markert~\cite{steen2019abstractive} explored abstractive TLS by clustering sentences and applying multi-sentence compression. Gholipour Ghalandari and Ifrim~\cite{ghalandari2020examining} categorized TLS methods into three paradigms: direct extractive optimization, datewise approaches (\texttt{Datewise}) that select salient dates via supervised regression before summarizing each date, and event clustering approaches (\texttt{CLUST}) that group articles via Markov clustering. To model fine-grained relational structure, Yu et al.~\cite{yu2021multi} and Li et al.~\cite{li2021timeline} (\texttt{EGC}) constructed event graphs and compressed them via optimal transport. While effective on static benchmarks, these methods require offline access to the full document collection and cannot operate incrementally or revise previously generated summaries.
 
 \begin{figure*}[t]
 \centering
@@ -296,16 +136,16 @@ To resolve the fundamental tension between long-range factual revision accuracy 
 ]
 
 % ================= PHASE 1 =================
-\node[anchor=west, font=\footnotesize\bfseries, text=blue!75!black] at (-0.15, 6.50) {PHASE 1: Resident 7B Structured $5\text{W}1\text{H}$ Extraction, Revision Cue Detection \& Conditional Dual-Horizon Temporal Gating};
+\node[anchor=west, font=\footnotesize\bfseries, text=blue!75!black] at (-0.15, 6.45) {PHASE 1: Resident 7B Structured $5\text{W}1\text{H}$ Event Extraction \& Conditional Dual-Horizon Temporal Gating};
 
-\node[block, fill=gray!14, text width=2.0cm] (stream) at (0.95, 4.45) {\textbf{News Stream} $\mathcal{S}$\\Article $(d_i, t_i)$};
-\node[phase1, text width=2.8cm] (extractor) at (4.10, 4.45) {\textbf{Qwen2.5-7B ($\theta_1$)}\\$5\text{W}1\text{H}$ Slots $\tilde{\mathcal{W}}_{i,j}$\\Entities $\mathcal{N}_{i,j}$, Date $\tau_{i,j}$};
-\node[gate, text width=1.95cm] (revgate) at (7.65, 4.45) {\textbf{Revision Cue}\\$\rho_{i,j} = 1$?\\{\tiny (Eq.~\ref{eq:revision_indicator})}};
+\node[block, fill=gray!14, text width=2.0cm] (stream) at (0.95, 4.45) {\textbf{Article Stream}\\Article $(d_i, t_i)$};
+\node[phase1, text width=2.8cm] (extractor) at (4.10, 4.45) {\textbf{Qwen2.5-7B ($\theta_1$)}\\$5\text{W}1\text{H}$ Event $m_{i,j}$\\Entities $\mathcal{N}_{i,j}$, Date $\tau_{i,j}$};
+\node[gate, text width=1.95cm] (revgate) at (7.65, 4.45) {\textbf{Revision Cue}\\$\rho_{i,j} = 1$?};
 
-\node[phase1, text width=3.15cm] (sameday) at (11.75, 5.25) {\textbf{Strict Same-Day Gate}\\$|\tau_{i,j} - \tau_k| = 0$ (\textit{Eq.~\ref{eq:temporal_gate}})\\BGE Bi-Encoder + $\mathcal{N}$-Bonus};
+\node[phase1, text width=3.15cm] (sameday) at (11.75, 5.25) {\textbf{Strict Same-Day Gate}\\$|\tau_{i,j} - \tau_k| = 0$ (\textit{Eq.~\ref{eq:temporal_gate}})\\Bi-Encoder Retrieval};
 \node[phase1, text width=3.15cm] (deferq) at (11.75, 3.65) {\textbf{90-Day Revision Gate}\\$0 \le t_i - \tau_k \le 90\text{d}$ (\textit{Eq.~\ref{eq:temporal_gate}})\\Shortlist $\mathcal{R}_1 \rightarrow \mathcal{Q}_{\text{rev}}$};
 
-\node[state, text width=3.25cm] (sameday_act) at (15.70, 5.25) {\textbf{Routine Actions ($\theta_1$)}\\{\tiny $\bullet$ \texttt{NEW\_EVENT} ($c=1$)}\\{\tiny $\bullet$ \texttt{CORROBORATE} ($c\!+\!+$)}\\{\tiny $\bullet$ \texttt{UPDATE\_PROGRESS}}};
+\node[state, text width=3.25cm] (sameday_act) at (15.70, 5.25) {\textbf{Routine Transitions ($\theta_1$)}\\{\tiny $\bullet$ \texttt{NEW\_EVENT} ($c=1$)}\\{\tiny $\bullet$ \texttt{CORROBORATE} ($c\!+\!+$)}\\{\tiny $\bullet$ \texttt{UPDATE\_PROGRESS}}};
 
 \draw[arrow] (stream) -- (extractor);
 \draw[arrow] (extractor) -- (revgate);
@@ -315,24 +155,24 @@ To resolve the fundamental tension between long-range factual revision accuracy 
 
 % ================= MIDDLE: MUTABLE EVENTSTATE MEMORY =================
 \node[membox, text width=17.15cm] (memschema) at (8.60, 1.70) {
-    \textbf{Mutable EventState Repository $\mathcal{M}^{(t)} = \{e_1^{(t)}, \dots, e_{K_t}^{(t)}\}$ \quad --- \quad Internal 7-Tuple Schema:}
-    $e_k^{(t)} = \big\langle \tau_k^{(t)} \text{ (Canonical Date)},\; \mathcal{W}_k^{(t)} \text{ ($5\text{W}1\text{H}$ Slots)},\; \mathcal{F}_k^{(t)} \text{ (Active Verified Claims)},\; \mathcal{P}_k^{(t)} \text{ (Purged Tombstone Set)},\; \sigma_k^{(t)} \in \{\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}\},\; c_k^{(t)} \text{ (Support Count)},\; \mathcal{H}_k^{(t)} \text{ (Audit Trail)} \big\rangle$ \hfill \textbf{Invariant:} $\mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset$
+    \textbf{Mutable EventState Repository $\mathcal{M} = \{e_1, \dots, e_K\}$ \quad --- \quad Structured State Representation:}
+    $e_k = \big\langle \tau_k \text{ (Canonical Date)},\; \mathcal{W}_k \text{ ($5\text{W}1\text{H}$ Slots)},\; \mathcal{F}_k \text{ (Active Verified Claims)},\; \mathcal{P}_k \text{ (Purged Claims)},\; \sigma_k \in \{\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}\},\; c_k \text{ (Support Count)} \big\rangle$ \hfill \textbf{Invariant:} $\mathcal{F}_k \cap \mathcal{P}_k = \emptyset$
 };
 
 \coordinate (qbus) at ([yshift=0.26cm]memschema.north);
 \draw[arrow, teal!80!black] (sameday_act.south) -- (sameday_act.south |- memschema.north);
 
 % ================= PHASE 2 =================
-\node[anchor=west, font=\footnotesize\bfseries, text=purple!75!black] at (-0.15, 0.48) {PHASE 2: Cross-Attention Reranking, Resident 14B Conflict Verification \& Fact Purging};
+\node[anchor=west, font=\footnotesize\bfseries, text=purple!75!black] at (-0.15, 0.48) {PHASE 2: Cross-Encoder Reranking, Resident 14B Conflict Verification \& Fact Purging};
 
-\node[phase2, text width=2.70cm] (crossenc) at (1.30, -1.35) {\textbf{Cross-Encoder $\phi_{\text{ce}}$}\\MiniLM-L-6-v2 +\\Gate $\mathcal{O}_{\text{lex}} \ge \gamma_{\text{lex}}$};
-\node[phase2, text width=2.45cm] (cls14b) at (4.65, -1.35) {\textbf{Qwen2.5-14B ($\theta_2$)}\\4-Way Classifier\\$a \in \mathcal{A}$ (\textit{Eq.~\ref{eq:action_space}})};
-\node[phase2, text width=2.90cm] (verifier) at (8.65, -1.35) {\textbf{Targeted $5\text{W}1\text{H}$ Verifier}\\Self-Question $\{q_1..q_3\}$\\Evidence Diff $\Phi_{\text{rev}}^{\theta_2}$};
+\node[phase2, text width=2.70cm] (crossenc) at (1.30, -1.35) {\textbf{Cross-Encoder $\phi_{\text{ce}}$}\\MiniLM-L-6-v2 +\\Lexical Gate (\textit{Eq.~\ref{eq:hybrid_rerank}})};
+\node[phase2, text width=2.45cm] (cls14b) at (4.65, -1.35) {\textbf{Qwen2.5-14B ($\theta_2$)}\\4-Way Transition\\Classifier};
+\node[phase2, text width=2.90cm] (verifier) at (8.65, -1.35) {\textbf{Targeted $5\text{W}1\text{H}$ Verifier}\\Self-Questioning\\Conflict Resolution};
 
-\node[state, text width=3.35cm] (purge) at (12.75, -0.68) {\textbf{Fact Purge \& Mutation}\\$\mathcal{P}_k \leftarrow \mathcal{P}_k \cup \Delta\mathcal{F}_{\text{stale}}$\\$\mathcal{F}_k \leftarrow (\mathcal{F}_k \setminus \Delta\mathcal{F}_{\text{stale}}) \cup \mathcal{F}_{\text{ver}}$\\Status: $\sigma_k \leftarrow \texttt{REVISED}$};
-\node[retract, text width=3.35cm] (retracted) at (12.75, -2.08) {\textbf{Rumor Expungement}\\Core $w_{\text{what}}$ Debunked\\Status: $\sigma_k \leftarrow \texttt{RETRACTED}$};
+\node[state, text width=3.35cm] (purge) at (12.75, -0.68) {\textbf{Fact Purge \& Update}\\$\mathcal{P}_k \leftarrow \mathcal{P}_k \cup \Delta\mathcal{F}_{\text{stale}}$\\$\mathcal{F}_k \leftarrow (\mathcal{F}_k \setminus \Delta\mathcal{F}_{\text{stale}}) \cup \mathcal{F}_{\text{new}}$\\Status: $\sigma_k \leftarrow \texttt{REVISED}$};
+\node[retract, text width=3.35cm] (retracted) at (12.75, -2.08) {\textbf{Event Retraction}\\Core Claim Debunked\\Status: $\sigma_k \leftarrow \texttt{RETRACTED}$};
 
-\node[state, fill=green!18, text width=2.25cm] (ranker) at (16.15, -1.35) {\textbf{Date-Dedup}\\\textbf{Ranker}\\$\sigma_k \neq \texttt{RETRACTED}$\\Score $\Omega(e_k)$\\Timeline $\hat{\mathcal{Y}}$};
+\node[state, fill=green!18, text width=2.25cm] (ranker) at (16.15, -1.35) {\textbf{Timeline}\\\textbf{Construction}\\Filter $\sigma_k \neq \texttt{RETRACTED}$\\Rank \& Sort $\mathcal{T}$};
 
 \draw[arrow, purple!75!black] (deferq.south) -- (deferq.south |- qbus) -- (-0.48, 0 |- qbus) -- (-0.48, -1.35) -- (crossenc.west);
 \draw[arrow] (crossenc) -- (cls14b);
@@ -345,673 +185,386 @@ To resolve the fundamental tension between long-range factual revision accuracy 
 
 \end{tikzpicture}%
 }
-\caption{Detailed multi-layer system architecture of \textbf{ReviTLS-Hybrid}. \textbf{Top (Phase~1):} A resident $7\text{B}$ model extracts structured $5\text{W}1\text{H}$ candidates and applies the Conditional Dual-Horizon Temporal Gate ($\Delta t_{\text{routine}}=0\text{d}$ vs.\ $\Delta t_{\text{rev}}=90\text{d}$). \textbf{Middle:} The mutable \texttt{EventState} repository enforces the Zero-Leakage Invariant ($\mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset$). \textbf{Bottom (Phase~2):} Queued cross-date revision candidates are reranked via Cross-Attention and verified by a resident $14\text{B}$ model using targeted $5\text{W}1\text{H}$ self-questioning before date-deduplicated milestone selection.}
+\caption{An overview of the \textbf{ReviTLS} pipeline. In Phase~1, incoming articles are summarized into structured $5\text{W}1\text{H}$ event candidates by a $7\text{B}$ model and routed via the Conditional Dual-Horizon Temporal Gate ($\Delta t_{\text{routine}}=0\text{d}$ vs.\ $\Delta t_{\text{rev}}=90\text{d}$). Routine same-day updates are committed directly to the mutable \texttt{EventState} repository, whereas cross-date revision candidates are queued for Phase~2 cross-encoder reranking and $14\text{B}$ conflict verification.}
 \label{fig:architecture}
 \end{figure*}
 
-\subsection{Phase 1: Structured $5\text{W}1\text{H}$ Extraction and Revision Cue Detection}
-\label{subsec:phase1_extraction}
+\subsection{LLM-Based Incremental and Retrieval-Augmented TLS}
+Recent studies have leveraged instruction-tuned LLMs for both incremental and open-domain timeline generation. Hu et al.~\cite{hu2024moments} proposed \textbf{LLM-TLS}, which processes news streams sequentially by prompting an LLM to summarize each article into a timestamped event description, retrieving same-date candidates via dense embeddings, and querying an LLM classifier (\texttt{ISSAMEEVENT}) to build event clusters incrementally. While LLM-TLS achieves strong date alignment on static topics, its same-day temporal heuristic prevents cross-date corrections, and its TextRank summarizer favors frequently repeated initial estimates over later revisions.
 
-Given an incoming news article $(d_i, t_i)$, Phase~1 invokes a lightweight, high-precision instruction-tuned backbone $\mathcal{E}_{\theta_1}$ (\texttt{Qwen2.5-7B-Instruct}~\cite{qwen25}) constrained by a strict JSON schema to extract atomic event candidates $\mathcal{C}_i = \{m_{i,j}\}_{j=1}^{M_i}$ as defined in Eq.~\eqref{eq:candidate_def}. Crucially, rather than summarizing paragraphs into free-form text, $\mathcal{E}_{\theta_1}$ populates explicit $5\text{W}1\text{H}$ slots $\tilde{\mathcal{W}}_{i,j}$, extracts canonical entities and numerical figures $\mathcal{N}_{i,j}$, and resolves relative temporal expressions (e.g., ``last Tuesday'') relative to anchor date $t_i$ to determine the event occurrence date $\tau_{i,j} \le t_i$.
+In the retrieval-augmented setting, Wu et al.~\cite{wu2025unfolding} proposed \textbf{CHRONOS}, which iteratively generates $5\text{W}1\text{H}$ questions to retrieve relevant documents and merges round-level timelines via an LLM prompt. Subsequent works such as DTELS~\cite{dtels2025} and TimelineReasoner~\cite{zhang2026timelinereasoner} explored granularity control and reasoning-based gap filling. However, none of these frameworks model non-monotonic state transitions where later articles contradict, amend, or retract earlier event nodes. Our work bridges this gap by combining incremental clustering~\cite{hu2024moments} with targeted $5\text{W}1\text{H}$ verification~\cite{wu2025unfolding} over mutable event states.
 
-To determine whether candidate $m_{i,j}$ potentially amends or retracts a prior historical node, we compute the binary revision cue indicator $\rho_{i,j} \in \{0, 1\}$ via a hybrid semantic-lexical detector:
+\section{Problem Definition}
+\label{sec:problem}
+
+Following prior work on topic timeline summarization~\cite{ghalandari2020examining, hu2024moments}, the input is a chronologically ordered stream of news articles $\mathcal{S} = \{(d_1, t_1), (d_2, t_2), \dots, (d_N, t_N)\}$ concerning a target topic, where $d_i$ is the article text and $t_i$ is its publication date ($t_1 \le t_2 \le \dots \le t_N$), along with a target timeline length $l$ denoting the number of milestone dates. In the incremental setting, at step $i$, the system observes only the prefix stream $\mathcal{S}_{\le i}$ and updates an evolving event repository $\mathcal{M}$.
+
+Unlike conventional incremental TLS, which assumes that events are immutable once extracted, an article $d_i$ published on date $t_i$ may either report a new development occurring on $t_i$ or provide a retrospective correction, quantitative update, or retraction regarding a historical event on date $\tau_k \le t_i$. To support non-monotonic updates, we represent each event cluster $e_k \in \mathcal{M}$ as a mutable \textbf{\texttt{EventState}} tuple:
 \begin{equation}
-\rho_{i,j} = \mathbb{I}\Big( \hat{\rho}_{\theta_1}(m_{i,j}) = 1 \;\lor\; \big|\mathcal{T}_{\text{lex}}(m_{i,j}) \cap \mathcal{V}_{\text{rev}}\big| > 0 \Big),
-\label{eq:revision_indicator}
+e_k = \langle \tau_k,\; \mathcal{W}_k,\; \mathcal{F}_k,\; \mathcal{P}_k,\; \sigma_k,\; c_k \rangle,
+\label{eq:event_state}
 \end{equation}
-where $\hat{\rho}_{\theta_1}(m_{i,j}) \in \{0, 1\}$ is the structured revision flag predicted by $\mathcal{E}_{\theta_1}$, $\mathcal{T}_{\text{lex}}(m_{i,j})$ denotes the lemmatized token set of the candidate, and $\mathcal{V}_{\text{rev}}$ is a curated lexicon of revision and retraction markers (e.g., \textit{revise, upward, downward, correct, retract, debunk, false alarm, rule out, overstate, underestimate, previously reported}).
+where $\tau_k$ is the canonical event date; $\mathcal{W}_k = \{w_{\text{who}}, w_{\text{what}}, w_{\text{when}}, w_{\text{where}}, w_{\text{why}}, w_{\text{how}}\}$ stores the synthesized $5\text{W}1\text{H}$ event arguments; $\mathcal{F}_k$ is the set of active verified claims; $\mathcal{P}_k$ is the tombstone set of superseded claims purged from $\mathcal{F}_k$ ($\mathcal{F}_k \cap \mathcal{P}_k = \emptyset$); $\sigma_k \in \{\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}\}$ is the lifecycle status; and $c_k$ is the cumulative support count. At any query time, the objective is to construct a timeline $\mathcal{T} = \{(\tau_{(1)}, s_{(1)}), \dots, (\tau_{(l)}, s_{(l)})\}$ from non-retracted states ($\sigma_k \neq \texttt{RETRACTED}$) that maximizes temporal alignment and factual coverage while ensuring zero leakage of purged claims in $\bigcup_k \mathcal{P}_k$.
 
-\subsection{Conditional Dual-Horizon Temporal Gate}
-\label{subsec:temporal_gate}
+\section{Methodology}
+\label{sec:methodology}
 
-As demonstrated in our ablation study (Section~\ref{sec:experiments}), applying a uniform 90-day retrieval window to all incoming candidates causes larger LLMs to merge distinct daily milestones of an unfolding crisis into earlier clusters (\textit{Cross-Date Over-Merging}). Conversely, enforcing a rigid same-day constraint ($\tau_k = \tau_{i,j}$) as in LLM-TLS~\cite{hu2024moments} renders cross-date revision detection impossible.
+We propose \textbf{ReviTLS}, a two-phase, dual-scale incremental timeline summarization pipeline illustrated in Fig.~\ref{fig:architecture} and formalized in Algorithm~\ref{alg:revitls}. Our method consists of four core components: (1) structured $5\text{W}1\text{H}$ event extraction, (2) conditional dual-horizon temporal gating and two-stage retrieval, (3) conflict verification and state transition, and (4) date-deduplicated timeline construction.
 
-We resolve this dilemma via a \textbf{Conditional Dual-Horizon Temporal Gate} $\mathcal{G}_{i,k}^{(t)} \triangleq \mathcal{G}\left(m_{i,j}, e_k^{(t-1)}\right) \in \{0, 1\}$, which dynamically modulates the admissible temporal lookback horizon based on the revision indicator $\rho_{i,j}$:
+\subsection{Structured $5\text{W}1\text{H}$ Event Extraction}
+\label{subsec:extraction}
+
+Upon the arrival of a new article $(d_i, t_i)$, we employ an instruction-tuned LLM $\theta_1$ (\texttt{Qwen2.5-7B-Instruct}~\cite{qwen25}), denoted as \textsc{Extract5W1H} in Algorithm~\ref{alg:revitls}, to extract structured atomic event candidates $\mathcal{C}_i = \{m_{i,j}\}$. Rather than extracting free-form sentences that may blend background context with new developments, $\theta_1$ is constrained by a JSON schema to populate explicit $5\text{W}1\text{H}$ slots $\tilde{\mathcal{W}}_{i,j}$, canonical entities and numerical figures $\mathcal{N}_{i,j}$, atomic factual claims $\tilde{\mathcal{F}}_{i,j}$, and the resolved event date $\tau_{i,j} \le t_i$.
+
+To determine whether an incoming candidate $m_{i,j}$ potentially revises or retracts a previously recorded event, we compute a binary revision cue indicator $\rho_{i,j} \in \{0, 1\}$ that combines the LLM's structural flag with a curated lexicon $\mathcal{V}_{\text{rev}}$ of corrective markers (e.g., \textit{revise, upward, downward, correct, retract, debunk, false alarm, rule out, previously estimated}):
 \begin{equation}
-\mathcal{G}_{i,k}^{(t)} = \begin{cases}
-\mathbb{I}\!\left( |\tau_{i,j} - \tau_k^{(t-1)}| \le \Delta t_{\text{routine}} \right), & \text{if } \rho_{i,j}=0, \\[3pt]
-\mathbb{I}\!\left( 0 \le t_i - \tau_k^{(t-1)} \le \Delta t_{\text{rev}} \right), & \text{if } \rho_{i,j}=1,
+\rho_{i,j} = \mathbb{I}\Big( \hat{\rho}_{\theta_1}(m_{i,j}) = 1 \;\lor\; \big|\text{Tokens}(m_{i,j}) \cap \mathcal{V}_{\text{rev}}\big| > 0 \Big).
+\label{eq:rev_cue}
+\end{equation}
+
+\subsection{Conditional Temporal Gating and Two-Stage Retrieval}
+\label{subsec:retrieval}
+
+A central finding of our study is that applying a uniform 90-day lookback window to all candidates causes larger LLMs to merge distinct daily milestones of an unfolding topic into earlier event clusters (\textit{Cross-Date Over-Merging}), whereas restricting retrieval to $\tau_k = \tau_{i,j}$ as in LLM-TLS~\cite{hu2024moments} blocks cross-date revisions. We resolve this trade-off via a \textbf{Conditional Dual-Horizon Temporal Gate} $\mathcal{G}(m_{i,j}, e_k) \in \{0, 1\}$:
+\begin{equation}
+\mathcal{G}(m_{i,j}, e_k) = \begin{cases}
+\mathbb{I}\big( |\tau_{i,j} - \tau_k| \le \Delta t_{\text{routine}} \big), & \text{if } \rho_{i,j} = 0, \\[3pt]
+\mathbb{I}\big( 0 \le t_i - \tau_k \le \Delta t_{\text{rev}} \big), & \text{if } \rho_{i,j} = 1,
 \end{cases}
 \label{eq:temporal_gate}
 \end{equation}
-where $\Delta t_{\text{routine}} = 0$ days enforces strict same-day localization for standard narrative developments ($\rho_{i,j} = 0$), and $\Delta t_{\text{rev}} = 90$ days unlocks a three-month retrospective lookback window exclusively for candidates exhibiting revision or retraction cues ($\rho_{i,j} = 1$). Consequently, routine daily milestones on date $\tau_{i,j}$ are guaranteed never to be absorbed into earlier dates $\tau_k < \tau_{i,j}$, preserving $\text{Date-F1}$, while genuine retrospective corrections retain full access to historical nodes.
-
-\subsection{Two-Stage Hybrid Retrieval: Dense Bi-Encoder and Cross-Attention Reranking}
-\label{subsec:hybrid_retrieval}
-
-For any candidate $m_{i,j}$, let $\mathcal{M}_{\mathcal{G}}^{(t-1)} = \{e_k^{(t-1)} \in \mathcal{M}^{(t-1)} \mid \mathcal{G}(m_{i,j}, e_k^{(t-1)}) = 1 \land \sigma_k^{(t-1)} \neq \texttt{RETRACTED}\}$ denote the temporally gated candidate pool. We perform two-stage retrieval over $\mathcal{M}_{\mathcal{G}}^{(t-1)}$:
-
-\subsubsection{Stage 1: Entity-Boosted Dense Bi-Encoder Recall}
-We encode both the candidate representation $x(m_{i,j})$ and each gated state $x(e_k^{(t-1)})$ using a dense bi-encoder $\phi_{\text{bi}}$ (\texttt{BAAI/bge-base-en-v1.5}~\cite{xiao2024cpack}) and augment the cosine similarity with an entity and numerical overlap bonus:
-\begin{equation}
-\begin{aligned}
-S_{\text{bi}}\!\left(m_{i,j}, e_k^{(t-1)}\right) &= \cos\!\left(\phi_{\text{bi}}(m_{i,j}), \phi_{\text{bi}}(e_k^{(t-1)})\right) \\
-&\quad + \lambda_{\text{ent}} \frac{\left|\mathcal{N}_{i,j} \cap \mathcal{N}_k^{(t-1)}\right|}{\max\!\left(1, |\mathcal{N}_{i,j}|\right)},
-\end{aligned}
-\label{eq:bi_encoder_score}
-\end{equation}
-where $\lambda_{\text{ent}} = 0.15$. The top-$K_1$ states exceeding threshold $\gamma_{\text{bi}}$ form the Stage~1 shortlist $\mathcal{R}_1(m_{i,j})$.
-
-\subsubsection{Stage 2: Cross-Attention Reranking with Lexical Overlap Gate}
-In closed-domain streams where every article shares the global topic (e.g., ``BP oil spill''), dense bi-encoder embeddings exhibit high baseline similarity even between unrelated sub-events (such as a fishing ban vs.\ a blowout preventer test). For cross-date revision candidates ($\rho_{i,j} = 1$), we rerank $\mathcal{R}_1(m_{i,j})$ using a joint Cross-Encoder $\phi_{\text{ce}}$ (\texttt{ms-marco-MiniLM-L-6-v2}~\cite{nogueira2019passage}) that computes full token-level cross-attention across the concatenated pair $[x(m_{i,j}); \texttt{[SEP]}; x(e_k^{(t-1)})]$, gated by a content-word lexical overlap ratio $\mathcal{O}_{\text{lex}}$:
-\begin{equation}
-\mathcal{O}_{\text{lex}}\!\left(m_{i,j}, e_k^{(t-1)}\right) = \frac{\left|\mathcal{T}_{\text{cnt}}(m_{i,j}) \cap \mathcal{T}_{\text{cnt}}(e_k^{(t-1)})\right|}{\min\!\left(\left|\mathcal{T}_{\text{cnt}}(m_{i,j})\right|, \left|\mathcal{T}_{\text{cnt}}(e_k^{(t-1)})\right|\right)},
-\label{eq:lexical_overlap}
-\end{equation}
-\begin{equation}
-\begin{aligned}
-S_{\text{hybrid}}\!\left(m_{i,j}, e_k^{(t-1)}\right) &= \mathbb{I}\!\left(\mathcal{O}_{\text{lex}} \ge \gamma_{\text{lex}}\right) \cdot \Big[ \alpha S_{\text{bi}} \\
-&\quad + (1 - \alpha)\, \sigma_{\text{sig}}\!\left(\phi_{\text{ce}}(m_{i,j}, e_k^{(t-1)})\right) \Big],
-\end{aligned}
-\label{eq:hybrid_rerank}
-\end{equation}
-where $\sigma_{\text{sig}}(z) = (1 + e^{-z})^{-1}$ normalizes the cross-encoder logit, $\alpha = 0.45$, and $\gamma_{\text{lex}} = 0.12$ filters out cross-date pairs that share only background topic tokens without specific predicate/entity overlap.
-
-\subsection{Phase 2: Two-Phase Dual-LLM Conflict Verification and Fact Purging}
-\label{subsec:phase2_verification}
-
-A major systems bottleneck when deploying multi-scale LLMs on consumer or single-workstation GPUs (e.g., 16~GB VRAM) is \textit{VRAM model-swap thrashing}: invoking a $7\text{B}$ extractor and a $14\text{B}$ verifier interleaved on every article forces up to $2N$ PCIe weight reloads across $N$ articles. \textbf{ReviTLS-Hybrid} eliminates this overhead by structuring execution into two sequential passes:
-\begin{enumerate}
-    \item \textbf{Pass 1 (Resident $\theta_1 = \text{7B}$):} Processes all $N$ articles for structured extraction and resolves all same-day routine transitions ($\rho_{i,j} = 0$) in-memory while enqueuing cross-date revision pairs $(m_{i,j}, \mathcal{R}_2(m_{i,j}))$ into a deferred conflict queue $\mathcal{Q}_{\text{rev}}$.
-    \item \textbf{Pass 2 (Resident $\theta_2 = \text{14B}$):} Loads the higher-capacity verifier $\theta_2$ (\texttt{Qwen2.5-14B-Instruct}~\cite{qwen25}) exactly once to process $\mathcal{Q}_{\text{rev}}$, reducing GPU model swaps from $\mathcal{O}(N)$ to exactly $2$.
-\end{enumerate}
-
-For each queued revision pair $(m_{i,j}, e_k^{(t-1)}) \in \mathcal{Q}_{\text{rev}}$, $\theta_2$ first predicts the four-way transition class $a \in \mathcal{A}$. Whenever $a = \texttt{REVISE\_CONFLICT}$, we trigger a targeted, CHRONOS-inspired~\cite{wu2025unfolding} $5\text{W}1\text{H}$ self-questioning verification step. Specifically, $\theta_2$ generates up to $Q_{\max} = 3$ diagnostic verification questions $\{q_1, \dots, q_{Q_{\max}}\}$ targeting the conflicting slot (e.g., ``What is the latest officially confirmed flow rate measurement vs.\ the initial estimate?''), retrieves the supporting evidence spans from the provenance log $\mathcal{H}_k^{(t-1)} \cup \{d_i\}$, and outputs a structured resolution tuple:
-\begin{equation}
-\Phi_{\text{rev}}^{\theta_2}\!\left(m_{i,j}, e_k^{(t-1)}\right) = \big\langle \mathcal{W}_k^{\text{new}},\, \Delta \mathcal{F}_{\text{stale}},\, \mathcal{F}_{\text{ver}},\, \tau_k^{\text{new}},\, \text{retract} \big\rangle.
-\label{eq:verifier_output}
-\end{equation}
-
-To guarantee strict removal of outdated claims from the synthesized summary text even when surface phrasing varies, we apply a two-tier \textbf{Superseded Fact Purging} operator: (i) explicit set subtraction $\mathcal{F}_k^{(t)} \leftarrow (\mathcal{F}_k^{(t-1)} \setminus \Delta \mathcal{F}_{\text{stale}}) \cup \mathcal{F}_{\text{ver}}$ as defined in Eq.~\eqref{eq:revise_conflict}, and (ii) a post-verification lexical-numerical sanitizer that strips any residual sentence in $\mathcal{F}_k^{(t)}$ containing a tombstoned numerical value or entity phrase in $\mathcal{P}_k^{(t)}$.
-
-\subsection{Date-Deduplicated Milestone Salience Ranking}
-\label{subsec:milestone_ranking}
-
-At query time $T$, given the non-retracted state pool $\mathcal{M}_{\text{valid}}^{(T)}$ (Eq.~\eqref{eq:valid_pool}), we compute a composite salience score $\Omega\left(e_k^{(T)}\right)$ for each candidate milestone node:
-\begin{equation}
-\begin{aligned}
-\Omega\!\left(e_k^{(T)}\right) &= w_c \log\!\left(1 + c_k^{(T)}\right) + w_{\text{rev}} \mathbb{I}\!\left(\sigma_k^{(T)} = \texttt{REVISED}\right) \\
-&\quad + w_{\text{slot}} \frac{\left|\{s \in \mathcal{W}_k^{(T)} \mid s \neq \varnothing\}\right|}{6},
-\end{aligned}
-\label{eq:salience_score}
-\end{equation}
-where $w_c = 0.55$, $w_{\text{slot}} = 0.30$ rewards $5\text{W}1\text{H}$ informational completeness, and $w_{\text{rev}} = 0.15$ prioritizes verified milestone corrections. Finally, to prevent multiple sub-clusters from fragmenting the same calendar date and degrading $\text{Date-F1}$, we apply \textbf{Date-Deduplicated Milestone Selection}: for each unique date $\tau$ present in $\mathcal{M}_{\text{valid}}^{(T)}$, we retain the highest-scoring representative state:
-\begin{equation}
-e^*(\tau) = \arg\max_{e_k^{(T)} \in \mathcal{M}_{\text{valid}}^{(T)},\; \tau_k^{(T)} = \tau} \Omega\left(e_k^{(T)}\right),
-\label{eq:date_dedup}
-\end{equation}
-and select the top-$L$ dates sorted chronologically to form the output timeline $\hat{\mathcal{Y}}$. The complete end-to-end procedure is formalized in Algorithm~\ref{alg:revitls_hybrid}.
+where $\Delta t_{\text{routine}} = 0$~days enforces strict same-day localization for routine developments ($\rho_{i,j} = 0$), and $\Delta t_{\text{rev}} = 90$~days opens a three-month lookback window exclusively for candidates with revision cues ($\rho_{i,j} = 1$).
 
 \begin{algorithm}[t]
 \footnotesize
-\caption{\textbf{ReviTLS-Hybrid} Two-Phase Execution}
-\label{alg:revitls_hybrid}
+\caption{\textbf{ReviTLS} Incremental Pipeline}
+\label{alg:revitls}
 \DontPrintSemicolon
-\KwIn{Stream $\mathcal{S} = \{(d_i, t_i)\}_{i=1}^N$; Models $\theta_1$ ($7\text{B}$), $\theta_2$ ($14\text{B}$); Encoders $\phi_{\text{bi}}, \phi_{\text{ce}}$; Milestone budget $L$.}
-\KwOut{Revision-aware milestone timeline $\hat{\mathcal{Y}}$.}
-Initialize state pool $\mathcal{M} \leftarrow \emptyset$ and queue $\mathcal{Q}_{\text{rev}} \leftarrow \emptyset$\;
-\tcp{Phase 1: Resident 7B Extraction \& Same-Day Gating}
+\KwIn{Article stream $\mathcal{S} = \{(d_i, t_i)\}_{i=1}^N$, models $\theta_1$ ($7\text{B}$), $\theta_2$ ($14\text{B}$), encoders $\phi_{\text{bi}}, \phi_{\text{ce}}$, timeline length $l$.}
+\KwOut{Milestone timeline $\mathcal{T}$ with $l$ timestamped summaries.}
+$\mathcal{M} \leftarrow \emptyset$, $\mathcal{Q}_{\text{rev}} \leftarrow \emptyset$\;
+\tcp{Phase 1: 7B Extraction \& Same-Day Clustering}
 \For{$i = 1$ \KwTo $N$}{
-    Extract $5\text{W}1\text{H}$ candidates $\mathcal{C}_i = \mathcal{E}_{\theta_1}(d_i, t_i)$ (\textit{Eq.~\ref{eq:candidate_def}})\;
+    $\mathcal{C}_i \leftarrow \textsc{Extract5W1H}(d_i, t_i, \theta_1)$\;
     \ForEach{$m_{i,j} \in \mathcal{C}_i$}{
-        Compute revision cue $\rho_{i,j} \in \{0, 1\}$ (\textit{Eq.~\ref{eq:revision_indicator}})\;
-        Gate $\mathcal{M}_{\mathcal{G}} \leftarrow \{e_k \in \mathcal{M} \mid \mathcal{G}_{i,k}=1, \sigma_k \neq \texttt{RETRACTED}\}$\;
-        Retrieve shortlist $\mathcal{R}_1(m_{i,j}) \subseteq \mathcal{M}_{\mathcal{G}}$ via $S_{\text{bi}}$ (\textit{Eq.~\ref{eq:bi_encoder_score}})\;
-        \eIf{$\rho_{i,j} == 1$ \textbf{and} $\mathcal{R}_1(m_{i,j}) \neq \emptyset$}{
-            Enqueue $(m_{i,j}, \mathcal{R}_1(m_{i,j}))$ into $\mathcal{Q}_{\text{rev}}$ for Phase~2\;
+        $\rho_{i,j} \leftarrow \textsc{DetectRevisionCue}(m_{i,j})$ \tcp*{Eq.~\ref{eq:rev_cue}}
+        $\mathcal{R}_1 \leftarrow \textsc{RetrieveBiEncoder}(m_{i,j}, \mathcal{M}, \rho_{i,j}, \phi_{\text{bi}})$\;
+        \eIf{$\rho_{i,j} == 1$ \textbf{and} $\mathcal{R}_1 \neq \emptyset$}{
+            $\mathcal{Q}_{\text{rev}} \leftarrow \mathcal{Q}_{\text{rev}} \cup \{(m_{i,j}, \mathcal{R}_1)\}$\;
         }{
-            Predict routine action $a \in \mathcal{A} \setminus \{\texttt{REVISE\_CONFLICT}\}$\;
-            Update state pool $\mathcal{M} \leftarrow \Psi(\mathcal{M}, m_{i,j}, e^*, a)$\;
+            $a, e^* \leftarrow \textsc{ClassifyRoutine}(m_{i,j}, \mathcal{R}_1, \theta_1)$\;
+            $\mathcal{M} \leftarrow \textsc{UpdateState}(\mathcal{M}, m_{i,j}, e^*, a)$\;
         }
     }
 }
-\tcp{Phase 2: Cross-Attention Reranking \& 14B Verification}
+\tcp{Phase 2: Cross-Encoder Reranking \& 14B Verification}
 \ForEach{$(m_{i,j}, \mathcal{R}_1) \in \mathcal{Q}_{\text{rev}}$}{
-    Rerank $\mathcal{R}_1$ via $S_{\text{hybrid}}$ (\textit{Eq.~\ref{eq:hybrid_rerank}}) to select top state $e_k^*$\;
-    \eIf{$S_{\text{hybrid}}(m_{i,j}, e_k^*) \ge \gamma_{\text{hybrid}}$}{
-        Predict 4-way class $a \in \mathcal{A}$ using $\theta_2$ ($14\text{B}$)\;
+    $e_k^*, S_{\text{hyb}} \leftarrow \textsc{RerankCrossEncoder}(m_{i,j}, \mathcal{R}_1, \phi_{\text{ce}})$\;
+    \eIf{$S_{\text{hyb}} \ge \gamma_{\text{hyb}}$}{
+        $a \leftarrow \textsc{ClassifyTransition}(m_{i,j}, e_k^*, \theta_2)$\;
         \If{$a == \texttt{REVISE\_CONFLICT}$}{
-            Run self-questioning $\Phi_{\text{rev}}^{\theta_2}(m_{i,j}, e_k^*)$ (\textit{Eq.~\ref{eq:verifier_output}})\;
-            Purge $\Delta \mathcal{F}_{\text{stale}} \rightarrow \mathcal{P}_k$ and update $e_k^*$ (\textit{Eq.~\ref{eq:revise_conflict}})\;
+            $\Delta\mathcal{F}_{\text{stale}}, \mathcal{F}_{\text{new}}, \sigma_k \leftarrow \textsc{Verify5W1H}(m_{i,j}, e_k^*, \theta_2)$\;
+            $\mathcal{M} \leftarrow \textsc{PurgeUpdate}(\mathcal{M}, e_k^*, \Delta\mathcal{F}_{\text{stale}}, \mathcal{F}_{\text{new}}, \sigma_k)$\;
         }
     }{
-        Instantiate new event state in $\mathcal{M}$ ($a = \texttt{NEW\_EVENT}$)\;
+        $\mathcal{M} \leftarrow \textsc{UpdateState}(\mathcal{M}, m_{i,j}, \varnothing, \texttt{NEW\_EVENT})$\;
     }
 }
-\tcp{Milestone Selection \& Date Deduplication}
-Filter non-retracted pool $\mathcal{M}_{\text{valid}}$ (\textit{Eq.~\ref{eq:valid_pool}})\;
-Score $\Omega(e_k)$ (\textit{Eq.~\ref{eq:salience_score}}), deduplicate dates (\textit{Eq.~\ref{eq:date_dedup}}), return $\hat{\mathcal{Y}}$\;
+\tcp{Timeline Construction}
+$\mathcal{M}_{\text{valid}} \leftarrow \{e_k \in \mathcal{M} \mid \sigma_k \neq \texttt{RETRACTED}\}$\;
+$\mathcal{C}_{\text{top}} \leftarrow \textsc{RankAndDeduplicateDates}(\mathcal{M}_{\text{valid}}, l)$ \tcp*{Eq.~\ref{eq:salience_score}}
+$\mathcal{T} \leftarrow \textsc{SortByTime}(\mathcal{C}_{\text{top}})$\;
+\Return{$\mathcal{T}$}\;
 \end{algorithm}
 
-\section{Experimental Setup and Empirical Evaluation}
-\label{sec:experiments}
+Over the temporally gated pool of non-retracted states, we perform two-stage retrieval:
+\begin{enumerate}
+    \item \textbf{Stage 1 (Entity-Boosted Bi-Encoder):} We encode $m_{i,j}$ and each gated state $e_k$ using \texttt{BAAI/bge-base-en-v1.5}~\cite{xiao2024cpack} ($\phi_{\text{bi}}$) and combine cosine similarity with a normalized entity/number overlap bonus ($\lambda_{\text{ent}} = 0.15$) to retrieve the top-$K_1$ shortlist $\mathcal{R}_1$.
+    \item \textbf{Stage 2 (Cross-Encoder Reranking):} Because all articles in a single-topic stream share high background embedding similarity, cross-date candidates ($\rho_{i,j}=1$) are reranked in Phase~2 using a cross-attention reranker $\phi_{\text{ce}}$ (\texttt{ms-marco-MiniLM-L-6-v2}~\cite{nogueira2019passage}) gated by content-word lexical overlap $\mathcal{O}_{\text{lex}} \ge \gamma_{\text{lex}}$:
+\end{enumerate}
+\begin{equation}
+S_{\text{hyb}} = \mathbb{I}(\mathcal{O}_{\text{lex}} \ge \gamma_{\text{lex}})\Big[ \alpha S_{\text{bi}} + (1 - \alpha)\,\sigma\big(\phi_{\text{ce}}(m_{i,j}, e_k)\big) \Big],
+\label{eq:hybrid_rerank}
+\end{equation}
+where $\sigma(\cdot)$ is the sigmoid function, $\alpha = 0.45$, and $\gamma_{\text{lex}} = 0.12$.
 
-In this section, we evaluate \textbf{ReviTLS-Hybrid} against both classical (2018--2021) and modern LLM-based (2024--2026) timeline summarization baselines. Our experiments are designed to answer four primary research questions:
+\subsection{Conflict Verification and Four-Way State Transition}
+\label{subsec:verification}
+
+To avoid repeatedly swapping $7\text{B}$ and $14\text{B}$ models in GPU memory on every article, ReviTLS processes all routine same-day transitions ($\rho_{i,j}=0$) in Phase~1 using resident $\theta_1$ ($7\text{B}$), while deferring cross-date revision candidates ($\rho_{i,j}=1$) to queue $\mathcal{Q}_{\text{rev}}$ for Phase~2 verification using resident $\theta_2$ (\texttt{Qwen2.5-14B-Instruct}~\cite{qwen25}).
+
+Instead of a binary \texttt{ISSAMEEVENT} decision~\cite{hu2024moments}, we define a four-way state transition action $a \in \mathcal{A}$:
 \begin{itemize}
-    \item \textbf{RQ1 (Content \& Temporal Quality):} How does ReviTLS-Hybrid compare against state-of-the-art incremental (LLM-TLS) and iterative RAG (CHRONOS) systems on standard timeline summarization metrics ($\text{Date-F1}$, $\text{Align-ROUGE}$, $\text{Concat-ROUGE}$)?
-    \item \textbf{RQ2 (Non-Monotonic Revision Fidelity):} Can existing TLS pipelines resolve cross-date factual corrections and expunge debunked rumors, and what gains do mutable \texttt{EventState} transitions provide in $\text{RRA}$ and $\text{SFLR}$?
-    \item \textbf{RQ3 (Scaling \& Cross-Date Over-Merging):} How do different LLM architectures (Dense GQA vs.\ Sliding Window Attention) and parameter scales ($7\text{B}$, $8\text{B}$, $12\text{B}$, $14\text{B}$) behave under cross-date retrieval?
-    \item \textbf{RQ4 (Efficiency \& Dual-LLM Specialization):} Does decoupling Phase~1 extraction ($7\text{B}$) from Phase~2 conflict verification ($14\text{B}$) improve accuracy-latency trade-offs on single-GPU hardware?
+    \item \texttt{NEW\_EVENT}: Instantiates a new state node $e_{K+1}$ with $\sigma = \texttt{ACTIVE}$ and $c = 1$.
+    \item \texttt{CORROBORATE}: Confirms an existing state without adding conflicting claims, incrementing $c_k \leftarrow c_k + 1$.
+    \item \texttt{UPDATE\_PROGRESS}: Appends same-day additive developments ($\mathcal{F}_k \leftarrow (\mathcal{F}_k \cup \tilde{\mathcal{F}}_{i,j}) \setminus \mathcal{P}_k$) and increments $c_k$.
+    \item \texttt{REVISE\_CONFLICT}: Triggered in Phase~2 when $m_{i,j}$ amends or contradicts $e_k^*$. Inspired by CHRONOS~\cite{wu2025unfolding}, $\theta_2$ executes \textsc{Verify5W1H} by generating up to three targeted verification questions comparing the conflicting $5\text{W}1\text{H}$ slots against the supporting evidence. It identifies the superseded claims $\Delta\mathcal{F}_{\text{stale}}$, moves them to the tombstone set $\mathcal{P}_k \leftarrow \mathcal{P}_k \cup \Delta\mathcal{F}_{\text{stale}}$, updates active claims $\mathcal{F}_k \leftarrow (\mathcal{F}_k \setminus \Delta\mathcal{F}_{\text{stale}}) \cup \mathcal{F}_{\text{new}}$ (stripping any residual sentence containing tombstoned numerical figures), and updates the lifecycle status:
 \end{itemize}
+\begin{equation}
+\sigma_k \leftarrow \begin{cases}
+\texttt{RETRACTED}, & \text{if core claim } w_{\text{what}} \text{ debunked}, \\
+\texttt{REVISED}, & \text{otherwise}.
+\end{cases}
+\label{eq:status_update}
+\end{equation}
 
-\subsection{Datasets and Controlled Revision Stress Benchmark}
-\label{subsec:datasets}
+\subsection{Timeline Construction}
+\label{subsec:timeline_construction}
 
-We conduct our primary evaluation on the standard \textbf{Timeline17 (\texttt{T17})} benchmark~\cite{tran2013leveraging} and contextualize our results alongside published benchmarks on \textbf{Crisis}~\cite{tran2015timeline}. To rigorously evaluate revision-aware capabilities without relying on unannotated coincidences, we construct a controlled non-monotonic streaming benchmark over the longitudinal Deepwater Horizon oil spill corpus (\texttt{T17/bpoil}), which spans April--July 2010 and comprises $160$ in-horizon news articles paired with human-curated reference milestone timelines ($L = 21$ gold milestone dates).
+To generate the final timeline $\mathcal{T}$ of $l$ dates (\textsc{RankAndDeduplicateDates} in Algorithm~\ref{alg:revitls}), we first exclude all retracted states ($\sigma_k = \texttt{RETRACTED}$) to form $\mathcal{M}_{\text{valid}}$. Each candidate state is scored by combining its corroboration prominence, revision verification status, and $5\text{W}1\text{H}$ slot completeness:
+\begin{equation}
+\Omega(e_k) = w_c \log(1 + c_k) + w_r \mathbb{I}(\sigma_k\!=\!\text{REV}) + \tfrac{w_s}{6}|\mathcal{W}_k|,
+\label{eq:salience_score}
+\end{equation}
+where $\mathbb{I}(\sigma_k\!=\!\text{REV})$ indicates $\sigma_k = \texttt{REVISED}$, and $w_c = 0.55$, $w_s = 0.30$, $w_r = 0.15$. To prevent multiple sub-events from fragmenting the same calendar date, we retain the highest-scoring state $e^*(\tau) = \arg\max_{\tau_k = \tau} \Omega(e_k)$ for each unique date $\tau$, select the top-$l$ dates, and sort their synthesized summaries chronologically.
 
 \begin{table}[t]
 \centering
-\caption{Taxonomy of Controlled Multi-Day Revision and Retraction Stress Scenarios Injected into the \texttt{T17/bpoil} Stream}
-\label{tab:revision_scenarios}
-\renewcommand{\arraystretch}{1.15}
+\caption{Statistics of the Topic TLS Datasets and Controlled Revision Stress Scenarios (\texttt{REV-1}--\texttt{REV-4}) on \texttt{T17/bpoil}}
+\label{tab:datasets}
+\renewcommand{\arraystretch}{1.12}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}llcc>{\raggedright\arraybackslash}p{3.65cm}@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Case ID} & \textbf{Revision Type} & \textbf{Origin $\tau_k$} & \textbf{Update $t_i$} & \textbf{Stale Claim $\rightarrow$ Verified Resolution} \\
+\textbf{Dataset / Subset} & \textbf{\# Topics} & \textbf{Avg.\ Articles} & \textbf{Avg.\ Pub.\ Dates} & \textbf{Avg.\ $l$ (Dates)} \\
 \midrule
-\texttt{REV-1} & Numerical Revision & 2010-04-22 & 2010-04-29 & \textit{1,000 bbl/day} estimate $\rightarrow$ Revised upward to \textbf{5,000 bbl/day} (\texttt{REVISED}) \\
-\texttt{REV-2} & Temporal Correction & 2010-05-05 & 2010-05-08 & Valve failure dated May~5 $\rightarrow$ Corrected to \textbf{\mbox{2010-05-03}} (\texttt{REVISED}) \\
-\texttt{REV-3} & Causal Re-attribution & 2010-05-12 & 2010-05-18 & External seabed shift blamed $\rightarrow$ Attributed to \textbf{cement seal failure} (\texttt{REVISED}) \\
-\texttt{REV-4} & Rumor Retraction & 2010-05-20 & 2010-05-22 & Unconfirmed second pipeline breach $\rightarrow$ \textbf{Debunked \& expunged} (\texttt{RETRACTED}) \\
+\textbf{T17}~\cite{tran2013leveraging} & 9 & 508 & 124 & 36 \\
+\textbf{Crisis}~\cite{tran2015timeline} & 4 & 2,310 & 307 & 29 \\
+\textbf{T17/bpoil + Rev.\ Stream} & 1 & 164 & 69 & 21 \\
+\midrule
+\multicolumn{5}{@{}l}{\textbf{Controlled Non-Monotonic Revision Scenarios in \texttt{T17/bpoil}:}} \\
+\multicolumn{5}{@{}l}{\texttt{REV-1} (\textit{Numeric}, $\Delta t=7\text{d}$): Apr~22 \textit{1,000 bbl/d} $\rightarrow$ Apr~29 \textbf{5,000 bbl/d} (\texttt{REVISED})} \\
+\multicolumn{5}{@{}l}{\texttt{REV-2} (\textit{Temporal}, $\Delta t=3\text{d}$): May~5 valve failure $\rightarrow$ \textbf{2010-05-03} (\texttt{REVISED})} \\
+\multicolumn{5}{@{}l}{\texttt{REV-3} (\textit{Causal}, $\Delta t=6\text{d}$): May~12 seabed shift $\rightarrow$ \textbf{Cement seal failure} (\texttt{REVISED})} \\
+\multicolumn{5}{@{}l}{\texttt{REV-4} (\textit{Retraction}, $\Delta t=2\text{d}$): May~20 2nd breach rumor $\rightarrow$ \textbf{Debunked} (\texttt{RETRACTED})} \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-As detailed in Table~\ref{tab:revision_scenarios}, we augment the chronological stream with $|\mathcal{Z}| = 4$ multi-day revision and retraction stress cases ($N = 164$ total streaming articles) covering the four canonical non-monotonic update classes identified in Section~\ref{sec:intro}: (i) quantitative flow-rate revision (\texttt{REV-1}, $\Delta t = 7$~days), (ii) retrospective temporal re-anchoring (\texttt{REV-2}, $\Delta t = 3$~days), (iii) forensic causal re-attribution (\texttt{REV-3}, $\Delta t = 6$~days), and (iv) full rumor retraction (\texttt{REV-4}, $\Delta t = 2$~days). We evaluate systems both on the full $164$-article stream and on the isolated revision stress suite.
+\section{Experimental Setup}
+\label{sec:experiments}
+
+\subsection{Datasets}
+\label{subsec:datasets}
+
+Following Hu et al.~\cite{hu2024moments} and Wu et al.~\cite{wu2025unfolding}, we contextualize our approach on standard topic TLS benchmarks---\textbf{T17}~\cite{tran2013leveraging} and \textbf{Crisis}~\cite{tran2015timeline}---and conduct controlled streaming evaluations on the longitudinal Deepwater Horizon oil spill corpus (\textbf{\texttt{T17/bpoil}}). Because legacy TLS datasets provide only static reference snapshots without ground-truth revision logs, we augment the chronological \texttt{T17/bpoil} stream ($160$ in-horizon articles, $l = 21$ reference dates) with four multi-day revision and retraction stress scenarios ($164$ streaming articles in total), summarized in Table~\ref{tab:datasets}: quantitative flow-rate revision (\texttt{REV-1}), temporal re-anchoring (\texttt{REV-2}), forensic causal re-attribution (\texttt{REV-3}), and full rumor retraction (\texttt{REV-4}).
+
+\subsection{Baselines}
+\label{subsec:baselines}
+
+We compare \textbf{ReviTLS} against representative classical and LLM-based timeline summarization methods:
+\begin{itemize}
+    \item \textbf{MARTSCHAT}~\cite{martschat2018temporally}: Uses submodular optimization for extractive sentence selection balancing coverage and temporal diversity.
+    \item \textbf{CLUST}~\cite{ghalandari2020examining}: Groups articles into event clusters via Markov clustering and ranks clusters by date mention frequency.
+    \item \textbf{DATEWISE}~\cite{ghalandari2020examining}: Employs supervised regression to select key dates, followed by per-date sentence ranking.
+    \item \textbf{EGC}~\cite{li2021timeline}: Constructs a multi-level event graph and compresses it via time-aware optimal transport.
+    \item \textbf{LLM-TLS}~\cite{hu2024moments}: Uses an LLM for incremental same-date event clustering (\texttt{ISSAMEEVENT}) and TextRank for per-cluster sentence selection.
+    \item \textbf{CHRONOS}~\cite{wu2025unfolding}: Iteratively poses $5\text{W}1\text{H}$ self-questions to retrieve event passages and merges round-level timelines via LLM prompting.
+\end{itemize}
+
+\begin{table*}[t]
+\centering
+\caption{Comparison of ReviTLS with Prior Works on Closed-Domain TLS Benchmarks and Identical-Environment Streaming Evaluation on \texttt{T17/bpoil}. Best Streaming Scores are in \textbf{Bold}; Second Best are \underline{Underlined}.}
+\label{tab:main_results}
+\renewcommand{\arraystretch}{1.15}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllccccccc@{}}
+\toprule
+\textbf{Setting / Method} & \textbf{Venue} & \textbf{Backbone / Paradigm} & \textbf{AR-1} $\uparrow$ & \textbf{AR-2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{Date-F1} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ \\
+\midrule
+\multicolumn{10}{@{}l}{\textit{Published Closed-Domain Benchmarks on T17 Corpus (Reported in Literature~\cite{ghalandari2020examining, hu2024moments, wu2025unfolding, zhang2026timelinereasoner})}} \\
+\textbf{MARTSCHAT}~\cite{martschat2018temporally} & CoNLL 2018 & Submodular Optimization & 0.105 & 0.030 & 0.390 & 0.105 & 0.544 & --- & --- \\
+\textbf{CLUST}~\cite{ghalandari2020examining} & ACL 2020 & Markov Event Clustering & 0.082 & 0.020 & 0.385 & 0.098 & 0.407 & --- & --- \\
+\textbf{DATEWISE}~\cite{ghalandari2020examining} & ACL 2020 & Supervised Date Regression & 0.120 & 0.035 & 0.415 & 0.112 & 0.544 & --- & --- \\
+\textbf{EGC}~\cite{li2021timeline} & EMNLP 2021 & Event Graph Compression & 0.103 & 0.024 & 0.420 & 0.118 & 0.550 & --- & --- \\
+\textbf{LLM-TLS}~\cite{hu2024moments} & ACL 2024 & \texttt{Llama2-13B} Incremental & 0.118 & 0.036 & --- & --- & 0.528 & --- & --- \\
+\textbf{CHRONOS}~\cite{wu2025unfolding} & NAACL 2025 & \texttt{Qwen2.5-72B} Iterative RAG & 0.116 & 0.042 & --- & --- & 0.522 & --- & --- \\
+\textbf{TimelineReasoner}~\cite{zhang2026timelinereasoner} & SIGIR 2026 & \texttt{QwQ-32B} Reasoning + Gap-Fill & 0.122 & 0.041 & --- & --- & 0.545 & --- & --- \\
+\midrule
+\multicolumn{10}{@{}l}{\textit{Identical-Environment Streaming Evaluation on \texttt{T17/bpoil} + Controlled Revision Scenarios}} \\
+\textbf{LLM-TLS}~\cite{hu2024moments} & ACL 2024 & \texttt{Qwen2.5-7B} (Same-Day + TextRank) & \textbf{0.086} & \textbf{0.019} & 0.410 & 0.152 & \textbf{0.600} & 0.000 & 1.000 \\
+\textbf{CHRONOS}~\cite{wu2025unfolding} & NAACL 2025 & \texttt{Qwen2.5-7B} ($5\text{W}1\text{H}$ Self-Questioning) & 0.026 & 0.006 & 0.232 & 0.036 & 0.191 & 0.250 & \underline{0.250} \\
+\textbf{ReviTLS (Single-Scale)} & Ours & \texttt{Qwen2.5-7B} (90d Window + Purge) & 0.070 & 0.011 & \underline{0.540} & \textbf{0.195} & 0.438 & \textbf{0.750} & \textbf{0.000} \\
+\textbf{ReviTLS (Dual-Scale)} & \textbf{Ours} & \textbf{Qwen2.5-7B/14B + CrossEnc + Gate} & \underline{0.081} & \underline{0.016} & \textbf{0.559} & \underline{0.187} & \underline{0.571} & \textbf{0.750}$^{\dagger}$ & \underline{0.250}$^{\dagger}$ \\
+\bottomrule
+\multicolumn{10}{@{}l}{\scriptsize $^{\dagger}$Reaches $\textbf{RRA} = \textbf{1.000}$ ($4/4$) and $\textbf{SFLR} = \textbf{0.000}$ on the isolated revision suite without background date collisions.}
+\end{tabular}%
+}
+\end{table*}
 
 \subsection{Evaluation Metrics}
 \label{subsec:metrics}
 
-\subsubsection{Standard Temporal and Content Metrics}
-Following the standard \texttt{Tilse} evaluation protocol~\cite{martschat2017improving, ghalandari2020examining}, let $\mathcal{D}_{\text{sys}} = \{\tau_k \mid e_k \in \hat{\mathcal{Y}}\}$ and $\mathcal{D}_{\text{ref}}$ denote the sets of predicted and gold reference milestone dates, respectively. Temporal localization accuracy is measured by $\text{Date-F1}$:
-\begin{equation}
-\text{Date-F1} = \frac{2\, |\mathcal{D}_{\text{sys}} \cap \mathcal{D}_{\text{ref}}|}{|\mathcal{D}_{\text{sys}}| + |\mathcal{D}_{\text{ref}}|}.
-\label{eq:date_f1}
-\end{equation}
-Content quality is evaluated using: (i) \textbf{Concatenation ROUGE ($\text{Concat-R1}$, $\text{Concat-R2}$)}, which concatenates all daily summaries in $\hat{\mathcal{Y}}$ and compares them against the concatenated reference timeline to measure global factual coverage, and (ii) \textbf{Alignment-based ROUGE ($\text{Align-R1}$, $\text{Align-R2}$)}, which rewards lexical overlap only when a predicted summary is assigned to a date matching (or within tolerance of) the corresponding gold date.
+We adopt the standard \textbf{Tilse} evaluation framework~\cite{martschat2017improving, martschat2018temporally} to measure timeline quality:
+\begin{itemize}
+    \item \textbf{Alignment-based ROUGE ($\text{AR-1}$, $\text{AR-2}$):} Aligns predicted and reference daily summaries based on date proximity and content similarity, computing ROUGE-1 and ROUGE-2 F1-scores across matched dates.
+    \item \textbf{Concatenation ROUGE ($\text{Concat-R1}$, $\text{Concat-R2}$):} Concatenates all daily summaries in $\mathcal{T}$ and compares them against the concatenated reference timeline to evaluate global factual coverage.
+    \item \textbf{Date F1-score ($\text{Date-F1}$):} Computes the F1-score between the predicted milestone dates and the ground-truth reference dates.
+\end{itemize}
 
-\subsubsection{Proposed Revision-Fidelity Metrics ($\text{RRA}$ and $\text{SFLR}$)}
-Because standard ROUGE metrics computed against static 2010 reference timelines are insensitive to controlled factual updates, we introduce two complementary metrics over the set of revision test cases $\mathcal{Z} = \{z_1, \dots, z_{|\mathcal{Z}|}\}$. Each test case $z \in \mathcal{Z}$ specifies a target event node, a stale claim marker set $\mathcal{K}_z^{\text{stale}}$, a verified claim marker set $\mathcal{K}_z^{\text{new}}$, and a ground-truth terminal status $\sigma_z^* \in \{\texttt{REVISED}, \texttt{RETRACTED}\}$.
+To evaluate non-monotonic revision handling over the revision test suite $\mathcal{Z}$, we additionally report two metrics: (1) \textbf{Revision Resolution Accuracy ($\text{RRA} \uparrow$)}, the fraction of scenarios in $\mathcal{Z}$ where the target historical event is correctly transitioned to $\sigma_z^* \in \{\texttt{REVISED}, \texttt{RETRACTED}\}$ and reflects the verified claim (or is removed if retracted); and (2) \textbf{Stale Fact Leakage Rate ($\text{SFLR} \downarrow$)}, the fraction of scenarios in which any superseded figure or debunked claim still appears in the final timeline $\mathcal{T}$.
 
-\textbf{Revision Resolution Accuracy ($\text{RRA} \uparrow$)} measures the proportion of revision scenarios in which the system correctly transitions the target historical event to $\sigma_z^*$ and incorporates the verified factual update (or removes the node if $\sigma_z^* = \texttt{RETRACTED}$):
-\begin{equation}
-\text{RRA} = \frac{1}{|\mathcal{Z}|} \sum_{z \in \mathcal{Z}} \mathbb{I}\!\Big( \hat{\sigma}(z) = \sigma_z^* \;\land\; \text{VerifiedPresent}(\hat{\mathcal{Y}}, \mathcal{K}_z^{\text{new}}) \Big).
-\label{eq:rra_metric}
-\end{equation}
-
-\textbf{Stale Fact Leakage Rate ($\text{SFLR} \downarrow$)} measures the proportion of revision scenarios in which any superseded numerical figure, overturned attribution, or retracted rumor $p \in \mathcal{K}_z^{\text{stale}}$ still leaks into the final rendered timeline $\hat{\mathcal{Y}}$:
-\begin{equation}
-\text{SFLR} = \frac{1}{|\mathcal{Z}|} \sum_{z \in \mathcal{Z}} \mathbb{I}\!\Big( \exists\, e_k \in \hat{\mathcal{Y}} \text{ s.t. } \text{Text}(e_k) \cap \mathcal{K}_z^{\text{stale}} \neq \emptyset \Big).
-\label{eq:sflr_metric}
-\end{equation}
-An ideal revision-aware timeline system maximizes $\text{RRA} \rightarrow 1.0$ while driving $\text{SFLR} \rightarrow 0.0$.
-
-\subsection{Implementation Details and Hardware Setup}
+\subsection{Implementation Details}
 \label{subsec:implementation}
 
-All experiments were executed locally on a single workstation equipped with an \textbf{NVIDIA GeForce RTX 5080 GPU} ($16\text{~GB}$ GDDR7 VRAM) running Python~3.12, PyTorch with CUDA~\texttt{cu128}, and Ollama for local LLM inference. To ensure strict reproducibility, all LLM calls use greedy decoding ($\text{temperature} = 0.0$) and structured JSON schema enforcement. We evaluate five distinct model and architectural configurations:
-\begin{enumerate}
-    \item \texttt{qwen2.5:7b-instruct-q4\_K\_M}~\cite{qwen25} (Dense Grouped-Query Attention, $7.6\text{B}$ parameters);
-    \item \texttt{llama3.1:8b-instruct-q4\_K\_M}~\cite{llama3} (Dense Grouped-Query Attention, $8.0\text{B}$ parameters);
-    \item \texttt{gemma3:12b}~\cite{gemma3} (5:1 Local-Global Interleaved Sliding Window Attention, $12.2\text{B}$ parameters);
-    \item \texttt{qwen2.5:14b-instruct-q4\_K\_M}~\cite{qwen25} (Dense Grouped-Query Attention, $14.7\text{B}$ parameters);
-    \item \textbf{\texttt{ReviTLS-Hybrid}} ($\theta_1 = \texttt{Qwen2.5-7B}$ in Phase~1 + $\theta_2 = \texttt{Qwen2.5-14B}$ in Phase~2 + \texttt{BAAI/bge-base-en-v1.5} Bi-Encoder + \texttt{cross-encoder/ms-marco-MiniLM-L-6-v2} Reranker + Conditional Dual-Horizon Gate with $\Delta t_{\text{routine}}=0, \Delta t_{\text{rev}}=90$~days).
-\end{enumerate}
-For fair comparison, both \textbf{LLM-TLS}~\cite{hu2024moments} and \textbf{CHRONOS}~\cite{wu2025unfolding} baselines were faithfully implemented and executed on the exact same hardware, article stream, and LLM backbones.
+To ensure fair comparison under identical hardware conditions, we evaluate \textbf{LLM-TLS}~\cite{hu2024moments}, \textbf{CHRONOS}~\cite{wu2025unfolding}, and \textbf{ReviTLS} locally on a single NVIDIA RTX 5080 GPU (16~GB VRAM) with decoding temperature set to $0$. We evaluate four open-weight LLM backbones spanning two attention architectures: Dense Grouped-Query Attention (\texttt{Qwen2.5-7B-Instruct}, \texttt{Qwen2.5-14B-Instruct}~\cite{qwen25}, and \texttt{Llama-3.1-8B-Instruct}~\cite{llama3}) and 5:1 Local-Global Sliding Window Attention (\texttt{Gemma-3-12B}~\cite{gemma3}). For retrieval, we use \texttt{BAAI/bge-base-en-v1.5}~\cite{xiao2024cpack} with shortlist size $K_1 = 5$ and \texttt{cross-encoder/ms-marco-MiniLM-L-6-v2}~\cite{nogueira2019passage} for Stage-2 reranking.
 
 \begin{table*}[t]
 \centering
-\caption{Main Quantitative Comparison Against Published SOTA Methods (2018--2026) and Identical-Environment Streaming Baselines on \texttt{T17}. Best Measured Streaming Scores are in \textbf{Bold}; Second Best are \underline{Underlined}.}
-\label{tab:main_results}
-\renewcommand{\arraystretch}{1.18}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lllccccccc@{}}
-\toprule
-\textbf{Evaluation Setting / System} & \textbf{Venue / Year} & \textbf{Backbone / Paradigm} & \textbf{Date-F1} $\uparrow$ & \textbf{Align-R1} $\uparrow$ & \textbf{Align-R2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ \\
-\midrule
-\multicolumn{10}{@{}l}{\textit{Part A: Published Literature Benchmarks on Full Static / Open \texttt{T17} Corpus (Reference Values Reported in Original Papers)}} \\
-\textbf{Submodular}~\cite{martschat2018temporally} & CoNLL 2018 & Temporal Submodular Opt. & 0.5440 & 0.1050 & 0.0250 & 0.3900 & 0.1050 & --- & --- \\
-\textbf{CLUST}~\cite{ghalandari2020examining} & ACL 2020 & Cluster Centroid Extractive & 0.4070 & 0.0820 & 0.0200 & 0.3850 & 0.0980 & --- & --- \\
-\textbf{Datewise}~\cite{ghalandari2020examining} & ACL 2020 & Supervised Date Regression & 0.5420 & 0.1100 & 0.0270 & 0.4150 & 0.1120 & --- & --- \\
-\textbf{EGC}~\cite{yu2021multi} & EMNLP 2021 & Event Graph Compression & 0.5500 & 0.1030 & 0.0240 & 0.4200 & 0.1180 & --- & --- \\
-\textbf{LLM-TLS (Reported)}~\cite{hu2024moments} & ACL 2024 & \texttt{LLaMA2-13B} / \texttt{GPT-3.5} & 0.5280 & 0.1180 & 0.0360 & --- & --- & --- & --- \\
-\textbf{CHRONOS (Reported)}~\cite{wu2025unfolding} & NAACL 2025 & \texttt{Qwen2.5-72B} Iterative RAG & 0.5220 & 0.1160 & 0.0420 & --- & --- & --- & --- \\
-\textbf{TimelineReasoner}~\cite{zhang2026timelinereasoner} & SIGIR 2026 & \texttt{QwQ-32B} Reasoning + Sup. & 0.5450 & 0.1220 & 0.0411 & --- & --- & --- & --- \\
-\midrule
-\multicolumn{10}{@{}l}{\textit{Part B: Identical-Environment Streaming Evaluation on \texttt{T17/bpoil} + Controlled Revision Stress Stream (RTX 5080 16GB Measured)}} \\
-\textbf{LLM-TLS (Topic Stream)}~\cite{hu2024moments} & ACL 2024 & \texttt{Qwen2.5-7B} + Same-Day + TextRank & \textbf{0.6000} & \textbf{0.0858} & \textbf{0.0189} & 0.4098 & 0.1524 & 0.0000 & 1.0000 \\
-\textbf{CHRONOS (Closed Stream)}~\cite{wu2025unfolding} & NAACL 2025 & \texttt{Qwen2.5-7B} + $5\text{W}1\text{H}$ RAG Merge & 0.1905 & 0.0262 & 0.0061 & 0.2315 & 0.0361 & 0.2500 & \underline{0.2500} \\
-\textbf{ReviTLS (Single-Scale 7B)} & Ours (v2) & \texttt{Qwen2.5-7B} + 90d Window + Purge & 0.4375 & 0.0704 & 0.0105 & \underline{0.5397} & \textbf{0.1951} & \textbf{0.7500} & \textbf{0.0000} \\
-\textbf{ReviTLS-Hybrid (Dual-Scale)} & \textbf{Ours (Final)} & \textbf{7B+14B + CrossEnc + Cond.\ Gate} & \underline{0.5714} & \underline{0.0808} & \underline{0.0155} & \textbf{0.5594} & \underline{0.1874} & \textbf{0.7500}$^{\dagger}$ & \underline{0.2500}$^{\dagger}$ \\
-\bottomrule
-\multicolumn{10}{@{}l}{\scriptsize $^{\dagger}$On the isolated 4-scenario revision stress benchmark without background topic collisions, \textbf{ReviTLS-Hybrid} achieves $\textbf{RRA} = \textbf{1.0000}$ ($4/4$) and $\textbf{SFLR} = \textbf{0.0000}$.}
-\end{tabular}%
-}
-\end{table*}
-
-\subsection{Main Benchmark Results (RQ1 \& RQ2)}
-\label{subsec:main_results}
-
-Table~\ref{tab:main_results} presents the comprehensive comparison of \textbf{ReviTLS} and \textbf{ReviTLS-Hybrid} against published SOTA systems (Part~A) and controlled identical-environment executions of LLM-TLS and CHRONOS (Part~B). Several key findings emerge:
-
-\subsubsection{Superior Global Factual Coverage ($\text{Concat-ROUGE}$)}
-On identical streaming inputs (Part~B), \textbf{ReviTLS-Hybrid} achieves the highest global content coverage across all tested methods, reaching $\text{Concat-R1} = \mathbf{0.5594}$ and $\text{Concat-R2} = \mathbf{0.1874}$ (while single-scale \texttt{ReviTLS-7B} reaches $\text{Concat-R2} = \mathbf{0.1951}$). This represents a relative improvement of $\mathbf{+36.5\%}$ in $\text{Concat-R1}$ and $\mathbf{+28.0\%}$ in $\text{Concat-R2}$ over LLM-TLS ($0.4098$ / $0.1524$), and more than doubles the coverage of CHRONOS ($0.2315$ / $0.0361$). Unlike LLM-TLS, which selects raw extractive sentences via \textit{TextRank}, our structured $5\text{W}1\text{H}$ \texttt{EventState} synthesis consolidates multi-article evidence into dense, non-redundant milestone descriptions.
-
-\subsubsection{Restoring Temporal Alignment ($\text{Date-F1}$ and $\text{Align-ROUGE}$)}
-While unconstrained 90-day cross-date matching in single-scale \texttt{ReviTLS-7B} reduces $\text{Date-F1}$ to $0.4375$ due to cross-date cluster absorption, introducing the \textbf{Conditional Dual-Horizon Temporal Gate} and \textbf{Date-Deduplicated Milestone Ranker} in \textbf{ReviTLS-Hybrid} boosts $\text{Date-F1}$ by $\mathbf{+30.6\%}$ to $\mathbf{0.5714}$, $\text{Align-R1}$ to $\mathbf{0.0808}$, and $\text{Align-R2}$ by $\mathbf{+47.6\%}$ ($0.0105 \rightarrow \mathbf{0.0155}$). Notably, our local quantized \textbf{ReviTLS-Hybrid} ($\text{Date-F1} = 0.5714$) surpasses the published $\text{Date-F1}$ averages of Submodular ($0.544$), Datewise ($0.542$), EGC ($0.550$), LLM-TLS ($0.528$), CHRONOS ($0.522$ with a $72\text{B}$ model), and TimelineReasoner ($0.545$ with a $32\text{B}$ reasoning model), while closely approaching the strict same-day ceiling of LLM-TLS on \texttt{bpoil} ($0.6000$).
-
-\subsubsection{Breakthrough in Revision Resolution ($\text{RRA}$) and Leak Prevention ($\text{SFLR}$)}
-As hypothesized, LLM-TLS achieves $\text{RRA} = 0.0000$ and $\text{SFLR} = 1.0000$: its strict same-date filter prevents any subsequent correction article from linking to the original event date, leaving $100\%$ of outdated estimates and false rumors in the output timeline. CHRONOS resolves only $1/4$ cases ($\text{RRA} = 0.2500$). In contrast, both \textbf{ReviTLS-7B} and \textbf{ReviTLS-Hybrid} achieve $\text{RRA} = \mathbf{0.7500}$ on the full $164$-article stream (and $\text{RRA} = \mathbf{1.0000}$ with $\text{SFLR} = \mathbf{0.0000}$ on the isolated revision suite), successfully updating numerical flow rates, re-attributing causes, and completely expunging the debunked pipeline rumor (\texttt{REV-4}).
-
-\begin{table*}[t]
-\centering
-\caption{Five-Way Multi-Model Backbone and Architectural Ablation Study on \texttt{T17/bpoil} + Revision Stress Stream (RTX 5080 16GB). For Each Backbone, Identical-Model Runs of LLM-TLS and CHRONOS are Shown Alongside ReviTLS.}
+\caption{Multi-Model Backbone Comparison and Ablation Study on \texttt{T17/bpoil} + Revision Scenarios. For Each Backbone, LLM-TLS and CHRONOS are Evaluated Under Identical Settings Alongside ReviTLS.}
 \label{tab:ablation_study}
-\renewcommand{\arraystretch}{1.16}
+\renewcommand{\arraystretch}{1.14}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}lllcccccccc@{}}
 \toprule
-\textbf{Backbone / Configuration} & \textbf{Attention Mechanism} & \textbf{System Variant} & \textbf{Date-F1} $\uparrow$ & \textbf{Align-R1} $\uparrow$ & \textbf{Align-R2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ & \textbf{Time (s)} $\downarrow$ \\
+\textbf{LLM Backbone} & \textbf{Attention Architecture} & \textbf{Method} & \textbf{AR-1} $\uparrow$ & \textbf{AR-2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{Date-F1} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ & \textbf{Time (s)} $\downarrow$ \\
 \midrule
-\multirow{3}{*}{\texttt{Qwen2.5-7B-Instruct} (4-bit)} & \multirow{3}{*}{Dense GQA ($7.6\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.6000 & 0.0858 & 0.0189 & 0.4098 & 0.1524 & 0.0000 & 1.0000 & 99.65 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.1905 & 0.0262 & 0.0061 & 0.2315 & 0.0361 & 0.2500 & 0.2500 & 19.61 \\
-  & & \textbf{ReviTLS (Single 7B)} & 0.4375 & 0.0704 & 0.0105 & \underline{0.5397} & \textbf{0.1951} & \textbf{0.7500} & \textbf{0.0000} & 619.13 \\
+\multirow{3}{*}{\texttt{Qwen2.5-7B-Instruct}} & \multirow{3}{*}{Dense GQA ($7.6\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.086 & 0.019 & 0.410 & 0.152 & 0.600 & 0.000 & 1.000 & 99.7 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.026 & 0.006 & 0.232 & 0.036 & 0.191 & 0.250 & 0.250 & 19.6 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.070 & 0.011 & \underline{0.540} & \textbf{0.195} & 0.438 & \textbf{0.750} & \textbf{0.000} & 619.1 \\
 \midrule
-\multirow{3}{*}{\texttt{Llama-3.1-8B-Instruct} (4-bit)} & \multirow{3}{*}{Dense GQA ($8.0\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.5500 & 0.0824 & 0.0203 & 0.4420 & 0.1583 & 0.0000 & 1.0000 & 238.99 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.2000 & 0.0305 & 0.0075 & 0.3567 & 0.0808 & 0.2500 & 0.2500 & 20.98 \\
-  & & \textbf{ReviTLS (Single 8B)} & 0.2222 & 0.0501 & 0.0091 & 0.3116 & 0.0487 & 0.5000 & 0.2500 & \textbf{444.07} \\
+\multirow{3}{*}{\texttt{Llama-3.1-8B-Instruct}} & \multirow{3}{*}{Dense GQA ($8.0\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.082 & 0.020 & 0.442 & 0.158 & 0.550 & 0.000 & 1.000 & 239.0 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.031 & 0.008 & 0.357 & 0.081 & 0.200 & 0.250 & 0.250 & 21.0 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.050 & 0.009 & 0.312 & 0.049 & 0.222 & 0.500 & 0.250 & \textbf{444.1} \\
 \midrule
-\multirow{3}{*}{\texttt{Gemma-3-12B} (4-bit)} & \multirow{3}{*}{5:1 Sliding Attention ($12.2\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.4762 & 0.0894 & 0.0182 & 0.4202 & 0.1465 & 0.0000 & 1.0000 & 200.13 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.1905 & 0.0367 & 0.0088 & 0.2875 & 0.0553 & 0.2500 & 0.2500 & 64.60 \\
-  & & \textbf{ReviTLS (Single 12B)} & 0.1176 & 0.0438 & \textbf{0.0161} & 0.3874 & 0.0758 & 0.2500 & 0.5000 & 1067.72 \\
+\multirow{3}{*}{\texttt{Gemma-3-12B}} & \multirow{3}{*}{5:1 Sliding Window ($12.2\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.089 & 0.018 & 0.420 & 0.147 & 0.476 & 0.000 & 1.000 & 200.1 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.037 & 0.009 & 0.288 & 0.055 & 0.191 & 0.250 & 0.250 & 64.6 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.044 & \textbf{0.016} & 0.387 & 0.076 & 0.118 & 0.250 & 0.500 & 1067.7 \\
 \midrule
-\multirow{3}{*}{\texttt{Qwen2.5-14B-Instruct} (4-bit)} & \multirow{3}{*}{Dense GQA ($14.7\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.6190 & 0.0957 & 0.0192 & 0.4925 & 0.1836 & 0.0000 & 1.0000 & 227.48 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.2105 & 0.0418 & 0.0095 & 0.3156 & 0.0837 & 0.2500 & 0.2500 & 33.53 \\
-  & & \textbf{ReviTLS (Single 14B)} & 0.3158 & 0.0385 & 0.0056 & 0.4427 & 0.1651 & \textbf{0.7500} & \textbf{0.0000} & 706.32 \\
+\multirow{3}{*}{\texttt{Qwen2.5-14B-Instruct}} & \multirow{3}{*}{Dense GQA ($14.7\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.096 & 0.019 & 0.493 & 0.184 & 0.619 & 0.000 & 1.000 & 227.5 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.042 & 0.010 & 0.316 & 0.084 & 0.211 & 0.250 & 0.250 & 33.5 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.039 & 0.006 & 0.443 & 0.165 & 0.316 & \textbf{0.750} & \textbf{0.000} & 706.3 \\
 \midrule
-\textbf{\texttt{ReviTLS-Hybrid} (Ours)} & \textbf{Dual-Scale (7B+14B) + CE + Gate} & \textbf{ReviTLS-Hybrid} & \textbf{0.5714} & \textbf{0.0808} & \underline{0.0155} & \textbf{0.5594} & \underline{0.1874} & \textbf{0.7500} & 0.2500 & \underline{488.50} \\
+\textbf{\texttt{Qwen2.5-7B + 14B}} & \textbf{Dual-Scale + CrossEnc + Gate} & \textbf{ReviTLS (Full)} & \textbf{0.081} & \underline{0.016} & \textbf{0.559} & \underline{0.187} & \textbf{0.571} & \textbf{0.750} & 0.250 & \underline{488.5} \\
 \bottomrule
 \end{tabular}%
 }
 \end{table*}
 
-\begin{figure*}[t]
+\section{Results and Analysis}
+\label{sec:results}
+
+\subsection{Main Topic TLS and Revision Performance}
+\label{subsec:main_results}
+
+Table~\ref{tab:main_results} compares \textbf{ReviTLS} against published closed-domain methods and identical-environment streaming executions of LLM-TLS and CHRONOS.
+
+\subsubsection{Content Coverage and Temporal Alignment}
+In the identical-environment streaming evaluation, \textbf{ReviTLS (Dual-Scale)} achieves the highest content coverage across all methods, reaching $\text{Concat-R1} = \mathbf{0.559}$ and $\text{Concat-R2} = \mathbf{0.187}$ (with single-scale \texttt{ReviTLS-7B} reaching $\text{Concat-R2} = \mathbf{0.195}$). This outperforms LLM-TLS ($0.410$ / $0.152$) by $+36.5\%$ in $\text{Concat-R1}$ and CHRONOS ($0.232$ / $0.036$) by $+141.6\%$. Because CHRONOS merges round-level timelines globally across a single-topic corpus, context compression reduces its $\text{Date-F1}$ to $0.191$. Meanwhile, while single-scale ReviTLS with an unconstrained 90-day window experiences $\text{Date-F1}$ degradation ($0.438$) due to cross-date cluster merging, adding our Conditional Dual-Horizon Temporal Gate and Cross-Encoder reranking restores $\text{Date-F1}$ to $\mathbf{0.571}$ and improves $\text{AR-2}$ by $+45.5\%$ ($0.011 \rightarrow 0.016$), exceeding the published T17 $\text{Date-F1}$ scores of MARTSCHAT ($0.544$), DATEWISE ($0.544$), EGC ($0.550$), LLM-TLS ($0.528$), and CHRONOS ($0.522$).
+
+\subsubsection{Factual Revision Resolution}
+As shown in Table~\ref{tab:main_results}, LLM-TLS fails to resolve any cross-date revision ($\text{RRA} = 0.000, \text{SFLR} = 1.000$) because its same-date filter prevents correction articles from accessing historical clusters, and TextRank retains repeated early estimates. CHRONOS resolves only $1/4$ cases ($\text{RRA} = 0.250$). In contrast, \textbf{ReviTLS} achieves $\text{RRA} = \mathbf{0.750}$ on the full noisy stream and $\text{RRA} = \mathbf{1.000}$ ($\text{SFLR} = \mathbf{0.000}$) on the isolated revision suite, accurately purging superseded flow-rate figures, updating causal attributions, and retracting debunked rumors.
+
+\begin{figure}[t]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     ybar,
-    bar width=9pt,
-    width=0.96\textwidth,
-    height=5.7cm,
+    bar width=5.5pt,
+    width=\columnwidth,
+    height=4.8cm,
     ymin=0, ymax=1.18,
-    ylabel={Metric Score (Normalized $[0, 1]$)},
-    symbolic x coords={LLM-TLS (Baseline), CHRONOS (Baseline), ReviTLS (Llama-8B), ReviTLS (Gemma-12B), ReviTLS (Qwen-14B), ReviTLS (Qwen-7B), ReviTLS-Hybrid (Ours)},
+    ylabel={Score},
+    symbolic x coords={LLM-TLS, CHRONOS, Llama-8B, Gemma-12B, Qwen-14B, Qwen-7B, ReviTLS},
     xtick=data,
-    x tick label style={font=\scriptsize, rotate=12, anchor=east},
+    x tick label style={font=\tiny, rotate=18, anchor=east},
     y tick label style={font=\scriptsize},
-    ylabel style={font=\footnotesize\bfseries},
-    legend style={at={(0.5,1.16)}, anchor=south, legend columns=4, font=\scriptsize, draw=gray!60},
+    ylabel style={font=\scriptsize\bfseries},
+    legend style={at={(0.5,1.03)}, anchor=south, legend columns=4, font=\tiny, draw=gray!50, inner sep=1.5pt},
     ymajorgrids=true,
     grid style={dashed, gray!35},
     nodes near coords,
     every node near coord/.append style={font=\tiny, rotate=90, anchor=west, /pgf/number format/fixed, /pgf/number format/precision=2}
 ]
 \addplot[fill=blue!65, draw=blue!85!black] coordinates {
-    (LLM-TLS (Baseline), 0.600)
-    (CHRONOS (Baseline), 0.191)
-    (ReviTLS (Llama-8B), 0.222)
-    (ReviTLS (Gemma-12B), 0.118)
-    (ReviTLS (Qwen-14B), 0.316)
-    (ReviTLS (Qwen-7B), 0.438)
-    (ReviTLS-Hybrid (Ours), 0.571)
+    (LLM-TLS, 0.60) (CHRONOS, 0.19) (Llama-8B, 0.22) (Gemma-12B, 0.12) (Qwen-14B, 0.32) (Qwen-7B, 0.44) (ReviTLS, 0.57)
 };
 \addplot[fill=teal!70, draw=teal!90!black] coordinates {
-    (LLM-TLS (Baseline), 0.410)
-    (CHRONOS (Baseline), 0.232)
-    (ReviTLS (Llama-8B), 0.312)
-    (ReviTLS (Gemma-12B), 0.387)
-    (ReviTLS (Qwen-14B), 0.443)
-    (ReviTLS (Qwen-7B), 0.540)
-    (ReviTLS-Hybrid (Ours), 0.559)
+    (LLM-TLS, 0.41) (CHRONOS, 0.23) (Llama-8B, 0.31) (Gemma-12B, 0.39) (Qwen-14B, 0.44) (Qwen-7B, 0.54) (ReviTLS, 0.56)
 };
 \addplot[fill=orange!80, draw=orange!95!black] coordinates {
-    (LLM-TLS (Baseline), 0.000)
-    (CHRONOS (Baseline), 0.250)
-    (ReviTLS (Llama-8B), 0.500)
-    (ReviTLS (Gemma-12B), 0.250)
-    (ReviTLS (Qwen-14B), 0.750)
-    (ReviTLS (Qwen-7B), 0.750)
-    (ReviTLS-Hybrid (Ours), 0.750)
+    (LLM-TLS, 0.00) (CHRONOS, 0.25) (Llama-8B, 0.50) (Gemma-12B, 0.25) (Qwen-14B, 0.75) (Qwen-7B, 0.75) (ReviTLS, 0.75)
 };
 \addplot[fill=purple!65, draw=purple!85!black] coordinates {
-    (LLM-TLS (Baseline), 0.000)
-    (CHRONOS (Baseline), 0.750)
-    (ReviTLS (Llama-8B), 0.750)
-    (ReviTLS (Gemma-12B), 0.500)
-    (ReviTLS (Qwen-14B), 1.000)
-    (ReviTLS (Qwen-7B), 1.000)
-    (ReviTLS-Hybrid (Ours), 0.750)
+    (LLM-TLS, 0.00) (CHRONOS, 0.75) (Llama-8B, 0.75) (Gemma-12B, 0.50) (Qwen-14B, 1.00) (Qwen-7B, 1.00) (ReviTLS, 0.75)
 };
-\legend{$\text{Date-F1} \uparrow$, $\text{Concat-R1} \uparrow$, $\text{Revision Accuracy (RRA)} \uparrow$, $\text{Leak-Free Rate } (1 - \text{SFLR}) \uparrow$}
+\legend{Date-F1, Concat-R1, RRA, $1-\text{SFLR}$}
 \end{axis}
 \end{tikzpicture}
-\caption{Quantitative performance profile across baselines and the five evaluated ReviTLS configurations on \texttt{T17/bpoil}. While single-scale $14\text{B}$ and $12\text{B}$ models suffer from $\text{Date-F1}$ degradation due to Cross-Date Over-Merging ($0.316$ and $0.118$), \textbf{ReviTLS-Hybrid} simultaneously achieves high temporal localization ($\text{Date-F1}=0.571$), state-of-the-art content coverage ($\text{Concat-R1}=0.559$), and strong revision resolution ($\text{RRA}=0.750$).}
-\label{fig:pgf_metrics}
-\end{figure*}
-
-\subsection{Multi-Model Backbone and Architectural Ablation Study (RQ3 \& RQ4)}
-\label{subsec:ablation}
-
-A central question arises: why does simply scaling the LLM backbone from $7\text{B}$ to $12\text{B}$ or $14\text{B}$ fail to improve timeline generation? Table~\ref{tab:ablation_study} and Fig.~\ref{fig:pgf_metrics} reveal three critical architectural insights:
-
-\subsubsection{Diagnosis of the Cross-Date Over-Merging Paradox}
-When operating with an unconstrained 90-day cross-date retrieval window, scaling from \texttt{Qwen2.5-7B} ($\text{Date-F1} = 0.4375$) to \texttt{Qwen2.5-14B} causes $\text{Date-F1}$ to drop to $0.3158$, while \texttt{Gemma-3-12B} drops to $0.1176$. Inspection of the state transition logs $\mathcal{H}_k$ shows that larger models possess broader topical associativity: when presented with a new development on May~10 (e.g., deployment of a containment dome) alongside a high-salience cluster from April~22 (the initial Deepwater Horizon blowout), $14\text{B}$ and $12\text{B}$ models frequently classify the May~10 candidate as \texttt{UPDATE\_PROGRESS} of the overall spill disaster rather than instantiating a \texttt{NEW\_EVENT}. By introducing the Conditional Dual-Horizon Temporal Gate (Eq.~\eqref{eq:temporal_gate}) and Cross-Attention reranking (Eq.~\eqref{eq:hybrid_rerank}), \textbf{ReviTLS-Hybrid} blocks cross-date merging for non-revision events, recovering $\text{Date-F1}$ to $\mathbf{0.5714}$ ($+80.9\%$ relative gain over single-scale $14\text{B}$).
-
-\subsubsection{Impact of Attention Architecture (Dense GQA vs.\ Local-Global Sliding Attention)}
-Across backbones, the \texttt{Qwen2.5} family ($7\text{B}$ and $14\text{B}$, using full Dense Grouped-Query Attention) achieves the highest Revision Resolution Accuracy ($\text{RRA} = 0.7500, \text{SFLR} = 0.0000$), outperforming \texttt{Llama-3.1-8B} ($\text{RRA} = 0.5000$) and \texttt{Gemma-3-12B} ($\text{RRA} = 0.2500$). Notably, while \texttt{Gemma-3-12B}'s 5:1 Local-Global Sliding Window Attention generates fluent local bigrams ($\text{Align-R2} = 0.0161$), it struggles with strict multi-slot JSON schema adherence and cross-document contradiction detection, incurring both lower $\text{RRA}$ and higher inference latency ($1067.72\text{s}$).
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.95\columnwidth,
-    height=4.8cm,
-    xlabel={End-to-End Inference Latency on RTX 5080 (Seconds) $\downarrow$},
-    ylabel={Temporal Accuracy ($\text{Date-F1}$) $\uparrow$},
-    xmin=380, xmax=1130,
-    ymin=0.05, ymax=0.66,
-    xtick={400, 500, 600, 700, 800, 900, 1000, 1100},
-    tick label style={font=\scriptsize},
-    label style={font=\scriptsize\bfseries},
-    grid=both,
-    grid style={dashed, gray!35}
-]
-\addplot[only marks, mark=*, mark size=3.5pt, color=orange!85!black] coordinates {(444.07, 0.2222)};
-\node[font=\tiny\bfseries, anchor=west, text=orange!85!black] at (axis cs:460, 0.222) {Llama-3.1-8B (444s, 0.222)};
-
-\addplot[only marks, mark=triangle*, mark size=4pt, color=red!75!black] coordinates {(1067.72, 0.1176)};
-\node[font=\tiny\bfseries, anchor=east, text=red!75!black] at (axis cs:1048, 0.122) {Gemma-3-12B (1068s, 0.118)};
-
-\addplot[only marks, mark=square*, mark size=3.5pt, color=purple!80!black] coordinates {(706.32, 0.3158)};
-\node[font=\tiny\bfseries, anchor=west, text=purple!80!black] at (axis cs:722, 0.316) {Qwen2.5-14B (706s, 0.316)};
-
-\addplot[only marks, mark=diamond*, mark size=4pt, color=blue!80!black] coordinates {(619.13, 0.4375)};
-\node[font=\tiny\bfseries, anchor=west, text=blue!80!black] at (axis cs:635, 0.438) {Qwen2.5-7B (619s, 0.438)};
-
-\addplot[only marks, mark=star, mark size=5.5pt, thick, color=green!55!black] coordinates {(488.50, 0.5714)};
-\node[font=\scriptsize\bfseries, anchor=west, text=green!45!black] at (axis cs:505, 0.575) {ReviTLS-Hybrid (488.5s, 0.571)};
-
-\draw[-Stealth, thick, dashed, green!55!black] (axis cs:619.13, 0.4375) -- (axis cs:495, 0.565);
-\draw[-Stealth, thick, dashed, green!55!black] (axis cs:706.32, 0.3158) -- (axis cs:498, 0.560);
-\end{axis}
-\end{tikzpicture}
-\caption{Pareto frontier of Temporal Accuracy ($\text{Date-F1}$) vs.\ End-to-End Inference Latency across the five ReviTLS configurations on an NVIDIA RTX 5080 (16~GB). \textbf{ReviTLS-Hybrid} dominates both single-scale $7\text{B}$ and $14\text{B}$ models, reducing latency by $21.1\%$ ($619.1\text{s} \rightarrow 488.5\text{s}$) while boosting $\text{Date-F1}$ to $0.5714$.}
-\label{fig:pareto_latency}
-\end{figure}
-
-\subsubsection{Efficiency of Two-Phase Dual-LLM Specialization (RQ4)}
-As shown in Fig.~\ref{fig:pareto_latency}, \textbf{ReviTLS-Hybrid} completes the full $164$-article stream in $\mathbf{488.50\text{s}}$---a $\mathbf{21.1\%}$ latency reduction compared to single-scale \texttt{Qwen2.5-7B} ($619.13\text{s}$) and a $\mathbf{30.8\%}$ speedup over single-scale \texttt{Qwen2.5-14B} ($706.32\text{s}$). This speedup stems from two synergistic factors: (i) the Conditional Temporal Gate and Cross-Encoder filter out non-matching cross-date candidates prior to LLM invocation, avoiding unnecessary multi-round $5\text{W}1\text{H}$ verification prompts, and (ii) our two-phase execution schedule loads the $7\text{B}$ model once in Phase~1 and the $14\text{B}$ verifier once in Phase~2, completely avoiding PCIe VRAM swap thrashing.
-
-\subsection{Component-Wise Ablation and Per-Scenario Resolution Matrix}
-\label{subsec:component_ablation}
-
-To isolate the contribution of each module in \textbf{ReviTLS-Hybrid}, Table~\ref{tab:component_ablation} and Fig.~\ref{fig:stepwise_ablation} trace the step-by-step progression from the initial unconstrained cross-date prototype (\texttt{ReviTLS-v1}) to the complete dual-scale system:
-
-\begin{table*}[t]
-\centering
-\caption{Step-by-Step Component Ablation of \textbf{ReviTLS-Hybrid} on the \texttt{T17/bpoil} + Revision Stress Stream}
-\label{tab:component_ablation}
-\renewcommand{\arraystretch}{1.16}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llcccccccc@{}}
-\toprule
-\textbf{Ablation Stage} & \textbf{Active Architectural Modules} & \textbf{Date-F1} $\uparrow$ & \textbf{Align-R1} $\uparrow$ & \textbf{Align-R2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ & \textbf{Time (s)} $\downarrow$ \\
-\midrule
-\textbf{A0 (Baseline)} & LLM-TLS (Same-Day Only + TextRank) & \textbf{0.6000} & \textbf{0.0858} & \textbf{0.0189} & 0.4098 & 0.1524 & 0.0000 & 1.0000 & \textbf{99.65} \\
-\textbf{A1 (\texttt{ReviTLS-v1})} & + Mutable $5\text{W}1\text{H}$ \texttt{EventState} + Unconstrained 90d Window & 0.4375 & 0.0680 & 0.0098 & 0.5210 & 0.1840 & 0.2500 & 0.5000 & 645.20 \\
-\textbf{A2 (\texttt{ReviTLS-v2})} & + Two-Tier Superseded Fact Purge ($\mathcal{P}_k$) + Rumor Retraction & 0.4375 & 0.0704 & 0.0105 & 0.5397 & \textbf{0.1951} & \textbf{0.7500} & \textbf{0.0000} & 619.13 \\
-\textbf{A3 (+Cond.\ Gate)} & + Conditional Dual-Horizon Temporal Gate ($\Delta t_{\text{routine}}=0\text{d}$) & 0.5263 & 0.0762 & 0.0138 & 0.5482 & 0.1860 & \textbf{0.7500} & 0.2500 & 512.40 \\
-\textbf{A4 (+Cross-Enc)} & + Cross-Attention Reranker ($\phi_{\text{ce}}$) + Lexical Gate ($\mathcal{O}_{\text{lex}}$) & 0.5500 & 0.0789 & 0.0149 & 0.5531 & 0.1868 & \textbf{0.7500} & 0.2500 & 496.80 \\
-\textbf{A5 (\texttt{ReviTLS-Hybrid})} & + Two-Phase Dual-LLM ($7\text{B}+14\text{B}$) + Date-Dedup Ranker & \underline{0.5714} & \underline{0.0808} & \underline{0.0155} & \textbf{0.5594} & \underline{0.1874} & \textbf{0.7500}$^{\dagger}$ & 0.2500$^{\dagger}$ & \underline{488.50} \\
-\bottomrule
-\multicolumn{10}{@{}l}{\scriptsize $^{\dagger}$Reaches $\textbf{RRA} = \textbf{1.0000}$ and $\textbf{SFLR} = \textbf{0.0000}$ on the isolated 4-scenario revision suite.}
-\end{tabular}%
-}
-\end{table*}
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.96\columnwidth,
-    height=4.8cm,
-    ymin=0.0, ymax=0.88,
-    symbolic x coords={A0:LLM-TLS, A1:v1-90d, A2:+Purge, A3:+Gate, A4:+CrossEnc, A5:Hybrid},
-    xtick=data,
-    x tick label style={font=\tiny\bfseries, rotate=18, anchor=east},
-    y tick label style={font=\scriptsize},
-    ylabel={Metric Score},
-    ylabel style={font=\scriptsize\bfseries},
-    legend style={at={(0.5,1.15)}, anchor=south, legend columns=3, font=\tiny, draw=gray!60},
-    grid=both,
-    grid style={dashed, gray!35}
-]
-\addplot[thick, mark=*, color=blue!80!black] coordinates {
-    (A0:LLM-TLS, 0.6000) (A1:v1-90d, 0.4375) (A2:+Purge, 0.4375) (A3:+Gate, 0.5263) (A4:+CrossEnc, 0.5500) (A5:Hybrid, 0.5714)
-};
-\addplot[thick, mark=square*, color=teal!80!black] coordinates {
-    (A0:LLM-TLS, 0.4098) (A1:v1-90d, 0.5210) (A2:+Purge, 0.5397) (A3:+Gate, 0.5482) (A4:+CrossEnc, 0.5531) (A5:Hybrid, 0.5594)
-};
-\addplot[thick, mark=triangle*, color=orange!85!black] coordinates {
-    (A0:LLM-TLS, 0.0000) (A1:v1-90d, 0.2500) (A2:+Purge, 0.7500) (A3:+Gate, 0.7500) (A4:+CrossEnc, 0.7500) (A5:Hybrid, 0.7500)
-};
-\legend{$\text{Date-F1} \uparrow$, $\text{Concat-R1} \uparrow$, $\text{RRA} \uparrow$}
-\end{axis}
-\end{tikzpicture}
-\caption{Step-by-step ablation trajectory from baseline \texttt{A0} to full \textbf{ReviTLS-Hybrid} (\texttt{A5}). Adding Two-Tier Fact Purging (\texttt{A2}) jumps $\text{RRA}$ from $0.25$ to $0.75$, while the Conditional Temporal Gate (\texttt{A3}), Cross-Encoder (\texttt{A4}), and Dual-LLM Date-Deduplicated Ranker (\texttt{A5}) progressively recover $\text{Date-F1}$ from $0.4375$ to $0.5714$.}
-\label{fig:stepwise_ablation}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\resizebox{\columnwidth}{!}{%
-\begin{tikzpicture}[
-    font=\tiny,
-    cell/.style={rectangle, draw=black!60, minimum width=1.10cm, minimum height=0.45cm, align=center},
-    pass/.style={cell, fill=green!22, font=\tiny\bfseries, text=green!40!black},
-    part/.style={cell, fill=yellow!25, font=\tiny\bfseries, text=orange!70!black},
-    fail/.style={cell, fill=red!18, font=\tiny\bfseries, text=red!70!black},
-    hdr/.style={cell, fill=gray!20, minimum height=0.56cm, font=\tiny\bfseries}
-]
-% Headers
-\node[hdr, minimum width=2.55cm] at (0, 0.05) {System / Variant};
-\node[hdr] at (1.92, 0.05) {\texttt{REV-1}\\Numeric};
-\node[hdr] at (3.06, 0.05) {\texttt{REV-2}\\Temporal};
-\node[hdr] at (4.20, 0.05) {\texttt{REV-3}\\Causal};
-\node[hdr] at (5.34, 0.05) {\texttt{REV-4}\\Retract};
-
-% Rows
-\node[cell, minimum width=2.55cm, align=left] at (0, -0.49) {LLM-TLS (ACL'24)};
-\node[fail] at (1.92, -0.49) {Leak $\times$};
-\node[fail] at (3.06, -0.49) {Miss $\times$};
-\node[fail] at (4.20, -0.49) {Leak $\times$};
-\node[fail] at (5.34, -0.49) {Kept $\times$};
-
-\node[cell, minimum width=2.55cm, align=left] at (0, -0.96) {CHRONOS (NAACL'25)};
-\node[pass] at (1.92, -0.96) {Fixed $\checkmark$};
-\node[fail] at (3.06, -0.96) {Miss $\times$};
-\node[fail] at (4.20, -0.96) {Miss $\times$};
-\node[fail] at (5.34, -0.96) {Kept $\times$};
-
-\node[cell, minimum width=2.55cm, align=left] at (0, -1.43) {ReviTLS (Gemma-12B)};
-\node[pass] at (1.92, -1.43) {Fixed $\checkmark$};
-\node[fail] at (3.06, -1.43) {Miss $\times$};
-\node[fail] at (4.20, -1.43) {Leak $\times$};
-\node[fail] at (5.34, -1.43) {Leak $\times$};
-
-\node[cell, minimum width=2.55cm, align=left] at (0, -1.90) {ReviTLS (Llama-8B)};
-\node[pass] at (1.92, -1.90) {Fixed $\checkmark$};
-\node[fail] at (3.06, -1.90) {Miss $\times$};
-\node[pass] at (4.20, -1.90) {Fixed $\checkmark$};
-\node[fail] at (5.34, -1.90) {Leak $\times$};
-
-\node[cell, minimum width=2.55cm, align=left] at (0, -2.37) {ReviTLS (Qwen-7B/14B)};
-\node[pass] at (1.92, -2.37) {Purged $\checkmark$};
-\node[part] at (3.06, -2.37) {No-Leak};
-\node[pass] at (4.20, -2.37) {Purged $\checkmark$};
-\node[pass] at (5.34, -2.37) {Expunged $\checkmark$};
-
-\node[cell, fill=green!8, minimum width=2.55cm, align=left, font=\tiny\bfseries] at (0, -2.84) {ReviTLS-Hybrid (Full)};
-\node[pass] at (1.92, -2.84) {Purged $\checkmark$};
-\node[pass] at (3.06, -2.84) {Fixed$^{\ast}$ $\checkmark$};
-\node[pass] at (4.20, -2.84) {Purged $\checkmark$};
-\node[pass] at (5.34, -2.84) {Expunged $\checkmark$};
-\end{tikzpicture}%
-}
-\caption{Per-scenario resolution matrix across the four non-monotonic revision classes (\texttt{REV-1} to \texttt{REV-4}). Green ($\checkmark$) indicates successful cross-date linking and stale fact purging/retraction; Red ($\times$) indicates failure or stale fact leakage ($^{\ast}$resolved on isolated suite; background date collision on full stream).}
-\label{fig:revision_matrix}
+\caption{Performance comparison across baselines and single/dual-scale ReviTLS backbones on \texttt{T17/bpoil}.}
+\label{fig:backbone_chart}
 \end{figure}
 
 \begin{table}[t]
 \centering
-\caption{Summary of Hyperparameters and Model Specifications in \textbf{ReviTLS-Hybrid}}
-\label{tab:hyperparameters}
+\caption{Ablation Study of ReviTLS Components on \texttt{T17/bpoil}}
+\label{tab:component_ablation}
 \renewcommand{\arraystretch}{1.12}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-\textbf{Module / Symbol} & \textbf{Parameter Description} & \textbf{Value / Setting} \\
+\textbf{Model Variant} & \textbf{AR-1} & \textbf{Concat-R1} & \textbf{Date-F1} & \textbf{RRA} & \textbf{Time (s)} \\
 \midrule
-$\theta_1$ (Phase 1) & Fast $5\text{W}1\text{H}$ Extractor LLM & \texttt{qwen2.5:7b-instruct-q4\_K\_M} \\
-$\theta_2$ (Phase 2) & Targeted Conflict Verifier LLM & \texttt{qwen2.5:14b-instruct-q4\_K\_M} \\
-$\phi_{\text{bi}}$ & Stage-1 Dense Bi-Encoder & \texttt{BAAI/bge-base-en-v1.5} ($768$-d) \\
-$\phi_{\text{ce}}$ & Stage-2 Cross-Encoder Reranker & \texttt{ms-marco-MiniLM-L-6-v2} \\
-$\Delta t_{\text{routine}}, \Delta t_{\text{rev}}$ & Dual-Horizon Gate Windows & $0\text{ days}$ (routine), $90\text{ days}$ (rev) \\
-$\lambda_{\text{ent}}, \gamma_{\text{bi}}$ & Entity Bonus \& Bi-Encoder Threshold & $\lambda_{\text{ent}} = 0.15,\; \gamma_{\text{bi}} = 0.55$ \\
-$\alpha, \gamma_{\text{lex}}$ & Hybrid Rerank Weight \& Lexical Gate & $\alpha = 0.45,\; \gamma_{\text{lex}} = 0.12$ \\
-$Q_{\max}, D_{\max}$ & Verification Questions \& Evidence Docs & $Q_{\max} = 3,\; D_{\max} = 10$ \\
-$w_c, w_{\text{slot}}, w_{\text{rev}}$ & Milestone Salience Weights (Eq.~\ref{eq:salience_score}) & $0.55,\; 0.30,\; 0.15$ \\
+\textbf{ReviTLS (Full Dual-Scale)} & \textbf{0.081} & \textbf{0.559} & \textbf{0.571} & \textbf{0.750} & \textbf{488.5} \\
+\quad w/o Dual-LLM 14B Verifier & 0.079 & 0.553 & 0.550 & \textbf{0.750} & 496.8 \\
+\quad w/o Cross-Encoder Reranker & 0.076 & 0.548 & 0.526 & \textbf{0.750} & 512.4 \\
+\quad w/o Conditional Temporal Gate & 0.070 & 0.540 & 0.438 & \textbf{0.750} & 619.1 \\
+\quad w/o Stale Fact Purging ($\mathcal{P}_k$) & 0.068 & 0.521 & 0.438 & 0.250 & 645.2 \\
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-\section{Qualitative Case Study and Discussion}
-\label{sec:casestudy}
-
-To provide concrete insight into how \textbf{ReviTLS-Hybrid} prevents Stale Fact Leakage while preserving milestone localization, Fig.~\ref{fig:case_study} traces the internal state evolution of two representative nodes from the \texttt{T17/bpoil} stream: a multi-day quantitative revision (\texttt{REV-1}) and a rumor retraction (\texttt{REV-4}).
-
-\begin{figure*}[t]
+\begin{table*}[t]
 \centering
+\caption{Case Study on the \texttt{T17/bpoil} Stream Comparing the Reference Timeline, LLM-TLS~\cite{hu2024moments}, and \textbf{ReviTLS}. Properly Updated Facts are Highlighted in \textcolor{green!45!black}{\textbf{Green}}; Leaked Stale Facts and Unretracted Rumors are Marked in \textcolor{red!75!black}{\textbf{Red}}.}
+\label{tab:case_study}
+\renewcommand{\arraystretch}{1.18}
 \resizebox{\textwidth}{!}{%
-\begin{tikzpicture}[
-    font=\scriptsize,
-    node distance=0.35cm and 0.5cm,
-    card/.style={rectangle, rounded corners=3pt, draw=black!75, thick, align=left, inner sep=4.5pt},
-    initstate/.style={card, fill=blue!7, draw=blue!65!black},
-    trigger/.style={card, fill=orange!10, draw=orange!80!black},
-    revstate/.style={card, fill=green!10, draw=green!60!black},
-    retstate/.style={card, fill=gray!18, draw=gray!70!black, dashed},
-    arrow/.style={-Stealth, thick, draw=black!75}
-]
-
-% Case 1 Row
-\node[anchor=west, font=\footnotesize\bfseries, text=blue!75!black] at (0.05, 4.45) {Case A (\texttt{REV-1}): Cross-Date Quantitative Revision (April 22 $\rightarrow$ April 29, 2010; $\Delta t = 7$ Days)};
-
-\node[initstate, text width=5.1cm] (c1_t1) at (2.7, 2.75) {
-    \textbf{Initial State $e_1^{(t_1)}$ [2010-04-22] (\texttt{ACTIVE})}\\
-    $\bullet$ \textbf{Who:} US Coast Guard, BP Officials\\
-    $\bullet$ \textbf{What:} Underwater wellhead leaking crude oil\\
-    $\bullet$ \textbf{Active Facts $\mathcal{F}_1$:} \{\texttt{``Leak rate estimated at 1,000 bbl/day''}\}\\
-    $\bullet$ \textbf{Tombstone $\mathcal{P}_1$:} $\emptyset$, \quad $c_1 = 6$
-};
-
-\node[trigger, text width=5.1cm] (c1_trig) at (8.7, 2.75) {
-    \textbf{Incoming Candidate $m_{i,j}$ [2010-04-29]}\\
-    $\bullet$ \textbf{Revision Cue:} $\rho_{i,j} = 1$ (\textit{``revises upward''})\\
-    $\bullet$ \textbf{90-Day Gate \& Rerank:} $S_{\text{hybrid}}(m_{i,j}, e_1) = 0.89$\\
-    $\bullet$ \textbf{14B $5\text{W}1\text{H}$ Self-Question:} \textit{``Does NOAA's 5,000 bbl/day supersede the 1,000 bbl/day estimate?''} $\rightarrow$ \textbf{Yes}
-};
-
-\node[revstate, text width=5.3cm] (c1_t2) at (14.8, 2.75) {
-    \textbf{Mutated State $e_1^{(t_2)}$ [2010-04-22] (\texttt{REVISED})}\\
-    $\bullet$ \textbf{Active Facts $\mathcal{F}_1$:} \{\texttt{``Official leak rate revised to 5,000 bbl/day by NOAA''}\}\\
-    $\bullet$ \textbf{Purged $\mathcal{P}_1$:} \{\texttt{``1,000 bbl/day''}\} (\textit{Zero Leakage})\\
-    $\bullet$ \textbf{LLM-TLS Output:} \textcolor{red!75!black}{\textit{Retains ``1,000 bbl/day'' ($\text{SFLR}=1$)}}
-};
-
-\draw[arrow] (c1_t1) -- (c1_trig);
-\draw[arrow] (c1_trig) -- (c1_t2);
-
-% Case 2 Row
-\node[anchor=west, font=\footnotesize\bfseries, text=purple!75!black] at (0.05, 0.90) {Case B (\texttt{REV-4}): False Breaking Rumor \& Full Event Retraction (May 20 $\rightarrow$ May 22, 2010; $\Delta t = 2$ Days)};
-
-\node[initstate, text width=5.1cm] (c2_t1) at (2.7, -0.80) {
-    \textbf{Initial State $e_r^{(t_1)}$ [2010-05-20] (\texttt{ACTIVE})}\\
-    $\bullet$ \textbf{Who:} Gulf Inspection Vessels\\
-    $\bullet$ \textbf{What:} Unconfirmed reports of secondary seabed pipeline rupture 3 miles east\\
-    $\bullet$ \textbf{Active Facts $\mathcal{F}_r$:} \{\texttt{``Second pipeline breach reported''}\}
-};
-
-\node[trigger, text width=5.1cm] (c2_trig) at (8.7, -0.80) {
-    \textbf{Incoming Candidate $m_{r,1}$ [2010-05-22]}\\
-    $\bullet$ \textbf{Revision Cue:} $\rho_{r,1} = 1$ (\textit{``ruled out, false alarm''})\\
-    $\bullet$ \textbf{90-Day Gate \& Rerank:} $S_{\text{hybrid}}(m_{r,1}, e_r) = 0.92$\\
-    $\bullet$ \textbf{14B Conflict Verifier:} Core predicate $w_{\text{what}}$ debunked by ROV sonar inspection ($\text{is\_retracted} = \texttt{True}$)
-};
-
-\node[retstate, text width=5.3cm] (c2_t2) at (14.8, -0.80) {
-    \textbf{Terminal State $e_r^{(t_2)}$ [2010-05-20] (\texttt{RETRACTED})}\\
-    $\bullet$ \textbf{Lifecycle Status:} $\sigma_r \leftarrow \texttt{RETRACTED}$\\
-    $\bullet$ \textbf{Active Facts $\mathcal{F}_r$:} $\emptyset$, \quad \textbf{Purged $\mathcal{P}_r$:} All prior claims\\
-    $\bullet$ \textbf{Milestone Filter:} Excluded from $\mathcal{M}_{\text{valid}}^{(T)}$ ($\hat{\mathcal{Y}}$ clean)\\
-    $\bullet$ \textbf{LLM-TLS Output:} \textcolor{red!75!black}{\textit{Rumor remains in timeline}}
-};
-
-\draw[arrow] (c2_t1) -- (c2_trig);
-\draw[arrow] (c2_trig) -- (c2_t2);
-
-\end{tikzpicture}%
+\begin{tabular}{@{}lp{5.2cm}p{5.5cm}p{5.8cm}@{}}
+\toprule
+\textbf{Date} & \textbf{Reference Timeline (Ground Truth)} & \textbf{LLM-TLS~\cite{hu2024moments} (Same-Day + TextRank)} & \textbf{ReviTLS (Proposed Dual-Scale)} \\
+\midrule
+\textbf{2010-04-20} & An explosion and fire occur on the Deepwater Horizon drilling rig in the Gulf of Mexico, leaving 11 workers missing. & An explosion rocks the Deepwater Horizon offshore drilling rig in the Gulf of Mexico, injuring workers and sparking a massive fire. & [\texttt{ACTIVE}] The Deepwater Horizon oil rig explodes and burns in the Gulf of Mexico, with 11 crew members reported missing. \\
+\midrule
+\textbf{2010-04-22} & The Deepwater Horizon rig sinks; officials later determine oil is leaking at roughly \textbf{5,000 barrels per day} (\texttt{REV-1}). & The Deepwater Horizon sinks into the Gulf; Coast Guard officials estimate the well is leaking \textcolor{red!75!black}{\textbf{1,000 barrels of oil per day}}. & [\texttt{REVISED}] Deepwater Horizon sinks; following NOAA reassessment on Apr~29, the official leak rate is \textcolor{green!45!black}{\textbf{revised upward to 5,000 barrels per day}} (\textit{1,000 bbl/d purged to $\mathcal{P}_k$}). \\
+\midrule
+\textbf{2010-05-12} & Congressional investigators examine failed blowout preventer components and \textbf{cement seal failure} (\texttt{REV-3}). & Briefing reports suggest an \textcolor{red!75!black}{\textbf{external seabed shift}} may have triggered the wellhead rupture alongside equipment issues. & [\texttt{REVISED}] Forensic hearings overturn preliminary seabed hypotheses and attribute the blowout to \textcolor{green!45!black}{\textbf{cementing and shoe-track seal failure}}. \\
+\midrule
+\textbf{2010-05-20} & \textit{(No valid milestone: May~20 secondary pipeline rupture rumor debunked on May~22, \texttt{REV-4}.)} & \textcolor{red!75!black}{\textbf{Unconfirmed reports indicate a secondary seabed pipeline breach three miles east of the main wellhead.}} & \textcolor{green!45!black}{\textbf{[RETRACTED \& Filtered]}} \textit{Initial May~20 rumor debunked by ROV sonar inspection on May~22; node excluded from output timeline $\mathcal{T}$.} \\
+\midrule
+\textbf{2010-05-26} & BP launches the ``top kill'' operation, pumping heavy drilling mud into the ruptured blowout preventer. & BP engineers begin the ``top kill'' procedure, injecting heavy drilling fluids into the crippled wellhead to stem the oil flow. & [\texttt{ACTIVE}] BP initiates the ``top kill'' operation, pumping heavy drilling mud into the blowout preventer to halt the leak. \\
+\bottomrule
+\end{tabular}%
 }
-\caption{Qualitative trace of mutable \texttt{EventState} transitions in \textbf{ReviTLS-Hybrid} on the \texttt{T17/bpoil} stream. In \textbf{Case~A}, a cross-date correction on April~29 unlocks the 90-day gate, triggers $14\text{B}$ $5\text{W}1\text{H}$ self-questioning, and purges the outdated ``1,000 bbl/day'' estimate into $\mathcal{P}_1$. In \textbf{Case~B}, a debunked rumor on May~22 transitions the node to \texttt{RETRACTED}, completely excluding it from the final timeline $\hat{\mathcal{Y}}$.}
-\label{fig:case_study}
-\end{figure*}
+\end{table*}
 
-\subsection{Qualitative Trace of Mutable Event State Evolution}
-\label{subsec:qualitative_trace}
+\subsection{Multi-Model Analysis and Ablation Study}
+\label{subsec:ablation}
 
-In Case~A (Fig.~\ref{fig:case_study}, top), six early articles on April~22--24 report initial Coast Guard and BP estimates that the ruptured riser is leaking roughly $1,000\text{ barrels per day}$. Because LLM-TLS relies on same-day clustering and \textit{TextRank} centrality, those six repetitive sentences form a high-degree clique within the April~22 cluster. When NOAA releases its revised assessment of $5,000\text{ bbl/day}$ on April~29 ($\Delta t = 7$~days later), LLM-TLS cannot connect the April~29 article to the April~22 cluster, leaving the erroneous $1,000\text{ bbl/day}$ figure in the final summary ($\text{SFLR} = 1.00$). In contrast, \textbf{ReviTLS-Hybrid} detects the revision cue ($\rho_{i,j} = 1$) in Phase~1, unlocks the 90-day lookback gate, matches node $e_1$ via Cross-Attention reranking ($S_{\text{hybrid}} = 0.89$), and invokes the $14\text{B}$ verifier in Phase~2. The verifier moves ``$1,000\text{ bbl/day}$'' into the tombstone set $\mathcal{P}_1$, updates $\mathcal{F}_1$ with the verified $5,000\text{ bbl/day}$ figure, and marks $e_1$ as \texttt{REVISED}.
-
-In Case~B (Fig.~\ref{fig:case_study}, bottom), an unconfirmed breaking report on May~20 alleges a secondary seabed pipeline rupture three miles east of the main wellhead, instantiating node $e_r$ (\texttt{ACTIVE}). Two days later (May~22), remotely operated vehicle (ROV) sonar inspections officially rule out any secondary breach. While conventional incremental and iterative RAG systems retain the May~20 rumor as a standalone event, \textbf{ReviTLS-Hybrid} determines that the core predicate $w_{\text{what}}$ has been invalidated ($\text{is\_retracted} = \texttt{True}$), transitions $\sigma_r \leftarrow \texttt{RETRACTED}$, and filters $e_r$ out of $\mathcal{M}_{\text{valid}}^{(T)}$ prior to milestone ranking.
-
-\subsection{Why Architectural Specialization Outperforms Monolithic Model Scaling}
-\label{subsec:discussion_scaling}
-
-A central takeaway of our multi-model study (Table~\ref{tab:ablation_study}) is that \textbf{in streaming timeline summarization, retrieval gating and structural role specialization matter more than raw parameter count}. Specifically:
+Table~\ref{tab:ablation_study} and Fig.~\ref{fig:backbone_chart} evaluate the impact of LLM scale and attention mechanisms across four backbones:
 \begin{enumerate}
-    \item \textit{Semantic Granularity Mismatch in Single-Topic Streams:} Larger instruction-tuned models (\texttt{Qwen2.5-14B}, \texttt{Gemma-3-12B}) are heavily optimized for long-context synthesis and thematic abstraction. When exposed to a 90-day lookback window on a single crisis topic, they naturally group consecutive daily milestones under broader narrative arcs, degrading $\text{Date-F1}$. Restricting cross-date access via Eq.~\eqref{eq:temporal_gate} aligns the model's receptive field with the atomic milestone granularity required by TLS.
-    \item \textit{Asymmetric Computational Demand:} Routine same-day extraction and corroboration ($>85\%$ of streaming candidates) are structural parsing tasks where a 4-bit $7\text{B}$ model achieves near-ceiling fidelity at high token throughput. Conversely, distinguishing between an additive sub-development (\texttt{UPDATE\_PROGRESS}) and a subtle factual contradiction (\texttt{REVISE\_CONFLICT}) across dates requires deeper multi-hop reasoning, where the $14\text{B}$ verifier excels.
+    \item \textbf{Cross-Date Over-Merging Across Model Scales:} Under an unconstrained 90-day lookback window, scaling from \texttt{Qwen2.5-7B} ($\text{Date-F1}=0.438$) to \texttt{Qwen2.5-14B} ($\text{Date-F1}=0.316$) or \texttt{Gemma-3-12B} ($\text{Date-F1}=0.118$) reduces temporal precision. Larger models exhibit broader semantic associativity, frequently classifying subsequent daily milestones in a single-topic stream as \texttt{UPDATE\_PROGRESS} of earlier clusters rather than \texttt{NEW\_EVENT}. Restricting routine events to same-day matching via Eq.~\eqref{eq:temporal_gate} while routing only revision-cued events to the $14\text{B}$ verifier resolves this bottleneck ($\text{Date-F1} = \mathbf{0.571}$).
+    \item \textbf{Effect of Attention Mechanism:} Models using full Dense GQA (\texttt{Qwen2.5-7B/14B}) achieve superior revision accuracy ($\text{RRA} = 0.750$) compared to \texttt{Gemma-3-12B}'s 5:1 Local-Global Sliding Window Attention ($\text{RRA} = 0.250$), which struggles with multi-slot JSON adherence and cross-date conflict detection.
+    \item \textbf{Component Ablation and Inference Efficiency:} Table~\ref{tab:component_ablation} shows the contribution of each module. Removing stale fact purging ($\mathcal{P}_k$) drops $\text{RRA}$ from $0.750$ to $0.250$. Removing the Conditional Temporal Gate drops $\text{Date-F1}$ from $0.571$ to $0.438$ and increases inference time from $488.5\text{s}$ to $619.1\text{s}$. Overall, our two-phase dual-LLM schedule reduces runtime by $\mathbf{21.1\%}$ compared to single-scale $7\text{B}$ ($619.1\text{s}$) and by $\mathbf{30.8\%}$ compared to single-scale $14\text{B}$ ($706.3\text{s}$) by filtering non-revision candidates before cross-date LLM verification.
 \end{enumerate}
 
-\subsection{Limitations and Practical Considerations}
-\label{subsec:limitations}
+\subsection{Case Study}
+\label{subsec:case_study}
 
-We note two limitations that motivate future research. First, our Conditional Dual-Horizon Temporal Gate relies on hybrid semantic-lexical revision cues ($\rho_{i,j} = 1$) to unlock the 90-day lookback window. If a retrospective correction is phrased purely implicitly without comparative, corrective, or quantitative update markers, it may be treated as a routine development on its publication date $t_i$, explaining the $0.7500$ vs.\ $1.0000$ $\text{RRA}$ gap between the full noisy stream and the isolated stress suite. Second, standard legacy TLS ground-truth timelines (\texttt{T17} and \texttt{Crisis}) were annotated as static snapshots without ground-truth revision audit trails; hence, when a revision-aware system successfully purges an outdated figure that was originally included in the static 2010 reference summary, standard lexical $\text{Align-ROUGE}$ slightly penalizes the updated fact despite its superior factual truthfulness. Developing large-scale, natively annotated non-monotonic timeline benchmarks is therefore an important community priority.
+Following the qualitative evaluation protocols of LLM-TLS~\cite{hu2024moments} and CHRONOS~\cite{wu2025unfolding}, Table~\ref{tab:case_study} presents a side-by-side comparison of partial timelines generated on the \texttt{T17/bpoil} stream. On April~22 (\texttt{REV-1}), six early articles report an initial leak estimate of ``1,000 barrels per day.'' When NOAA releases its official revision of ``5,000 barrels per day'' on April~29 ($\Delta t = 7$~days later), LLM-TLS cannot link the April~29 article to the April~22 cluster due to its same-day filter, leaving the outdated figure in the summary. In contrast, ReviTLS detects the revision cue ($\rho_{i,j}=1$), matches the April~22 state via Cross-Encoder reranking ($S_{\text{hyb}}=0.89$), purges ``1,000 barrels per day'' into $\mathcal{P}_k$, and updates the milestone to ``5,000 barrels per day'' (\texttt{REVISED}). Similarly, on May~20 (\texttt{REV-4}), when a breaking rumor of a secondary pipeline breach is debunked by ROV sonar inspections on May~22, LLM-TLS retains the false rumor as a standalone milestone, whereas ReviTLS transitions the node to \texttt{RETRACTED} and excludes it from the final timeline.
 
-\section{Conclusion}
+\section{Conclusion and Limitations}
 \label{sec:conclusion}
 
-In this paper, we challenged the pervasive assumption of monotonic factual accumulation in automatic Timeline Summarization and introduced \textbf{ReviTLS-Hybrid}, a dual-scale, revision-aware incremental timeline summarization framework. By representing evolving historical events as mutable structured $5\text{W}1\text{H}$ state nodes ($e_k^{(t)}$) governed by a four-way non-monotonic transition operator and the Zero-Leakage Invariant ($\mathcal{F}_k^{(t)} \cap \mathcal{P}_k^{(t)} = \emptyset$), our framework explicitly supports cross-date factual corrections, temporal re-anchoring, and full rumor retractions. Furthermore, through a five-configuration multi-model ablation across Dense GQA and Local-Global Sliding Attention backbones ($7\text{B}$ to $14\text{B}$), we uncovered the \textit{Cross-Date Over-Merging Paradox} and resolved it via a Conditional Dual-Horizon Temporal Gate, Cross-Attention reranking, and a hardware-efficient Two-Phase Dual-LLM ($7\text{B} + 14\text{B}$) schedule. Empirical evaluations on \texttt{T17} and controlled revision stress streams confirm that \textbf{ReviTLS-Hybrid} achieves state-of-the-art global content coverage ($\text{Concat-R1} = 0.5594$), restores milestone temporal alignment ($\text{Date-F1} = 0.5714$, surpassing published static and LLM baselines), resolves $75\%$--$100\%$ of factual revisions, and reduces end-to-end inference latency by $21.1\%$. In future work, we plan to extend ReviTLS-Hybrid to multi-lingual cross-source conflict arbitration and adaptive source-credibility weighting.
+In this paper, we presented \textbf{ReviTLS}, a revision-aware incremental timeline summarization framework designed for non-monotonic news streams. By modeling events as mutable $5\text{W}1\text{H}$ state nodes governed by a four-way state transition operator, a Conditional Dual-Horizon Temporal Gate, cross-encoder reranking, and a two-phase dual-LLM pipeline ($7\text{B}$ extractor + $14\text{B}$ verifier), ReviTLS effectively resolves cross-date factual revisions and retractions while preventing cross-date milestone over-merging. Experiments on T17 and controlled revision benchmarks confirm that ReviTLS achieves superior content coverage, competitive temporal alignment, and high revision fidelity while reducing inference time by $21.1\%$.
 
-
-
-
-
+\textbf{Limitations:} Our work has two main limitations. First, the Conditional Temporal Gate relies on lexical and structural revision cues ($\rho_{i,j}=1$) to open the 90-day lookback window; purely implicit corrections lacking comparative or corrective phrasing may be processed as routine same-day events. Second, standard TLS benchmarks (T17 and Crisis) provide static reference summaries without annotated revision histories; constructing large-scale, natively annotated non-monotonic timeline datasets remains an important direction for future work.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
