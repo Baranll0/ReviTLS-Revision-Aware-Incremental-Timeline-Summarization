@@ -24,6 +24,8 @@ class RetrievalConfig(BaseModel):
     allow_cross_date: bool = True
     max_date_window_days: int = 90
     similarity_threshold: float = 0.45
+    strict_temporal_gate: bool = False
+    cross_encoder_model: str | None = None
 
 
 class VerifierConfig(BaseModel):
@@ -35,10 +37,12 @@ class VerifierConfig(BaseModel):
 class TimelineConfig(BaseModel):
     default_num_dates: int = 20
     exclude_retracted: bool = True
+    deduplicate_dates: bool = False
 
 
 class ReviTLSConfig(BaseModel):
     llm: LLMConfig = Field(default_factory=LLMConfig)
+    verifier_llm: LLMConfig | None = None
     embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
     retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
     verifier: VerifierConfig = Field(default_factory=VerifierConfig)

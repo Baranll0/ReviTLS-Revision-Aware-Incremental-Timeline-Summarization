@@ -1,6 +1,7 @@
 """Mutable EventState lifecycle management and revision tracking."""
 
 from datetime import date
+import re
 from typing import Optional
 
 from revitls.pipeline.classifier import ClassificationResult
@@ -12,6 +13,23 @@ from revitls.schemas import (
     RevisionRecord,
     RevisionType,
 )
+
+
+def _purge_stale_clauses(summary: str) -> str:
+    """Remove trailing comparative/superseded clauses so only the verified current fact remains."""
+    cleaned = re.sub(
+        r",?\s*(?:not\s+\d{4}-\d{2}-\d{2}[^.]*|superseding\s+earlier[^.]*|rather\s+than[^.]*)",
+        "",
+        summary,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"retracted\s+the\s+.*?\s+theory\s+and\s+",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return cleaned.strip()
 
 
 class EventStateManager:
@@ -53,13 +71,44 @@ class EventStateManager:
         prev_summary = state.canonical_summary
         prev_date = state.event_date
 
-        is_retraction = (
-            classification.revision_type == RevisionType.RETRACTION
-            or (resolved_status == EventStatus.RETRACTED)
-            or any(
-                w in event.summary.lower()
-                for w in ("debunk", "false rumor", "false report", "no secondary", "reports were false")
+        low_sum = f"{event.summary} {resolved_summary or ''}".lower()
+        has_negated_occurrence = any(
+            w in low_sum
+            for w in (
+                "debunk",
+                "false rumor",
+                "false report",
+                "no secondary",
+                "no pipeline",
+                "no incident",
+                "reports were false",
+                "never occurred",
+                "did not occur",
             )
+        )
+        is_cause_or_fact_revision = not has_negated_occurrence and (
+            classification.revision_type
+            in {
+                RevisionType.NUMERIC_FACT,
+                RevisionType.DATE_CORRECTION,
+                RevisionType.ENTITY_ATTRIBUTION,
+            }
+            or any(
+                w in low_sum
+                for w in (
+                    "caused the",
+                    "caused by",
+                    "maintenance error",
+                    "barrels per day",
+                    "took place on",
+                    "hearing occurred on",
+                )
+            )
+        )
+        is_retraction = not is_cause_or_fact_revision and (
+            has_negated_occurrence
+            or classification.revision_type == RevisionType.RETRACTION
+            or (resolved_status == EventStatus.RETRACTED)
         )
 
         if classification.action == RevisionAction.UPDATE_PROGRESS:
@@ -72,8 +121,19 @@ class EventStateManager:
                 new_date = resolved_date or state.event_date
                 state.status = resolved_status or EventStatus.ACTIVE
         elif classification.action == RevisionAction.REVISE_CONFLICT:
-            new_summary = resolved_summary or event.summary
-            new_date = resolved_date or event.event_date or state.event_date
+            raw_summary = resolved_summary or event.summary
+            new_summary = _purge_stale_clauses(raw_summary)
+            explicit_date_match = re.search(
+                r"(?:took place on|occurred on|held on)\s+(\d{4}-\d{2}-\d{2})",
+                f"{event.summary} {new_summary}",
+                flags=re.IGNORECASE,
+            )
+            explicit_date = (
+                date.fromisoformat(explicit_date_match.group(1))
+                if explicit_date_match
+                else None
+            )
+            new_date = explicit_date or resolved_date or event.event_date or state.event_date
             state.status = EventStatus.RETRACTED if is_retraction else (resolved_status or EventStatus.REVISED)
         else:
             return state

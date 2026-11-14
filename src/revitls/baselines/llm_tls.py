@@ -46,7 +46,11 @@ class TopicLLMTLSBaseline:
             f"Title: {article.title}\n"
             f"Content:\n{article.content[:3000]}"
         )
-        data = self.llm.complete_json(system, user)
+        default_sum = {"event_date": article.publish_date.isoformat(), "summary": article.title}
+        if hasattr(self.llm, "complete_json_safe"):
+            data = self.llm.complete_json_safe(system, user, default_sum)
+        else:
+            data = self.llm.complete_json(system, user)
         evt_date = article.publish_date
         if data.get("event_date"):
             try:
@@ -61,7 +65,10 @@ class TopicLLMTLSBaseline:
             "Return JSON: {\"same_event\": true/false}."
         )
         user = f"Topic: {topic}\nEvent 1 ({d1}): {s1}\nEvent 2 ({d2}): {s2}"
-        data = self.llm.complete_json(system, user)
+        if hasattr(self.llm, "complete_json_safe"):
+            data = self.llm.complete_json_safe(system, user, {"same_event": False})
+        else:
+            data = self.llm.complete_json(system, user)
         return bool(data.get("same_event", False))
 
     def run_stream(

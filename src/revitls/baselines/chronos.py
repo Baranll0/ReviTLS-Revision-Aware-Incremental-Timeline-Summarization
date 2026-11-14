@@ -33,42 +33,53 @@ class ClosedDomainCHRONOSBaseline:
         top_idx = np.argsort(sims)[::-1][: self.top_n]
         return [articles[int(i)] for i in top_idx]
 
+    def _call_json(self, system: str, user: str, default: dict) -> dict:
+        if hasattr(self.llm, "complete_json_safe"):
+            return self.llm.complete_json_safe(system, user, default)
+        return self.llm.complete_json(system, user)
+
     def _generate_questions(self, topic: str, docs: list[Article], asked: list[str]) -> list[str]:
         context = "\n".join(f"[{a.publish_date}] {a.title}: {a.content[:250]}" for a in docs[:10])
-        data = self.llm.complete_json(
+        data = self._call_json(
             "Propose non-overlapping factual 5W1H questions not yet answered by the news context. "
             "Return JSON: {\"questions\": [\"...\"]}.",
             f"Topic: {topic}\nAsked: {asked}\nContext:\n{context}",
+            {"questions": []},
         )
         return [str(q).strip() for q in data.get("questions", []) if str(q).strip()][:5]
 
     def _rewrite_query(self, question: str) -> list[str]:
-        data = self.llm.complete_json(
+        data = self._call_json(
             "Decompose the question into 2-3 focused search queries. Return JSON: {\"queries\": [\"...\"]}.",
             f"Question: {question}",
+            {"queries": [question]},
         )
         return [str(q).strip() for q in data.get("queries", []) if str(q).strip()][:3]
 
     def _round_timeline(self, topic: str, docs: list[Article]) -> list[dict[str, str]]:
         doc_block = "\n".join(f"[{a.publish_date}] {a.title}: {a.content[:350]}" for a in docs)
-        data = self.llm.complete_json(
+        data = self._call_json(
             "Extract significant milestone events with dates. Return JSON: "
             "{\"events\": [{\"start\": \"YYYY-MM-DD\", \"summary\": \"...\"}]}.",
             f"Topic: {topic}\nArticles:\n{doc_block}",
+            {"events": []},
         )
-        return list(data.get("events", []))
+        events = data.get("events", [])
+        return list(events) if isinstance(events, list) else []
 
     def _merge_timelines(
         self, topic: str, round_events: list[dict[str, str]], num_dates: int
     ) -> list[dict[str, str]]:
         # Follows Table 12 prompt in CHRONOS: preserve original dates, exclude later duplicates
-        data = self.llm.complete_json(
+        data = self._call_json(
             f"Merge the timelines chronologically, select top-{num_dates} events without changing "
             "the original date, and exclude duplicate events appearing in later dates. "
             "Return JSON: {\"events\": [{\"start\": \"YYYY-MM-DD\", \"summary\": \"...\"}]}.",
             f"Topic: {topic}\nEvents:\n{round_events}",
+            {"events": round_events[:num_dates]},
         )
-        return list(data.get("events", []))
+        events = data.get("events", [])
+        return list(events) if isinstance(events, list) else round_events[:num_dates]
 
     def run_stream(
         self,

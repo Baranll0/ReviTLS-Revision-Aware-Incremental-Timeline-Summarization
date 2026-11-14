@@ -66,22 +66,55 @@ class ReviTLSPipeline:
         config: ReviTLSConfig,
         llm: LLMProtocol,
         embedder: EmbedderProtocol,
+        verifier_llm: Optional[LLMProtocol] = None,
     ) -> None:
         self.config = config
         self.embedder = embedder
         self.memory = EventMemory(config.retrieval)
+        active_verifier_llm = verifier_llm or llm
         self.extractor = EventExtractor(llm)  # type: ignore[arg-type]
-        self.classifier = RevisionClassifier(llm)  # type: ignore[arg-type]
-        self.verifier = TargetedVerifier(llm, config.verifier)  # type: ignore[arg-type]
+        self.classifier = RevisionClassifier(active_verifier_llm)  # type: ignore[arg-type]
+        self.verifier = TargetedVerifier(active_verifier_llm, config.verifier)  # type: ignore[arg-type]
         self.state_mgr = EventStateManager()
         self.ranker = TimelineRanker(config.timeline)
         self._seen_articles: list[Article] = []
         self._cluster_seq = 0
+        self._cross_encoder = None
+        if config.retrieval.cross_encoder_model:
+            from sentence_transformers import CrossEncoder
 
-    def step(self, article: Article) -> EventState:
+            self._cross_encoder = CrossEncoder(
+                config.retrieval.cross_encoder_model,
+                device=config.embedding.device,
+            )
+
+    def _is_revision_candidate(self, article: Article, claim: ExtractedEvent) -> bool:
+        haystack = f"{article.title} {claim.summary}".lower()
+        return claim.is_correction_or_update or any(
+            w in haystack
+            for w in (
+                "revise",
+                "correction",
+                "correcting",
+                "clarif",
+                "retract",
+                "debunk",
+                "supersed",
+                "rule out",
+                "earlier report",
+                "previously stated",
+                "false",
+            )
+        )
+
+    def step(
+        self,
+        article: Article,
+        pre_extracted_claim: Optional[ExtractedEvent] = None,
+    ) -> EventState:
         """Process a single incoming article and update the evolving EventState graph."""
         self._seen_articles.append(article)
-        claim = self.extractor.extract(article)
+        claim = pre_extracted_claim or self.extractor.extract(article)
         vec = self.embedder.encode(claim.summary, normalize_embeddings=self.config.embedding.normalize)
         candidates = self.memory.search(
             vec,
@@ -89,9 +122,44 @@ class ReviTLSPipeline:
             entities=claim.entities,
         )
 
+        is_rev_cand = self._is_revision_candidate(article, claim)
+        if self.config.retrieval.strict_temporal_gate and not is_rev_cand:
+            candidates = [
+                (st, sc) for st, sc in candidates if st.event_date == claim.event_date
+            ]
+
+        if self._cross_encoder is not None and len(candidates) > 1:
+            import numpy as np
+
+            pairs = [(st.canonical_summary, claim.summary) for st, _ in candidates]
+            ce_scores = self._cross_encoder.predict(pairs)
+            art_tokens = {
+                tok.strip(".,:;()\"'").lower()
+                for tok in f"{article.title} {article.content[:600]}".split()
+                if len(tok.strip(".,:;()\"'")) >= 4
+            }
+            rescored = []
+            for (st, bi_sc), ce_sc in zip(candidates, ce_scores):
+                st_tokens = {
+                    tok.strip(".,:;()\"'").lower()
+                    for tok in st.canonical_summary.split()
+                    if len(tok.strip(".,:;()\"'")) >= 4
+                }
+                lex_overlap = len(art_tokens & st_tokens) / max(1, len(st_tokens))
+                ce_prob = float(1.0 / (1.0 + np.exp(-float(ce_sc))))
+                rescored.append((st, 0.65 * bi_sc + 0.20 * ce_prob + 0.15 * lex_overlap))
+            rescored.sort(key=lambda item: item[1], reverse=True)
+            candidates = rescored
+
         for state, _score in candidates:
             result = self.classifier.classify(claim, state)
             if result.action == RevisionAction.NEW_EVENT:
+                continue
+            if (
+                self.config.retrieval.strict_temporal_gate
+                and state.event_date != claim.event_date
+                and result.action != RevisionAction.REVISE_CONFLICT
+            ):
                 continue
 
             resolved_summary: Optional[str] = None
@@ -144,8 +212,17 @@ class ReviTLSPipeline:
         num_dates: Optional[int] = None,
     ) -> tuple[list[TimelineEntry], list[EventState]]:
         """Process an article collection in publication order and return timeline + final states."""
-        for article in sorted(articles, key=lambda a: (a.publish_date, a.article_id)):
-            self.step(article)
+        ordered = sorted(articles, key=lambda a: (a.publish_date, a.article_id))
+        if self.config.verifier_llm is not None:
+            # Two-phase Dual-LLM execution avoids model-swap thrashing in local Ollama VRAM:
+            # Phase 1: Fast structured event extraction on primary LLM
+            claims = [self.extractor.extract(art) for art in ordered]
+            # Phase 2: Incremental memory, Cross-Attention reranking & conflict verification on verifier_llm
+            for article, claim in zip(ordered, claims):
+                self.step(article, pre_extracted_claim=claim)
+        else:
+            for article in ordered:
+                self.step(article)
         states = self.memory.all_states()
         timeline = self.ranker.build_timeline(states, num_dates=num_dates)
         return timeline, states

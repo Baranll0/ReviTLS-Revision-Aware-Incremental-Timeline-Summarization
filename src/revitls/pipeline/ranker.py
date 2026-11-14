@@ -26,7 +26,20 @@ class TimelineRanker:
             verified_bonus = 1 if state.status == EventStatus.REVISED else 0
             return (state.corroboration_count + verified_bonus, len(state.supporting_article_ids))
 
-        top_states = sorted(candidates, key=prominence_score, reverse=True)[:target_l]
+        top_states_sorted = sorted(candidates, key=prominence_score, reverse=True)
+        if self.config.deduplicate_dates:
+            seen_dates: set[object] = set()
+            unique_date_states: list[EventState] = []
+            overflow_states: list[EventState] = []
+            for st in top_states_sorted:
+                if st.event_date not in seen_dates:
+                    seen_dates.add(st.event_date)
+                    unique_date_states.append(st)
+                else:
+                    overflow_states.append(st)
+            top_states = (unique_date_states + overflow_states)[:target_l]
+        else:
+            top_states = top_states_sorted[:target_l]
         top_states.sort(key=lambda s: s.event_date)  # chronological order
 
         return [

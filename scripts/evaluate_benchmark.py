@@ -56,10 +56,11 @@ def evaluate_single_run(
         target_l = max(1, round(sum(len(r) for r in refs) / len(refs)))
     target_l = target_l or cfg.timeline.default_num_dates
 
+    verifier_llm = LLMClient(cfg.verifier_llm) if cfg.verifier_llm else None
     runners = [
         ("LLM-TLS (Topic)", TopicLLMTLSBaseline(llm=llm, embedder=embedder)),
         ("CHRONOS (Closed)", ClosedDomainCHRONOSBaseline(llm=llm, embedder=embedder)),
-        ("ReviTLS (Ours)", ReviTLSPipeline(cfg, llm=llm, embedder=embedder)),
+        ("ReviTLS (Ours)", ReviTLSPipeline(cfg, llm=llm, embedder=embedder, verifier_llm=verifier_llm)),
     ]
 
     rows: list[dict[str, object]] = []

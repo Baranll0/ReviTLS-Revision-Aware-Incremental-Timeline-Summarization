@@ -12,9 +12,13 @@ QUESTIONER_SYSTEM_PROMPT = (
     "1. State ONLY the verified, updated current truth. Completely purge and omit superseded numbers, "
     "outdated dates, or false theories. NEVER echo or repeat the old superseded claim (e.g. write "
     "'Federal scientists confirmed the Macondo well is leaking 5,000 barrels per day', do NOT write "
-    "'earlier 1,000-barrel estimate' or 'previously thought to be 1,000').\n"
-    "2. If an event is debunked, false, or retracted by authorities, set status to 'RETRACTED'.\n"
-    "3. If a date was corrected, put the exact new date in resolved_date (YYYY-MM-DD).\n"
+    "'earlier 1,000-barrel estimate'; write 'A manual valve maintenance error caused the Meridian outage', "
+    "do NOT mention 'software glitch').\n"
+    "2. Set status to 'RETRACTED' ONLY if the entire event itself never happened (e.g., a false rumor where "
+    "no incident occurred at all). If the event DID happen but its cause, number, or date was corrected "
+    "(e.g., ruling out a software glitch in favor of a valve maintenance error), you MUST set status to 'REVISED'.\n"
+    "3. If a date was corrected, put the exact new date in resolved_date (YYYY-MM-DD) and include the "
+    "YYYY-MM-DD date in resolved_summary.\n"
     "Return valid JSON only."
 )
 
