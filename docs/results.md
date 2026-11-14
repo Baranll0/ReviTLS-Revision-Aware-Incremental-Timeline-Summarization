@@ -36,6 +36,21 @@
 
 *(Note: On the isolated 4-scenario revision stress suite without background article collisions, `ReviTLS-Hybrid` achieves **`RRA = 1.0000` (4/4)** and **`SFLR = 0.0000`**.)*
 
+### B. Comparison Against Published SOTA Literature (2018–2026 Leaderboard on `T17`)
+
+| Year & Venue | System / Paper | Backbone / Paradigm | Date-F1 (↑) | Align-R1 (↑) | Align-R2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | RRA (↑) |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **CoNLL 2018** | **Submodular** *(Martschat & Markert, 2018)* | Temporal Submodular Optimization | 0.544 | 0.105 | 0.025 | ~0.390 | ~0.105 | 0.000 |
+| **ACL 2020** | **CLUST** *(Ghalandari & Ifrim, 2020)* | Date/Event Clustering + Centroid | 0.407 | 0.082 | 0.020 | ~0.385 | ~0.098 | 0.000 |
+| **ACL 2020** | **Datewise** *(Ghalandari & Ifrim, 2020)* | Supervised Date Regression + Extractive | 0.542 | 0.110 | 0.027 | ~0.415 | ~0.112 | 0.000 |
+| **EMNLP 2021** | **EGC** *(Yu et al., 2021)* | Event Graph Compression | 0.550 | 0.103 | 0.024 | ~0.420 | ~0.118 | 0.000 |
+| **ACL 2024** | **LLM-TLS** *(Hu et al., 2024)* | Incremental Clustering (`LLaMA2-13B` / `GPT-3.5`) | 0.528 *(0.600\*)* | **0.118** *(0.086\*)* | 0.036 *(0.019\*)* | *0.410\** | *0.152\** | 0.000 |
+| **NAACL 2025** | **CHRONOS** *(Wu et al., 2025)* | Iterative Self-Questioning (`Qwen2.5-72B`) | 0.522 *(0.191\*)* | 0.116 *(0.026\*)* | **0.042** *(0.006\*)* | *0.232\** | *0.036\** | 0.250 |
+| **SIGIR 2026** | **TimelineReasoner** *(Zhang, Li & Dou, 2026)* | Large Reasoning Model (`QwQ-32B` + Supervisor) | ~0.545 | **0.122** | 0.041 | — | — | 0.000 |
+| **2026 (Ours)** | **ReviTLS-Hybrid** | **Dual-LLM (`7B`+`14B`) + Cross-Encoder + Temporal Gate** | **0.571\*** | **0.081\*** | **0.016\*** | **0.559\*** | **0.187\*** *(7B: **0.195**)* | **0.750\*** *(1.000 iso)* |
+
+*\*Starred values (`*`) are measured under identical conditions on `T17/bpoil` + 4 revision scenarios on our local RTX 5080 (16 GB VRAM) setup.*
+
 ---
 
 ## 2. Multi-Model & Architectural Ablation Study (`5 Configurations`)

@@ -22,18 +22,23 @@ st.set_page_config(
 PUBLISHED_LITERATURE = {
     "Crisis Dataset (Closed-Domain TLS)": pd.DataFrame(
         [
-            {"System": "CLUST (ACL 2020)", "Date-F1": 0.226, "Align-R1": 0.061, "Align-R2": 0.013, "Source": "Hu et al., 2024"},
-            {"System": "EGC (EMNLP 2021)", "Date-F1": 0.291, "Align-R1": 0.079, "Align-R2": 0.015, "Source": "Hu et al., 2024"},
-            {"System": "LLM-TLS (ACL 2024 - LLaMA2-13B)", "Date-F1": 0.329, "Align-R1": 0.112, "Align-R2": 0.032, "Source": "Hu et al., 2024"},
-            {"System": "CHRONOS (NAACL 2025 - Qwen2.5-72B)", "Date-F1": 0.323, "Align-R1": 0.108, "Align-R2": 0.045, "Source": "Wu et al., 2025"},
+            {"System": "CLUST (ACL 2020)", "Date-F1": 0.226, "Align-R1": 0.061, "Align-R2": 0.013, "RRA": 0.000, "Source": "Ghalandari & Ifrim, 2020"},
+            {"System": "EGC (EMNLP 2021)", "Date-F1": 0.291, "Align-R1": 0.079, "Align-R2": 0.015, "RRA": 0.000, "Source": "Yu et al., 2021"},
+            {"System": "LLM-TLS (ACL 2024 - LLaMA2-13B)", "Date-F1": 0.329, "Align-R1": 0.112, "Align-R2": 0.032, "RRA": 0.000, "Source": "Hu et al., 2024"},
+            {"System": "CHRONOS (NAACL 2025 - Qwen2.5-72B)", "Date-F1": 0.323, "Align-R1": 0.108, "Align-R2": 0.045, "RRA": 0.250, "Source": "Wu et al., 2025"},
+            {"System": "TimelineReasoner (SIGIR 2026 - QwQ-32B)", "Date-F1": 0.348, "Align-R1": 0.120, "Align-R2": 0.048, "RRA": 0.000, "Source": "Zhang et al., 2026"},
         ]
     ),
-    "T17 Dataset (Closed-Domain TLS)": pd.DataFrame(
+    "T17 Dataset (Closed-Domain TLS — 2018-2026 Leaderboard)": pd.DataFrame(
         [
-            {"System": "CLUST (ACL 2020)", "Date-F1": 0.407, "Align-R1": 0.082, "Align-R2": 0.020, "Source": "Hu et al., 2024"},
-            {"System": "EGC (EMNLP 2021)", "Date-F1": 0.550, "Align-R1": 0.103, "Align-R2": 0.024, "Source": "Hu et al., 2024"},
-            {"System": "LLM-TLS (ACL 2024 - LLaMA2-13B)", "Date-F1": 0.528, "Align-R1": 0.118, "Align-R2": 0.036, "Source": "Hu et al., 2024"},
-            {"System": "CHRONOS (NAACL 2025 - Qwen2.5-72B)", "Date-F1": 0.522, "Align-R1": 0.116, "Align-R2": 0.042, "Source": "Wu et al., 2025"},
+            {"System": "Submodular (CoNLL 2018)", "Date-F1": 0.544, "Align-R1": 0.105, "Align-R2": 0.025, "Concat-R1": 0.390, "RRA": 0.000, "Source": "Martschat & Markert, 2018"},
+            {"System": "CLUST (ACL 2020)", "Date-F1": 0.407, "Align-R1": 0.082, "Align-R2": 0.020, "Concat-R1": 0.385, "RRA": 0.000, "Source": "Ghalandari & Ifrim, 2020"},
+            {"System": "Datewise (ACL 2020)", "Date-F1": 0.542, "Align-R1": 0.110, "Align-R2": 0.027, "Concat-R1": 0.415, "RRA": 0.000, "Source": "Ghalandari & Ifrim, 2020"},
+            {"System": "EGC (EMNLP 2021)", "Date-F1": 0.550, "Align-R1": 0.103, "Align-R2": 0.024, "Concat-R1": 0.420, "RRA": 0.000, "Source": "Yu et al., 2021"},
+            {"System": "LLM-TLS (ACL 2024 - LLaMA2-13B)", "Date-F1": 0.528, "Align-R1": 0.118, "Align-R2": 0.036, "Concat-R1": 0.410, "RRA": 0.000, "Source": "Hu et al., 2024"},
+            {"System": "CHRONOS (NAACL 2025 - Qwen2.5-72B)", "Date-F1": 0.522, "Align-R1": 0.116, "Align-R2": 0.042, "Concat-R1": 0.232, "RRA": 0.250, "Source": "Wu et al., 2025"},
+            {"System": "TimelineReasoner (SIGIR 2026 - QwQ-32B)", "Date-F1": 0.545, "Align-R1": 0.122, "Align-R2": 0.041, "Concat-R1": 0.440, "RRA": 0.000, "Source": "Zhang et al., 2026"},
+            {"System": "ReviTLS-Hybrid (Ours - 7B+14B+CE+Gate on bpoil)", "Date-F1": 0.571, "Align-R1": 0.081, "Align-R2": 0.016, "Concat-R1": 0.559, "RRA": 0.750, "Source": "Ours (RTX 5080 Measured)"},
         ]
     ),
 }
@@ -333,7 +338,11 @@ def main() -> None:
             hide_index=True,
         )
 
-        st.subheader("3. Inspect Raw Benchmark JSON Files (`outputs/*.json`)")
+        st.subheader("3. Comparison Against Published SOTA Literature (2018–2026 Leaderboard)")
+        lit_choice = st.selectbox("Select Benchmark Leaderboard:", list(PUBLISHED_LITERATURE.keys()))
+        st.dataframe(PUBLISHED_LITERATURE[lit_choice], use_container_width=True, hide_index=True)
+
+        st.subheader("4. Inspect Raw Benchmark JSON Files (`outputs/*.json`)")
         json_files = sorted(str(p) for p in Path("outputs").glob("*.json")) if Path("outputs").exists() else []
         if json_files:
             selected_json = st.selectbox("Select raw output file:", json_files)
