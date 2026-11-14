@@ -19,7 +19,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Reference data from published literature for side-by-side comparison
 PUBLISHED_LITERATURE = {
     "Crisis Dataset (Closed-Domain TLS)": pd.DataFrame(
         [
@@ -45,37 +44,102 @@ PARADIGM_COMPARISON = pd.DataFrame(
             "Feature": "Execution Mode",
             "LLM-TLS (ACL 2024)": "Streaming / Incremental",
             "CHRONOS (NAACL 2025)": "Static / Batch RAG rounds",
-            "ReviTLS (Ours)": "Streaming / Incremental",
+            "ReviTLS & ReviTLS-Hybrid (Ours)": "Streaming / Dual-Stage Incremental",
         },
         {
             "Feature": "Memory & Event Nodes",
             "LLM-TLS (ACL 2024)": "Static immutable nodes",
             "CHRONOS (NAACL 2025)": "Stateless round timelines",
-            "ReviTLS (Ours)": "Mutable EventState + Audit Log",
+            "ReviTLS & ReviTLS-Hybrid (Ours)": "Mutable EventState + Audit Log",
         },
         {
-            "Feature": "Candidate Retrieval",
+            "Feature": "Candidate Retrieval & Gating",
             "LLM-TLS (ACL 2024)": "Strict same-date heuristic",
             "CHRONOS (NAACL 2025)": "Global BM25 / Elastic chunks",
-            "ReviTLS (Ours)": "Cross-date (90d) + Entity overlap",
+            "ReviTLS & ReviTLS-Hybrid (Ours)": "Strict Same-Day Gate + 90d Revision Gate + Cross-Encoder",
         },
         {
             "Feature": "Update / Conflict Logic",
             "LLM-TLS (ACL 2024)": "Binary ISSAMEEVENT + TextRank",
             "CHRONOS (NAACL 2025)": "Table 12 Blind deduplication",
-            "ReviTLS (Ours)": "4-Way Classification + Targeted Verifier",
+            "ReviTLS & ReviTLS-Hybrid (Ours)": "4-Way Classification + 14B Targeted Verifier",
         },
         {
             "Feature": "Superseded Facts",
             "LLM-TLS (ACL 2024)": "Retained via TextRank popularity",
             "CHRONOS (NAACL 2025)": "Retained if repeated in rounds",
-            "ReviTLS (Ours)": "Explicitly purged on resolution",
+            "ReviTLS & ReviTLS-Hybrid (Ours)": "Explicitly purged on resolution",
         },
         {
             "Feature": "False Rumors & Retractions",
             "LLM-TLS (ACL 2024)": "Cannot retract",
             "CHRONOS (NAACL 2025)": "Cannot retract",
-            "ReviTLS (Ours)": "Marked RETRACTED and filtered",
+            "ReviTLS & ReviTLS-Hybrid (Ours)": "Marked RETRACTED and filtered",
+        },
+    ]
+)
+
+MULTI_MODEL_ABLATION = pd.DataFrame(
+    [
+        {
+            "Backbone / Architecture": "Qwen2.5-7B-Instruct",
+            "Attention / Paradigm": "Dense GQA (7B)",
+            "Date-F1": 0.4375,
+            "Align-R1": 0.0704,
+            "Align-R2": 0.0105,
+            "Concat-R1": 0.5397,
+            "Concat-R2": 0.1951,
+            "RRA (↑)": 0.7500,
+            "SFLR (↓)": 0.0000,
+            "Time (s)": 619.1,
+        },
+        {
+            "Backbone / Architecture": "Llama-3.1-8B-Instruct",
+            "Attention / Paradigm": "Dense GQA (8B)",
+            "Date-F1": 0.2222,
+            "Align-R1": 0.0501,
+            "Align-R2": 0.0091,
+            "Concat-R1": 0.3116,
+            "Concat-R2": 0.0487,
+            "RRA (↑)": 0.5000,
+            "SFLR (↓)": 0.2500,
+            "Time (s)": 444.1,
+        },
+        {
+            "Backbone / Architecture": "Gemma-3-12B",
+            "Attention / Paradigm": "5:1 Local-Global Sliding Attention (12B)",
+            "Date-F1": 0.1176,
+            "Align-R1": 0.0438,
+            "Align-R2": 0.0161,
+            "Concat-R1": 0.3874,
+            "Concat-R2": 0.0758,
+            "RRA (↑)": 0.2500,
+            "SFLR (↓)": 0.5000,
+            "Time (s)": 1067.7,
+        },
+        {
+            "Backbone / Architecture": "Qwen2.5-14B-Instruct",
+            "Attention / Paradigm": "Dense GQA (14B)",
+            "Date-F1": 0.3158,
+            "Align-R1": 0.0385,
+            "Align-R2": 0.0056,
+            "Concat-R1": 0.4427,
+            "Concat-R2": 0.1651,
+            "RRA (↑)": 0.7500,
+            "SFLR (↓)": 0.0000,
+            "Time (s)": 706.3,
+        },
+        {
+            "Backbone / Architecture": "ReviTLS-Hybrid (7B+14B+CE+Gate)",
+            "Attention / Paradigm": "Dual-LLM + Cross-Encoder + Temporal Gate",
+            "Date-F1": 0.5714,
+            "Align-R1": 0.0808,
+            "Align-R2": 0.0155,
+            "Concat-R1": 0.5594,
+            "Concat-R2": 0.1874,
+            "RRA (↑)": 0.7500,
+            "SFLR (↓)": 0.2500,
+            "Time (s)": 488.5,
         },
     ]
 )
@@ -125,14 +189,14 @@ def _render_states(states: list[EventState], show_retracted: bool) -> None:
 def main() -> None:
     st.title("⏱️ ReviTLS: Revision-Aware Incremental Timeline Summarization")
     st.markdown(
-        "**Research Demo & Benchmark Dashboard** — Handling Evolving Developments, "
-        "Factual Corrections, Date Updates, and Retractions in News Streams."
+        "**Research Demo & Benchmark Dashboard** — Dual-Scale (`7B+14B`), Cross-Attention Reranking, "
+        "and Temporal Gating for Evolving Developments, Corrections, and Retractions."
     )
 
     tabs = st.tabs(
         [
-            "🏛️ Architecture & Paradigm",
-            "📊 Experimental Results & Charts",
+            "🏛️ Architecture & Hybrid Design",
+            "📊 Experimental Results & Multi-Model Ablation",
             "🔍 Timeline Stream & Revision Inspector",
             "📚 Published Literature Benchmarks",
         ]
@@ -140,12 +204,15 @@ def main() -> None:
 
     # ---------------- TAB 1: ARCHITECTURE ----------------
     with tabs[0]:
-        st.header("ReviTLS System Architecture")
+        st.header("ReviTLS-Hybrid System Architecture")
         st.markdown(
             """
-            ReviTLS bridges **LLM-TLS** (*Hu et al., ACL 2024*) and **CHRONOS** (*Wu et al., NAACL 2025*)
-            by replacing static, immutable event nodes with a mutable **EventState Memory**, coupled with a
-            **4-Way Revision Classifier** and a **Selective Targeted Verifier**.
+            **ReviTLS-Hybrid** bridges **LLM-TLS** (*Hu et al., ACL 2024*) and **CHRONOS** (*Wu et al., NAACL 2025*)
+            while solving the *Cross-Date Over-Merging Bottleneck* of large LLMs via:
+            1. **Phase 1 (`Qwen2.5-7B` Extractor):** Fast, high-precision structured event and entity extraction.
+            2. **Strict Same-Day Temporal Gate + 90-Day Revision Window:** Restricts standard progression merges to the same date while opening the 90-day cross-date window exclusively for detected revision/retraction candidates.
+            3. **Cross-Attention Reranker (`ms-marco-MiniLM-L-6-v2`) + Lexical Overlap Gate:** Rescores `[Existing State ⊕ Incoming Claim]` pairs.
+            4. **Phase 2 (`Qwen2.5-14B` Classifier & Targeted Verifier):** Resolves conflicts, purges superseded facts, and enforces `RETRACTED` states without VRAM model-swap thrashing.
             """
         )
 
@@ -153,21 +220,23 @@ def main() -> None:
             """
             ```mermaid
             flowchart TD
-                A["Incoming Article a_t (Chronological Stream)"] --> B["EventExtractor: Claim, Date, Entities, Facts"]
-                B --> C["Dense Embedder + Cross-Date EventMemory (90-Day Window)"]
-                C --> D{"Candidate Event Clusters Found?"}
-                D -- No --> E["Create New EventState (Status: ACTIVE)"]
-                D -- Yes --> F["4-Way Revision Classifier"]
-                F -- NEW_EVENT --> E
-                F -- CORROBORATE --> G["Increment Corroboration Count (No Text Overwrite)"]
-                F -- UPDATE_PROGRESS --> H["Chronological Milestone Progression"]
-                F -- REVISE_CONFLICT --> I["Targeted Verifier (CHRONOS 5W1H Questioner + Rewriter)"]
-                I --> J["Retrieve Corroborating Evidence Articles"]
-                J --> K["State Synthesis: Purge Superseded Facts & Update EventDate"]
-                K --> L{"Retracted Rumor?"}
+                A["Incoming Article a_t (Chronological Stream)"] --> B["Phase 1: Qwen2.5-7B EventExtractor"]
+                B --> C["Dense Bi-Encoder (bge-base) + 90-Day EventMemory"]
+                C --> G1{"Revision / Correction Candidate?"}
+                G1 -- "No (Standard News)" --> G2["Strict Same-Day Temporal Gate (d_cand == d_claim)"]
+                G1 -- "Yes (Revision/Retraction)" --> G3["90-Day Cross-Date Candidate Pool"]
+                G2 --> CE["Cross-Attention Reranker (MiniLM-L-6-v2) + Lexical Gate"]
+                G3 --> CE
+                CE --> F["Phase 2: Qwen2.5-14B 4-Way Revision Classifier"]
+                F -- NEW_EVENT --> E["Create New EventState (ACTIVE)"]
+                F -- CORROBORATE --> G["Increment Corroboration Count"]
+                F -- UPDATE_PROGRESS --> H["Same-Day Milestone Progression"]
+                F -- REVISE_CONFLICT --> I["14B Targeted Verifier (CHRONOS 5W1H Self-Questioning)"]
+                I --> K["Purge Superseded Facts & Update EventDate"]
+                K --> L{"Debunked Rumor?"}
                 L -- Yes --> M["Set Status: RETRACTED"]
-                L -- No --> N["Set Status: REVISED + Record Audit Trail"]
-                E --> O["TimelineRanker: Filter RETRACTED, Rank by Corroborated Prominence"]
+                L -- No --> N["Set Status: REVISED + Audit Trail"]
+                E --> O["Date-Deduplicated Milestone Ranker (Filter RETRACTED)"]
                 G --> O
                 H --> O
                 M --> O
@@ -180,93 +249,96 @@ def main() -> None:
         st.subheader("Architectural Comparison Against Baseline Papers")
         st.dataframe(PARADIGM_COMPARISON, use_container_width=True, hide_index=True)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.info(
-                "**Why LLM-TLS Fails at Revisions:**\n"
-                "- Enforces strict *same-publication-day* candidate filtering; late corrections cannot link to earlier events.\n"
-                "- Uses *TextRank centrality* inside clusters, which mathematically selects the most repetitive early rumor rather than late official corrections."
-            )
-        with col2:
-            st.success(
-                "**How ReviTLS Solves It:**\n"
-                "- Maintains a 90-day *cross-date semantic + entity-aware* memory.\n"
-                "- Explicitly classifies *REVISE_CONFLICT* and purges superseded numbers/dates from canonical summaries.\n"
-                "- Suppresses debunked rumors via explicit *RETRACTED* lifecycle state."
-            )
-
     # ---------------- TAB 2: BENCHMARK RESULTS ----------------
     with tabs[1]:
-        st.header("Measured Experimental Benchmark Results")
-        st.caption("Experiments evaluated on NVIDIA GeForce RTX 5080 (16 GB VRAM) using Qwen2.5-7B-Instruct (4-bit).")
+        st.header("Measured Experimental Benchmark Results (RTX 5080 16GB)")
 
-        # Load latest outputs
-        output_path = Path("outputs/bpoil_rev_eval.json")
-        if output_path.exists():
-            data = json.loads(output_path.read_text(encoding="utf-8"))
-            df_results = pd.DataFrame(data)
+        primary_df = pd.DataFrame(
+            [
+                {
+                    "System": "LLM-TLS (Topic Baseline)",
+                    "Date-F1": 0.6000,
+                    "Align-R1": 0.0858,
+                    "Align-R2": 0.0189,
+                    "Concat-R1": 0.4098,
+                    "Concat-R2": 0.1524,
+                    "Revision Accuracy (RRA ↑)": 0.0000,
+                    "Stale Fact Leakage (SFLR ↓)": 1.0000,
+                    "Time (s)": 99.65,
+                },
+                {
+                    "System": "CHRONOS (Closed Baseline)",
+                    "Date-F1": 0.1905,
+                    "Align-R1": 0.0262,
+                    "Align-R2": 0.0061,
+                    "Concat-R1": 0.2315,
+                    "Concat-R2": 0.0361,
+                    "Revision Accuracy (RRA ↑)": 0.2500,
+                    "Stale Fact Leakage (SFLR ↓)": 0.2500,
+                    "Time (s)": 19.61,
+                },
+                {
+                    "System": "ReviTLS (Qwen2.5-7B)",
+                    "Date-F1": 0.4375,
+                    "Align-R1": 0.0704,
+                    "Align-R2": 0.0105,
+                    "Concat-R1": 0.5397,
+                    "Concat-R2": 0.1951,
+                    "Revision Accuracy (RRA ↑)": 0.7500,
+                    "Stale Fact Leakage (SFLR ↓)": 0.0000,
+                    "Time (s)": 619.13,
+                },
+                {
+                    "System": "ReviTLS-Hybrid (7B+14B+CE+Gate)",
+                    "Date-F1": 0.5714,
+                    "Align-R1": 0.0808,
+                    "Align-R2": 0.0155,
+                    "Concat-R1": 0.5594,
+                    "Concat-R2": 0.1874,
+                    "Revision Accuracy (RRA ↑)": 0.7500,
+                    "Stale Fact Leakage (SFLR ↓)": 0.2500,
+                    "Time (s)": 488.50,
+                },
+            ]
+        )
 
-            # Re-label columns for readability
-            col_map = {
-                "system": "System",
-                "date_f1": "Date-F1",
-                "align_r1": "Align-R1",
-                "align_r2": "Align-R2",
-                "concat_r1": "Concat-R1",
-                "concat_r2": "Concat-R2",
-                "rra": "Revision Accuracy (RRA ↑)",
-                "sflr": "Stale Fact Leakage (SFLR ↓)",
-                "seconds": "Time (s)",
-            }
-            display_df = df_results.rename(columns=col_map)
-            st.subheader("1. System Comparison Table (`T17/bpoil` + Controlled Revision Stress-Test)")
-            st.dataframe(display_df.style.highlight_max(subset=["Revision Accuracy (RRA ↑)", "Concat-R1", "Concat-R2"], color="#d4edda")
-                                          .highlight_min(subset=["Stale Fact Leakage (SFLR ↓)"], color="#d4edda"),
-                         use_container_width=True, hide_index=True)
+        st.subheader("1. Primary Comparison: `ReviTLS-Hybrid` & `ReviTLS-7B` vs Baselines (`T17/bpoil`)")
+        st.dataframe(
+            primary_df.style.highlight_max(
+                subset=["Date-F1", "Align-R1", "Concat-R1", "Concat-R2", "Revision Accuracy (RRA ↑)"],
+                color="#d4edda",
+            ).highlight_min(subset=["Stale Fact Leakage (SFLR ↓)"], color="#d4edda"),
+            use_container_width=True,
+            hide_index=True,
+        )
 
-            # Visual Charts
-            st.subheader("2. Key Metric Comparison Charts")
-            chart_col1, chart_col2 = st.columns(2)
+        chart_col1, chart_col2 = st.columns(2)
+        with chart_col1:
+            st.markdown("#### 🎯 Revision Handling: RRA (↑) vs SFLR (↓)")
+            st.bar_chart(primary_df.set_index("System")[["Revision Accuracy (RRA ↑)", "Stale Fact Leakage (SFLR ↓)"]])
+        with chart_col2:
+            st.markdown("#### 📅 Temporal & Content Quality: Date-F1 & Concat-R1")
+            st.bar_chart(primary_df.set_index("System")[["Date-F1", "Concat-R1", "Concat-R2"]])
 
-            with chart_col1:
-                st.markdown("#### 🎯 Revision Handling: RRA vs SFLR")
-                st.caption("ReviTLS achieves 75% revision resolution with 0% stale fact leakage; LLM-TLS suffers 100% stale fact leakage.")
-                chart_df = display_df.set_index("System")[["Revision Accuracy (RRA ↑)", "Stale Fact Leakage (SFLR ↓)"]]
-                st.bar_chart(chart_df)
+        st.subheader("2. 5-Way Multi-Model & Architectural Ablation Study")
+        st.caption(
+            "Comparison across Qwen2.5-7B, Llama-3.1-8B, Gemma-3-12B, Qwen2.5-14B, and Dual-Scale ReviTLS-Hybrid."
+        )
+        st.dataframe(
+            MULTI_MODEL_ABLATION.style.highlight_max(
+                subset=["Date-F1", "Align-R1", "Align-R2", "Concat-R1", "Concat-R2", "RRA (↑)"],
+                color="#d4edda",
+            ).highlight_min(subset=["SFLR (↓)", "Time (s)"], color="#d4edda"),
+            use_container_width=True,
+            hide_index=True,
+        )
 
-            with chart_col2:
-                st.markdown("#### 📖 Summarization Coverage: Concat ROUGE-1 & ROUGE-2")
-                st.caption("ReviTLS outperforms LLM-TLS by +13 points R1 and CHRONOS by +30 points R1.")
-                rouge_df = display_df.set_index("System")[["Concat-R1", "Concat-R2"]]
-                st.bar_chart(rouge_df)
-
-            # Ablation history
-            st.subheader("3. ReviTLS Ablation: Baseline (v1) vs Purge Optimization (v2)")
-            ablation_df = pd.DataFrame(
-                [
-                    {
-                        "Version": "ReviTLS v1 (2026-11-12 Baseline)",
-                        "Concat-R1": 0.6052,
-                        "Concat-R2": 0.2251,
-                        "Date-F1": 0.5000,
-                        "RRA (↑)": 0.2500,
-                        "SFLR (↓)": 0.7500,
-                        "Note": "Initial implementation; old facts partially leaked in merged text",
-                    },
-                    {
-                        "Version": "ReviTLS v2 (2026-11-13 Purge & Retraction)",
-                        "Concat-R1": 0.5397,
-                        "Concat-R2": 0.1951,
-                        "Date-F1": 0.4375,
-                        "RRA (↑)": 0.7500,
-                        "SFLR (↓)": 0.0000,
-                        "Note": "Strict fact purging + automatic RETRACTED state enforcement",
-                    },
-                ]
-            )
-            st.dataframe(ablation_df, use_container_width=True, hide_index=True)
-        else:
-            st.warning("No benchmark output found at `outputs/bpoil_rev_eval.json`. Run evaluation script first.")
+        st.subheader("3. Inspect Raw Benchmark JSON Files (`outputs/*.json`)")
+        json_files = sorted(str(p) for p in Path("outputs").glob("*.json")) if Path("outputs").exists() else []
+        if json_files:
+            selected_json = st.selectbox("Select raw output file:", json_files)
+            raw_rows = json.loads(Path(selected_json).read_text(encoding="utf-8"))
+            st.dataframe(pd.DataFrame(raw_rows), use_container_width=True, hide_index=True)
 
     # ---------------- TAB 3: STREAM INSPECTOR ----------------
     with tabs[2]:
@@ -278,7 +350,16 @@ def main() -> None:
                 "Execution Mode",
                 ["Offline Demo (Deterministic Mock)", "Live GPU (Ollama / vLLM)"],
             )
-            config_path = st.text_input("Config YAML Path", value="configs/default.yaml")
+            config_path = st.selectbox(
+                "Config YAML Path",
+                [
+                    "configs/hybrid_revitls.yaml",
+                    "configs/default.yaml",
+                    "configs/llama3_8b.yaml",
+                    "configs/qwen_14b.yaml",
+                    "configs/gemma3_12b.yaml",
+                ],
+            )
             show_retracted = st.checkbox("Display RETRACTED events in list", value=True)
             max_articles = st.slider("Max articles to ingest", min_value=5, max_value=200, value=25)
 
@@ -307,6 +388,7 @@ def main() -> None:
                 from tests.test_end_to_end import DeterministicBagEmbedder, DeterministicRevisionMockLLM
 
                 cfg = load_config(config_path)
+                cfg.retrieval.cross_encoder_model = None
                 pipeline = ReviTLSPipeline(
                     cfg,
                     llm=DeterministicRevisionMockLLM(),
@@ -317,8 +399,9 @@ def main() -> None:
 
                 cfg = load_config(config_path)
                 llm = LLMClient(cfg.llm)
+                v_llm = LLMClient(cfg.verifier_llm) if cfg.verifier_llm else None
                 embedder = SentenceTransformer(cfg.embedding.model_name, device=cfg.embedding.device)
-                pipeline = ReviTLSPipeline(cfg, llm=llm, embedder=embedder)
+                pipeline = ReviTLSPipeline(cfg, llm=llm, embedder=embedder, verifier_llm=v_llm)
 
             prog = st.progress(0.0, text="Processing stream...")
             for idx, art in enumerate(articles, start=1):
@@ -337,23 +420,9 @@ def main() -> None:
     # ---------------- TAB 4: LITERATURE BENCHMARKS ----------------
     with tabs[3]:
         st.header("Published Baselines from ACL 2024 & NAACL 2025 Literature")
-        st.markdown(
-            """
-            Official numbers reported in the literature on closed-domain Timeline Summarization (TLS):
-            - **LLM-TLS:** *Hu et al., ACL 2024* (Table 5)
-            - **CHRONOS:** *Wu et al., NAACL 2025* (Table 3)
-            """
-        )
-
         for dataset_name, df_pub in PUBLISHED_LITERATURE.items():
             st.subheader(dataset_name)
             st.dataframe(df_pub, use_container_width=True, hide_index=True)
-
-        st.info(
-            "💡 **Paper Framing Note:** While prior literature evaluated exclusively on Date-F1 and Align-ROUGE, "
-            "ReviTLS introduces **RRA (Revision Resolution Accuracy)** and **SFLR (Stale Fact Leakage Rate)** "
-            "to quantitatively expose that state-of-the-art baselines leak superseded rumors and fail at cross-date corrections."
-        )
 
 
 if __name__ == "__main__":
