@@ -282,3 +282,24 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
 * **5. 2026-11-14 Genel Değerlendirme:**
   - `ReviTLS-Hybrid`, **Strict Temporal Gate** ve **Date-Deduplicated Ranker** sayesinde tekil modellerdeki aşırı tarih birleştirme sorununu çözerek **`Date-F1` skorunu `0.438` (7B) ve `0.316` (14B) seviyesinden `0.571` seviyesine** (+13.3 ile +25.5 puan artış) taşıdı.
   - **`Concat-R1` (`0.559`)**, **`Align-R1` (`0.081`)** ve **`Align-R2` (`0.015` — %50 artış)** metriklerinde en yüksek performansı yakalarken, çalışma süresini **`619s / 706s ➔ 488.5s`** seviyesine (%21–%31 daha hızlı) indirdi.
+
+---
+
+### 🔹 15.11.2026: SCI-E Çoklu-Konu, 16-Senaryo Revizyon & Önbilgi Kontrolü Paketi (Diğer PC / RTX 5080 İçin Çalıştırılacak Komutlar)
+* **Amaç:** Tek konu (`bpoil`) ve 4 senaryo sınırını aşarak **T17 (9 konu) + Crisis (4 konu)** tam deneylerini, **16 çoklu-konu revizyon senaryosunu** (izole + akış içi) ve **8 kurgusal/karşı-olgusal önbilgi (parametric memory) kontrol testini** tek seferde çalıştırmak.
+* **Diğer Bilgisayarda (RTX 5080 + Ollama açıkken) Çalıştırılacak Komutlar:**
+  ```powershell
+  # 1. En güncel kodu ve benchmark paketini GitHub'dan çekin
+  git pull origin main
+
+  # 2. Sanal ortamı aktifleştirin (eğer aktif değilse)
+  .\.venv\Scripts\Activate.ps1
+
+  # 3. Ollama üzerinde 7B ve 14B modellerinin hazır olduğundan emin olun
+  ollama pull qwen2.5:7b-instruct-q4_K_M
+  ollama pull qwen2.5:14b-instruct-q4_K_M
+
+  # 4. Tam SCI-E deney paketini çalıştırın (T17 + Crisis + 16 Revizyon + 8 Önbilgi Kontrolü)
+  python scripts/run_scie_suite.py --datasets t17 crisis
+  ```
+* **Üretilecek Çıktı:** `outputs/scie_results/summary.json` (makalenin `v6` sürümündeki çoklu-konu, istatistiksel anlamlılık ve önbilgi kontrol tabloları bu dosyadan işlenecektir).
