@@ -322,20 +322,14 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
 
 ---
 
-### 🔹 15.11.2026 (v7 / Q2 SCI-E Revizyon Paketi): Güçlü Baseline'lar, T17 Geneli Ablation ve Hata Analizi
-* **Eklenen Yeni Deneyler (`scripts/run_scie_suite.py`, varsayılan `--max-articles 100`):**
-  - `LLM-TLS (14B)` ve `CHRONOS (14B)` (hesaplama eşitliği).
-  - `LLM-TLS + 90d + Latest`, `LLM-TLS (Recency-TR)` ve `LLM-TLS + PostHoc-14B` (güçlü basit revizyon rakipleri).
-  - `ReviTLS (TextRank Sel.)` (`Date-F1` kazancının revizyondan mı sıralamadan mı geldiğini ayıran ablation).
-  - **Tam `T17` (`n=9`) Bileşen Ablation'ı** (`Full`, `w/o 14B Verifier`, `w/o Cross-Encoder`, `w/o Conditional Gate`, `w/o Tombstone Purge`).
-  - **Doğal Akış Tanılaması:** $\rho=1$ tetiklenme oranları, `REVISED` / `RETRACTED` sayıları ve örnekleri (`diagnostics`).
-  - **İstatistikler:** Holm-Bonferroni düzeltmesi, Wilcoxon signed-rank, Hedges' $g$ ve %95 Wilson güven aralıkları.
-* **RTX 5080 Makinesinde Çalıştırılacak Komut:**
+### 🔹 15.11.2026 (v7 / Q2 SCI-E Tam Veri Paketi): Tüm `T17` + `Crisis` (`--max-articles 0`), Güçlü Baseline'lar ve Tam Ablation
+* **Kapsam:** `T17` (9 konu, `4.197` ham makale) + `Crisis` (4 konu, `17.573` ham makale) veri setlerinin referans zaman aralığındaki **tamamı** (`--max-articles 0` — örnekleme yok), güçlü baseline'lar (`LLM-TLS 14B`, `CHRONOS 14B`, `90d + Latest`, `Recency-TR`, `PostHoc-14B`), `Date-F1` ayrıştırma (`TextRank Sel.`), tam `T17` bileşen ablation'ı, doğal akış hata/$\rho$ tanılaması ve Holm-Bonferroni / Wilcoxon / Hedges' $g$ / Wilson CI istatistikleri.
+* **RTX 5080 Makinesinde Çalıştırılacak Komut (İlk başlatmada `--fresh` kullanın; durdurulursa `--fresh` olmadan kaldığı konudan devam eder):**
   ```powershell
   git pull origin main
   .\.venv\Scripts\Activate.ps1
-  python scripts/run_scie_suite.py --datasets t17 crisis --max-articles 100
+  python scripts/run_scie_suite.py --datasets t17 crisis --max-articles 0 --fresh
   git add outputs/scie_results/summary.json
-  git commit -m "Add RTX 5080 Q2/SCI-E v7 experimental results"
+  git commit -m "Add RTX 5080 Q2/SCI-E full-corpus v7 experimental results"
   git push origin main
   ```

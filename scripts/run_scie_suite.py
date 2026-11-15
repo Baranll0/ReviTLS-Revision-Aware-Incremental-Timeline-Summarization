@@ -291,9 +291,10 @@ def run_revision_suite(
         if not stream_path.exists():
             continue
         if cached_topic_streams and topic in cached_topic_streams:
-            base_articles = cached_topic_streams[topic]
+            base_articles = cached_topic_streams[topic][: (max_articles if max_articles > 0 else 150)]
         else:
-            base_articles = load_articles(stream_path)[:max_articles]
+            raw_arts = load_articles(stream_path)
+            base_articles = raw_arts[:max_articles] if max_articles > 0 else raw_arts[:150]
         anchor = base_articles[0].publish_date if base_articles else date(2010, 4, 20)
 
         # (a) Isolated revision suite (only the revision chains, no background noise)
@@ -448,7 +449,8 @@ def main() -> None:
     parser.add_argument("--datasets", nargs="+", default=["t17", "crisis"], choices=["t17", "crisis"])
     parser.add_argument("--single-config", type=Path, default=Path("configs/default.yaml"))
     parser.add_argument("--dual-config", type=Path, default=Path("configs/hybrid_revitls.yaml"))
-    parser.add_argument("--max-articles", type=int, default=100, help="Max reference-stratified articles per topic")
+    parser.add_argument("--max-articles", type=int, default=0, help="Max reference-stratified articles per topic (0 = full corpus)")
+    parser.add_argument("--fresh", action="store_true", help="Ignore existing summary.json and start from scratch")
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/scie_results"))
     args = parser.parse_args()
 
@@ -458,7 +460,15 @@ def main() -> None:
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     out_json = args.output_dir / "summary.json"
-    all_output: dict[str, Any] = {"datasets": {}, "revision_suite": {}, "parametric_control": {}}
+    if out_json.exists() and not args.fresh:
+        try:
+            all_output: dict[str, Any] = json.loads(out_json.read_text(encoding="utf-8"))
+            print(f"[Resume] Loaded existing checkpoint from {out_json}", flush=True)
+        except Exception:
+            all_output = {"datasets": {}, "revision_suite": {}, "parametric_control": {}}
+    else:
+        all_output = {"datasets": {}, "revision_suite": {}, "parametric_control": {}}
+    all_output.setdefault("datasets", {})
     t17_sampled_streams: dict[str, list[Article]] = {}
 
     for ds in args.datasets:
@@ -469,7 +479,7 @@ def main() -> None:
 
             convert_dataset_root(raw_dir, proc_dir)
 
-        per_topic: dict[str, dict[str, dict[str, float]]] = {}
+        per_topic: dict[str, dict[str, dict[str, Any]]] = all_output["datasets"].get(ds, {}).get("per_topic", {})
         for stream_file in sorted(proc_dir.glob("*.jsonl")):
             topic = stream_file.stem
             tl_file = raw_dir / topic / "timelines.jsonl"
@@ -480,6 +490,9 @@ def main() -> None:
             articles = sample_topic_articles(articles, refs, max_articles=args.max_articles)
             if ds == "t17":
                 t17_sampled_streams[topic] = articles
+            if topic in per_topic and "ReviTLS (Dual-Scale)" in per_topic[topic] and "LLM-TLS (14B)" in per_topic[topic]:
+                print(f"[{ds}/{topic}] Skipping completed topic (checkpoint found).", flush=True)
+                continue
             print(f"[{ds}/{topic}] Evaluating {len(articles)} articles...", flush=True)
             per_topic[topic] = eval_topic_stream(articles, refs, cfg_single, cfg_dual, embedder)
             dual_sc = per_topic[topic]["ReviTLS (Dual-Scale)"]
