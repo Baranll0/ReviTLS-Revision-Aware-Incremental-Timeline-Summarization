@@ -303,3 +303,18 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
   python scripts/run_scie_suite.py --datasets t17 crisis
   ```
 * **Üretilecek Çıktı:** `outputs/scie_results/summary.json` (makalenin `v6` sürümündeki çoklu-konu, istatistiksel anlamlılık ve önbilgi kontrol tabloları bu dosyadan işlenecektir).
+* **Çıkan Sonuçlar (`outputs/scie_results/summary.json`):**
+  1. **Çoklu-Konu `T17` (9 Konu — Ortalama ± Std):**
+     - `ReviTLS (Dual-Scale)`: **`Date-F1 = 0.680 ± 0.208`**, **`AR-1 = 0.131 ± 0.046`**, `AR-2 = 0.023 ± 0.016`, `Concat-R1 = 0.400 ± 0.116`, `Concat-R2 = 0.112 ± 0.040`
+     - `ReviTLS (Single-Scale)`: `Date-F1 = 0.526 ± 0.119`, `AR-1 = 0.110 ± 0.032`, **`Concat-R1 = 0.413 ± 0.106`**, **`Concat-R2 = 0.116 ± 0.033`**
+     - `LLM-TLS`: `Date-F1 = 0.609 ± 0.145`, `AR-1 = 0.106 ± 0.033`, `Concat-R1 = 0.351 ± 0.120`
+     - `CHRONOS`: `Date-F1 = 0.485 ± 0.242`, `AR-1 = 0.082 ± 0.040`, `Concat-R1 = 0.254 ± 0.151`
+     - **Eşleştirilmiş $t$-Testi (`Dual-Scale` vs rakipler):** vs `LLM-TLS` (`Concat-R1 p = 0.00035`, `AR-1 p = 0.0115`); vs `CHRONOS` (`Concat-R1 p = 0.0055`, `Date-F1 p = 0.0125`, `AR-1 p = 0.0068`); vs `Single-Scale` (`Date-F1 p = 0.0066`, `AR-1 p = 0.0496`).
+  2. **Çoklu-Konu `Crisis` (4 Konu — Ortalama ± Std):**
+     - `ReviTLS (Dual-Scale)`: **`Date-F1 = 0.369 ± 0.096`**, `AR-1 = 0.080 ± 0.028`, **`AR-2 = 0.023 ± 0.013`**, `Concat-R1 = 0.438 ± 0.039`, **`Concat-R2 = 0.119 ± 0.031`** (`CHRONOS`'a karşı `Concat-R1 p = 0.0163`).
+  3. **16 Çoklu-Konu Revizyon Senaryosu (`bpoil`, `finan`, `h1n1`, `haiti`):**
+     - **İzole Mod:** `ReviTLS (Dual-Scale)` **`RRA = 0.875 (14/16)`**, **`SFLR = 0.125`** (`Single-Scale`: `0.750 / 0.188`, `LLM-TLS`: `0.125 / 0.875`, `CHRONOS`: `0.063 / 0.938`).
+     - **Akış İçi (*Embedded*) Mod:** `ReviTLS (Dual-Scale)` **`RRA = 0.813 (13/16)`**, **`SFLR = 0.125`** (`Single-Scale`: `0.813 / 0.188`, `LLM-TLS`: `0.125 / 0.813`, `CHRONOS`: `0.313 / 0.188`).
+  4. **8 Kurgusal & Karşı-Olgusal Önbilgi Kontrolü (`Parametric Memory Control`):**
+     - **Temporal Blindness Audit (Düzeltme Öncesi Sızıntı):** **`0 / 8 (0.000)`**
+     - **`ReviTLS (Dual-Scale)`:** **`RRA = 1.000 (8/8 — %100)`**, **`SFLR = 0.000 (%0)`** (`Single-Scale`: `0.750 / 0.125`, `LLM-TLS`: `0.125 / 0.875`, `CHRONOS`: `0.125 / 0.875`).

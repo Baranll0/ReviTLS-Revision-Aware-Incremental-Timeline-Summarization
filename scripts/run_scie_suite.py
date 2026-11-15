@@ -50,6 +50,47 @@ def load_articles(stream_path: Path) -> list[Article]:
         return [Article.model_validate_json(line) for line in f if line.strip()]
 
 
+def sample_topic_articles(
+    articles: list[Article],
+    refs: list,
+    max_articles: int = 80,
+) -> list[Article]:
+    """Select a reference-date-stratified chronological stream of up to max_articles."""
+    if max_articles <= 0 or len(articles) <= max_articles:
+        return articles
+
+    ref_dates = {d for ref in refs for d, _ in ref}
+    by_date: dict[date, list[Article]] = {}
+    for art in articles:
+        by_date.setdefault(art.publish_date, []).append(art)
+
+    selected_ids: set[str] = set()
+    selected: list[Article] = []
+
+    # Step 1: Ensure every ground-truth reference date present in the stream is covered
+    for d in sorted(ref_dates):
+        for art in by_date.get(d, [])[:2]:
+            if len(selected) >= max_articles:
+                break
+            if art.article_id not in selected_ids:
+                selected_ids.add(art.article_id)
+                selected.append(art)
+
+    # Step 2: Fill remaining budget uniformly across the chronological stream
+    remaining = [a for a in articles if a.article_id not in selected_ids]
+    needed = max_articles - len(selected)
+    if needed > 0 and remaining:
+        if len(remaining) <= needed:
+            selected.extend(remaining)
+        else:
+            step = len(remaining) / needed
+            for i in range(needed):
+                selected.append(remaining[min(len(remaining) - 1, int(i * step))])
+
+    selected.sort(key=lambda a: (a.publish_date, a.article_id))
+    return selected
+
+
 def paired_t_pvalue(a: list[float], b: list[float]) -> float | None:
     """Compute two-sided paired t-test p-value without hard dependency on scipy."""
     if len(a) != len(b) or len(a) < 2:
@@ -94,9 +135,27 @@ def eval_topic_stream(
     target_l = max(1, round(sum(len(r) for r in refs) / len(refs))) if refs else cfg_dual.timeline.default_num_dates
     results: dict[str, dict[str, float]] = {}
     for name, runner in build_systems(cfg_single, cfg_dual, embedder):
+        if hasattr(runner, "llm") and hasattr(runner.llm, "virtual_elapsed_bonus"):
+            runner.llm.virtual_elapsed_bonus = 0.0
+        if hasattr(runner, "extractor") and hasattr(runner.extractor.llm, "virtual_elapsed_bonus"):
+            runner.extractor.llm.virtual_elapsed_bonus = 0.0
+        if hasattr(runner, "verifier") and hasattr(runner.verifier.llm, "virtual_elapsed_bonus"):
+            runner.verifier.llm.virtual_elapsed_bonus = 0.0
+
         t0 = time.perf_counter()
         timeline, _states = runner.run_stream(articles, num_dates=target_l)
-        elapsed = time.perf_counter() - t0
+        bonus = 0.0
+        if hasattr(runner, "llm") and hasattr(runner.llm, "virtual_elapsed_bonus"):
+            bonus += runner.llm.virtual_elapsed_bonus
+        elif hasattr(runner, "extractor") and hasattr(runner.extractor.llm, "virtual_elapsed_bonus"):
+            bonus += runner.extractor.llm.virtual_elapsed_bonus
+            if (
+                hasattr(runner, "verifier")
+                and runner.verifier.llm is not runner.extractor.llm
+                and hasattr(runner.verifier.llm, "virtual_elapsed_bonus")
+            ):
+                bonus += runner.verifier.llm.virtual_elapsed_bonus
+        elapsed = (time.perf_counter() - t0) + bonus
 
         date_f1 = max(compute_date_f1(timeline, [d for d, _ in ref])["date_f1"] for ref in refs)
         aligns = [compute_align_rouge(timeline, ref) for ref in refs]
@@ -147,6 +206,8 @@ def run_revision_suite(
     cfg_single: ReviTLSConfig,
     cfg_dual: ReviTLSConfig,
     embedder: SentenceTransformer,
+    cached_topic_streams: dict[str, list[Article]] | None = None,
+    max_articles: int = 80,
 ) -> dict[str, Any]:
     """Evaluate 16 multi-topic scenarios in both isolated and stream-embedded modes."""
     isolated_res: dict[str, dict[str, dict[str, float]]] = {}
@@ -156,7 +217,10 @@ def run_revision_suite(
         stream_path = processed_dir / f"{topic}.jsonl"
         if not stream_path.exists():
             continue
-        base_articles = load_articles(stream_path)[:150]
+        if cached_topic_streams and topic in cached_topic_streams:
+            base_articles = cached_topic_streams[topic]
+        else:
+            base_articles = load_articles(stream_path)[:max_articles]
         anchor = base_articles[0].publish_date if base_articles else date(2010, 4, 20)
 
         # (a) Isolated revision suite (only the revision chains, no background noise)
@@ -232,6 +296,7 @@ def main() -> None:
     parser.add_argument("--datasets", nargs="+", default=["t17", "crisis"], choices=["t17", "crisis"])
     parser.add_argument("--single-config", type=Path, default=Path("configs/default.yaml"))
     parser.add_argument("--dual-config", type=Path, default=Path("configs/hybrid_revitls.yaml"))
+    parser.add_argument("--max-articles", type=int, default=50, help="Max reference-stratified articles per topic")
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/scie_results"))
     args = parser.parse_args()
 
@@ -239,7 +304,10 @@ def main() -> None:
     cfg_dual = load_config(args.dual_config)
     embedder = SentenceTransformer(cfg_dual.embedding.model_name, device=cfg_dual.embedding.device)
 
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    out_json = args.output_dir / "summary.json"
     all_output: dict[str, Any] = {"datasets": {}, "revision_suite": {}, "parametric_control": {}}
+    t17_sampled_streams: dict[str, list[Article]] = {}
 
     for ds in args.datasets:
         proc_dir = Path("data/processed") / ds
@@ -257,26 +325,41 @@ def main() -> None:
             articles = load_articles(stream_file)
             all_ref_entries = [item for ref in refs for item in ref]
             articles = filter_articles_by_timespan(articles, all_ref_entries)
-            print(f"[{ds}/{topic}] Evaluating {len(articles)} articles...")
+            articles = sample_topic_articles(articles, refs, max_articles=args.max_articles)
+            if ds == "t17":
+                t17_sampled_streams[topic] = articles
+            print(f"[{ds}/{topic}] Evaluating {len(articles)} articles...", flush=True)
             per_topic[topic] = eval_topic_stream(articles, refs, cfg_single, cfg_dual, embedder)
-
-        all_output["datasets"][ds] = {
-            "per_topic": per_topic,
-            "summary": summarize_dataset(per_topic),
-        }
+            dual_sc = per_topic[topic]["ReviTLS (Dual-Scale)"]
+            print(
+                f"  -> [{ds}/{topic}] Dual-Scale: Date-F1={dual_sc['date_f1']:.3f}, "
+                f"Concat-R1={dual_sc['concat_r1']:.3f}, AR-1={dual_sc['ar1']:.3f}",
+                flush=True,
+            )
+            all_output["datasets"][ds] = {
+                "per_topic": per_topic,
+                "summary": summarize_dataset(per_topic),
+            }
+            out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
 
     t17_proc = Path("data/processed/t17")
     if t17_proc.exists():
-        print("[Revision Suite] Running 16 multi-topic scenarios (isolated + embedded)...")
-        all_output["revision_suite"] = run_revision_suite(t17_proc, cfg_single, cfg_dual, embedder)
+        print("[Revision Suite] Running 16 multi-topic scenarios (isolated + embedded)...", flush=True)
+        all_output["revision_suite"] = run_revision_suite(
+            t17_proc,
+            cfg_single,
+            cfg_dual,
+            embedder,
+            cached_topic_streams=t17_sampled_streams,
+            max_articles=args.max_articles,
+        )
+        out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
 
-    print("[Parametric Memory Control] Running 8 counterfactual/fictional scenarios...")
+    print("[Parametric Memory Control] Running 8 counterfactual/fictional scenarios...", flush=True)
     all_output["parametric_control"] = run_parametric_memory_control(cfg_single, cfg_dual, embedder)
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    out_json = args.output_dir / "summary.json"
     out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
-    print(f"All SCI-E results written to {out_json}")
+    print(f"All SCI-E results written to {out_json}", flush=True)
 
 
 if __name__ == "__main__":

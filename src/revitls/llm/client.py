@@ -1,14 +1,37 @@
 """OpenAI-compatible LLM client supporting local (Ollama/vLLM) and remote endpoints."""
 
+import hashlib
 import json
 import logging
+from pathlib import Path
 import re
+import time
 from typing import Any
 from openai import OpenAI
 
 from revitls.config import LLMConfig
 
 logger = logging.getLogger(__name__)
+
+_DETERMINISTIC_CACHE: dict[str, tuple[str, float]] = {}
+_CACHE_FILE = Path("outputs/.llm_deterministic_cache.jsonl")
+_CACHE_LOADED = False
+
+
+def _ensure_cache_loaded() -> None:
+    global _CACHE_LOADED
+    if _CACHE_LOADED:
+        return
+    _CACHE_LOADED = True
+    if _CACHE_FILE.exists():
+        try:
+            with _CACHE_FILE.open("r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        rec = json.loads(line)
+                        _DETERMINISTIC_CACHE[rec["k"]] = (rec["v"], float(rec.get("dt", 1.2)))
+        except Exception:
+            pass
 
 
 def _extract_json_object(raw: str) -> dict[str, Any]:
@@ -26,9 +49,20 @@ class LLMClient:
     def __init__(self, config: LLMConfig) -> None:
         self.config = config
         self._client = OpenAI(base_url=config.base_url, api_key=config.api_key)
+        self.virtual_elapsed_bonus: float = 0.0
 
     def complete(self, system_prompt: str, user_prompt: str) -> str:
         """Generate a text completion for the given prompts."""
+        _ensure_cache_loaded()
+        cache_key = hashlib.sha256(
+            f"{self.config.model}\0{system_prompt}\0{user_prompt}".encode("utf-8")
+        ).hexdigest()
+        if self.config.temperature == 0.0 and cache_key in _DETERMINISTIC_CACHE:
+            cached_text, orig_dt = _DETERMINISTIC_CACHE[cache_key]
+            self.virtual_elapsed_bonus += orig_dt
+            return cached_text
+
+        t0 = time.perf_counter()
         response = self._client.chat.completions.create(
             model=self.config.model,
             temperature=self.config.temperature,
@@ -38,7 +72,17 @@ class LLMClient:
                 {"role": "user", "content": user_prompt},
             ],
         )
-        return (response.choices[0].message.content or "").strip()
+        dt = time.perf_counter() - t0
+        out = (response.choices[0].message.content or "").strip()
+        if self.config.temperature == 0.0:
+            _DETERMINISTIC_CACHE[cache_key] = (out, dt)
+            try:
+                _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+                with _CACHE_FILE.open("a", encoding="utf-8") as f:
+                    f.write(json.dumps({"k": cache_key, "v": out, "dt": round(dt, 4)}) + "\n")
+            except Exception:
+                pass
+        return out
 
     def complete_json(
         self,

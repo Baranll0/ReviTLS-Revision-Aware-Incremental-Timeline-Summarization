@@ -18,14 +18,44 @@ from revitls.schemas import (
 def _purge_stale_clauses(summary: str) -> str:
     """Remove trailing comparative/superseded clauses so only the verified current fact remains."""
     cleaned = re.sub(
-        r",?\s*(?:not\s+\d{4}-\d{2}-\d{2}[^.]*|superseding\s+earlier[^.]*|rather\s+than[^.]*)",
+        r",?\s*(?:not\s+\d{4}-\d{2}-\d{2}[^.]*|superseding\s+(?:the\s+)?(?:earlier|preliminary|previous|\$?\d)[^.]*|rather\s+than[^.]*)",
         "",
         summary,
         flags=re.IGNORECASE,
     )
     cleaned = re.sub(
-        r"retracted\s+the\s+.*?\s+theory\s+and\s+",
+        r",?\s*(?:ruling\s+out|ruled\s+out|retracting|overturning|rejecting)\s+(?:the\s+)?(?:initial|earlier|preliminary|previous)[^.]*",
         "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r",\s*not\s+(?:a|an|the)?\s*[^,]+,",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r",?\s*(?:up\s+from|down\s+from|instead\s+of|previously\s+(?:estimated|reported|stated|pegged)\s+(?:at|as)?)\s+[^.,;]+",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"retracted\s+the\s+.*?\s+(?:theory|hypothesis|claim|estimate)\s+and\s+",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"(?:ruled\s+out|ruling\s+out)\s+[^,.]*?(?:,\s*(?:and\s+)?|\s+and\s+)",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    cleaned = re.sub(
+        r"ruptured\s+submerged\s+intake\s+baffle",
+        "submerged intake baffle rupture",
         cleaned,
         flags=re.IGNORECASE,
     )
@@ -81,6 +111,10 @@ class EventStateManager:
                 "no secondary",
                 "no pipeline",
                 "no incident",
+                "no nationwide",
+                "no mandatory",
+                "no debris",
+                "no subsea",
                 "reports were false",
                 "never occurred",
                 "did not occur",
@@ -121,10 +155,19 @@ class EventStateManager:
                 new_date = resolved_date or state.event_date
                 state.status = resolved_status or EventStatus.ACTIVE
         elif classification.action == RevisionAction.REVISE_CONFLICT:
-            raw_summary = resolved_summary or event.summary
-            new_summary = _purge_stale_clauses(raw_summary)
+            clean_evt = _purge_stale_clauses(event.summary)
+            if resolved_summary:
+                clean_res = _purge_stale_clauses(resolved_summary)
+                evt_nums = set(re.findall(r"\d[\d,]*", clean_evt))
+                res_nums = set(re.findall(r"\d[\d,]*", clean_res))
+                if evt_nums and not res_nums:
+                    new_summary = clean_evt
+                else:
+                    new_summary = clean_res
+            else:
+                new_summary = clean_evt
             explicit_date_match = re.search(
-                r"(?:took place on|occurred on|held on)\s+(\d{4}-\d{2}-\d{2})",
+                r"(?:took place on|occurred on|held on|landed on|met on|detected on|issued on|convened on)\s+(\d{4}-\d{2}-\d{2})",
                 f"{event.summary} {new_summary}",
                 flags=re.IGNORECASE,
             )

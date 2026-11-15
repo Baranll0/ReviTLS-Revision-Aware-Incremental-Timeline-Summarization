@@ -106,3 +106,53 @@
    - Introducing the **Strict Same-Day Temporal Gate (`strict_temporal_gate=True`)** and **Date-Deduplicated Milestone Ranking (`deduplicate_dates=True`)** in **`ReviTLS-Hybrid`** restricts non-revision merges to the same event date while preserving the 90-day cross-date window exclusively for revision/retraction candidates. This boosts **`Date-F1` from `0.4375` (7B) / `0.3158` (14B) to `0.5714`**, **`Align-R1` from `0.0704` to `0.0808`**, **`Align-R2` by +48% (`0.0105 -> 0.0155`)**, and **`Concat-R1` to `0.5594`** (the highest of all tested models and baselines), while reducing runtime by **21%** (`619s -> 488s`).
 2. **Cross-Attention Reranking + Dual-LLM Specialization (`7B + 14B`):**
    - Combining a fast, high-precision structured extractor (`qwen2.5:7b-instruct-q4_K_M`) in Phase 1 with a Cross-Attention reranker (`cross-encoder/ms-marco-MiniLM-L-6-v2` + lexical overlap gate) and a 14B conflict verifier (`qwen2.5:14b-instruct-q4_K_M`) in Phase 2 avoids VRAM model-swap thrashing and achieves both high temporal accuracy (`Date-F1 = 0.5714`) and strong revision resolution (`RRA = 0.7500` on the full 164-article stream, `1.0000` on isolated revision scenarios).
+
+---
+
+## 4. SCI-E Multi-Topic (`T17` & `Crisis`), 16-Scenario Revision Suite & Parametric Memory Control (`2026-11-15`)
+
+* **Raw JSON Output:** [`outputs/scie_results/summary.json`](../outputs/scie_results/summary.json)
+* **Command:** `python scripts/run_scie_suite.py --datasets t17 crisis` (reference-date-stratified evaluation across all 9 `T17` topics and all 4 `Crisis` topics, up to 50 articles/topic).
+
+### A. Multi-Topic `T17` (9 Topics — Mean ± Std)
+
+| System | Date-F1 (↑) | AR-1 (↑) | AR-2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | Time (s) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LLM-TLS** | 0.609 ± 0.145 | 0.106 ± 0.033 | 0.023 ± 0.015 | 0.351 ± 0.120 | 0.105 ± 0.039 | **26.1 ± 1.4** |
+| **CHRONOS** | 0.485 ± 0.242 | 0.082 ± 0.040 | 0.017 ± 0.010 | 0.254 ± 0.151 | 0.070 ± 0.032 | 26.7 ± 10.6 |
+| **ReviTLS (Single-Scale)** | 0.526 ± 0.119 | 0.110 ± 0.032 | 0.021 ± 0.012 | **0.413 ± 0.106** | **0.116 ± 0.033** | 116.5 ± 5.8 |
+| **ReviTLS (Dual-Scale)** | **0.680 ± 0.208** | **0.131 ± 0.046** | **0.023 ± 0.016** | 0.400 ± 0.116 | 0.112 ± 0.040 | 117.0 ± 16.3 |
+
+* **Paired $t$-Test Significance (`ReviTLS Dual-Scale` vs. Baselines):**
+  - vs. `LLM-TLS`: `Concat-R1` $p = 0.00035$, `AR-1` $p = 0.0115$
+  - vs. `CHRONOS`: `Concat-R1` $p = 0.0055$, `Date-F1` $p = 0.0125$, `AR-1` $p = 0.0068$
+  - vs. `ReviTLS (Single-Scale)`: `Date-F1` $p = 0.0066$, `AR-1` $p = 0.0496$
+
+### B. Multi-Topic `Crisis` (4 Topics — Mean ± Std)
+
+| System | Date-F1 (↑) | AR-1 (↑) | AR-2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | Time (s) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LLM-TLS** | 0.340 ± 0.102 | **0.081 ± 0.025** | 0.022 ± 0.010 | 0.436 ± 0.037 | 0.114 ± 0.035 | **24.9 ± 0.7** |
+| **CHRONOS** | 0.355 ± 0.099 | 0.068 ± 0.034 | 0.021 ± 0.012 | 0.319 ± 0.062 | 0.079 ± 0.035 | 27.4 ± 5.9 |
+| **ReviTLS (Single-Scale)** | 0.312 ± 0.071 | 0.055 ± 0.016 | 0.012 ± 0.003 | **0.460 ± 0.038** | 0.118 ± 0.028 | 110.9 ± 6.1 |
+| **ReviTLS (Dual-Scale)** | **0.369 ± 0.096** | 0.080 ± 0.028 | **0.023 ± 0.013** | 0.438 ± 0.039 | **0.119 ± 0.031** | 101.1 ± 9.4 |
+
+### C. 16-Scenario Multi-Topic Revision Suite (`bpoil`, `finan`, `h1n1`, `haiti`)
+
+| System | Isolated RRA (↑) | Isolated SFLR (↓) | Embedded RRA (↑) | Embedded SFLR (↓) |
+| :--- | :---: | :---: | :---: | :---: |
+| **LLM-TLS** | 0.125 (2/16) | 0.875 | 0.125 (2/16) | 0.813 |
+| **CHRONOS** | 0.063 (1/16) | 0.938 | 0.313 (5/16) | 0.188 |
+| **ReviTLS (Single-Scale)** | 0.750 (12/16) | 0.188 | **0.813 (13/16)** | 0.188 |
+| **ReviTLS (Dual-Scale)** | **0.875 (14/16)** | **0.125** | **0.813 (13/16)** | **0.125** |
+
+### D. Parametric Memory / Data Contamination Control (8 Fictional & Counterfactual Scenarios)
+
+* **Pre-Correction Temporal Blindness Audit:** `0 / 8` premature leaks (`premature_leak_rate = 0.000`).
+
+| System | RRA (↑) | SFLR (↓) |
+| :--- | :---: | :---: |
+| **LLM-TLS** | 0.125 (1/8) | 0.875 (7/8) |
+| **CHRONOS** | 0.125 (1/8) | 0.875 (7/8) |
+| **ReviTLS (Single-Scale)** | 0.750 (6/8) | 0.125 (1/8) |
+| **ReviTLS (Dual-Scale)** | **1.000 (8/8)** | **0.000 (0/8)** |

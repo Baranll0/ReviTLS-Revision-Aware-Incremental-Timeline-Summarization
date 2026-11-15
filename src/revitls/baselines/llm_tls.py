@@ -90,14 +90,12 @@ class TopicLLMTLSBaseline:
             assigned_cluster: Optional[int] = None
 
             if same_day_nodes:
-                scored = sorted(
-                    (
-                        (float(np.dot(vec, nvec)), cid, nsum)
-                        for cid, nsum, nvec, _ in same_day_nodes
-                    ),
-                    key=lambda x: x[0],
-                    reverse=True,
-                )[: self.top_n]
+                best_per_cluster: dict[int, tuple[float, int, str]] = {}
+                for cid, nsum, nvec, _ in same_day_nodes:
+                    sim = float(np.dot(vec, nvec))
+                    if sim >= 0.45 and (cid not in best_per_cluster or sim > best_per_cluster[cid][0]):
+                        best_per_cluster[cid] = (sim, cid, nsum)
+                scored = sorted(best_per_cluster.values(), key=lambda x: x[0], reverse=True)[:2]
                 for _sim, cid, nsum in scored:
                     if self._is_same_event(art.topic, evt_date.isoformat(), summary, evt_date.isoformat(), nsum):
                         assigned_cluster = cid

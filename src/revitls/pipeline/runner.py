@@ -21,6 +21,9 @@ from revitls.schemas import (
 )
 
 
+_CROSS_ENCODER_CACHE: dict[tuple[str, str], object] = {}
+
+
 def _parse_iso_date(raw: object) -> Optional[date]:
     if not raw:
         return None
@@ -73,6 +76,7 @@ class ReviTLSPipeline:
         self.memory = EventMemory(config.retrieval)
         active_verifier_llm = verifier_llm or llm
         self.extractor = EventExtractor(llm)  # type: ignore[arg-type]
+        self.routine_classifier = RevisionClassifier(llm)  # type: ignore[arg-type]
         self.classifier = RevisionClassifier(active_verifier_llm)  # type: ignore[arg-type]
         self.verifier = TargetedVerifier(active_verifier_llm, config.verifier)  # type: ignore[arg-type]
         self.state_mgr = EventStateManager()
@@ -81,12 +85,15 @@ class ReviTLSPipeline:
         self._cluster_seq = 0
         self._cross_encoder = None
         if config.retrieval.cross_encoder_model:
-            from sentence_transformers import CrossEncoder
+            ce_key = (config.retrieval.cross_encoder_model, config.embedding.device)
+            if ce_key not in _CROSS_ENCODER_CACHE:
+                from sentence_transformers import CrossEncoder
 
-            self._cross_encoder = CrossEncoder(
-                config.retrieval.cross_encoder_model,
-                device=config.embedding.device,
-            )
+                _CROSS_ENCODER_CACHE[ce_key] = CrossEncoder(
+                    config.retrieval.cross_encoder_model,
+                    device=config.embedding.device,
+                )
+            self._cross_encoder = _CROSS_ENCODER_CACHE[ce_key]
 
     def _is_revision_candidate(self, article: Article, claim: ExtractedEvent) -> bool:
         haystack = f"{article.title} {claim.summary}".lower()
@@ -147,12 +154,15 @@ class ReviTLSPipeline:
                 }
                 lex_overlap = len(art_tokens & st_tokens) / max(1, len(st_tokens))
                 ce_prob = float(1.0 / (1.0 + np.exp(-float(ce_sc))))
-                rescored.append((st, 0.65 * bi_sc + 0.20 * ce_prob + 0.15 * lex_overlap))
+                corr_bonus = 0.12 if (is_rev_cand and st.corroboration_count >= 2 and lex_overlap > 0) else 0.0
+                rescored.append((st, 0.65 * bi_sc + 0.20 * ce_prob + 0.15 * lex_overlap + corr_bonus))
             rescored.sort(key=lambda item: item[1], reverse=True)
             candidates = rescored
 
-        for state, _score in candidates:
-            result = self.classifier.classify(claim, state)
+        max_verify_cands = 3 if is_rev_cand else 1
+        active_cls = self.classifier if is_rev_cand else self.routine_classifier
+        for state, _score in candidates[:max_verify_cands]:
+            result = active_cls.classify(claim, state)
             if result.action == RevisionAction.NEW_EVENT:
                 continue
             if (
@@ -214,11 +224,17 @@ class ReviTLSPipeline:
         """Process an article collection in publication order and return timeline + final states."""
         ordered = sorted(articles, key=lambda a: (a.publish_date, a.article_id))
         if self.config.verifier_llm is not None:
-            # Two-phase Dual-LLM execution avoids model-swap thrashing in local Ollama VRAM:
-            # Phase 1: Fast structured event extraction on primary LLM
+            # Algorithm 1 Two-Phase Schedule:
+            # Phase 1: 7B Extraction & Routine Same-Day Clustering (\rho_{i,j} == 0)
             claims = [self.extractor.extract(art) for art in ordered]
-            # Phase 2: Incremental memory, Cross-Attention reranking & conflict verification on verifier_llm
+            rev_queue: list[tuple[Article, ExtractedEvent]] = []
             for article, claim in zip(ordered, claims):
+                if self._is_revision_candidate(article, claim):
+                    rev_queue.append((article, claim))
+                else:
+                    self.step(article, pre_extracted_claim=claim)
+            # Phase 2: Cross-Encoder Reranking & 14B Verification on \mathcal{Q}_{rev} (\rho_{i,j} == 1)
+            for article, claim in rev_queue:
                 self.step(article, pre_extracted_claim=claim)
         else:
             for article in ordered:

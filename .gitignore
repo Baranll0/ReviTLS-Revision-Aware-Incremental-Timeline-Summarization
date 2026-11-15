@@ -20,6 +20,8 @@ data/revisions/*
 outputs/*
 !outputs/*.json
 !outputs/*.md
+!outputs/scie_results/
+!outputs/scie_results/*.json
 checkpoints/
 *.jsonl
 *.sqlite3
