@@ -70,9 +70,13 @@ class ReviTLSPipeline:
         llm: LLMProtocol,
         embedder: EmbedderProtocol,
         verifier_llm: Optional[LLMProtocol] = None,
+        selection_mode: str = "eq6",
+        disable_purge: bool = False,
     ) -> None:
         self.config = config
         self.embedder = embedder
+        self.selection_mode = selection_mode
+        self.disable_purge = disable_purge
         self.memory = EventMemory(config.retrieval)
         active_verifier_llm = verifier_llm or llm
         self.extractor = EventExtractor(llm)  # type: ignore[arg-type]
@@ -83,6 +87,7 @@ class ReviTLSPipeline:
         self.ranker = TimelineRanker(config.timeline)
         self._seen_articles: list[Article] = []
         self._cluster_seq = 0
+        self.last_diagnostics: dict[str, object] = {}
         self._cross_encoder = None
         if config.retrieval.cross_encoder_model:
             ce_key = (config.retrieval.cross_encoder_model, config.embedding.device)
@@ -176,7 +181,7 @@ class ReviTLSPipeline:
             resolved_date: Optional[date] = None
             resolved_status: Optional[EventStatus] = None
 
-            if result.action == RevisionAction.REVISE_CONFLICT:
+            if result.action == RevisionAction.REVISE_CONFLICT and not self.disable_purge:
                 queries = self.verifier.generate_verification_queries(state, claim)
                 evidence = _select_evidence_articles(
                     self._seen_articles,
@@ -191,6 +196,12 @@ class ReviTLSPipeline:
                 raw_status = str(resolution.get("status", "")).upper()
                 if raw_status in {s.value for s in EventStatus}:
                     resolved_status = EventStatus(raw_status)
+            elif result.action == RevisionAction.REVISE_CONFLICT and self.disable_purge:
+                # Ablation mode: downgrade conflict revision to additive progress without purging
+                result.action = RevisionAction.UPDATE_PROGRESS
+
+            if hasattr(self, "_diag_actions"):
+                self._diag_actions[result.action.value] = self._diag_actions.get(result.action.value, 0) + 1
 
             updated = self.state_mgr.apply_action(
                 state,
@@ -222,6 +233,15 @@ class ReviTLSPipeline:
         num_dates: Optional[int] = None,
     ) -> tuple[list[TimelineEntry], list[EventState]]:
         """Process an article collection in publication order and return timeline + final states."""
+        self._diag_actions: dict[str, int] = {
+            "NEW_EVENT": 0,
+            "CORROBORATE": 0,
+            "UPDATE_PROGRESS": 0,
+            "REVISE_CONFLICT": 0,
+        }
+        rho_total = 0
+        rho_llm = 0
+        rho_lex = 0
         ordered = sorted(articles, key=lambda a: (a.publish_date, a.article_id))
         if self.config.verifier_llm is not None:
             # Algorithm 1 Two-Phase Schedule:
@@ -229,7 +249,12 @@ class ReviTLSPipeline:
             claims = [self.extractor.extract(art) for art in ordered]
             rev_queue: list[tuple[Article, ExtractedEvent]] = []
             for article, claim in zip(ordered, claims):
-                if self._is_revision_candidate(article, claim):
+                is_lex = any(kw in f"{article.title} {claim.summary}".lower() for kw in self.config.retrieval.revision_keywords)
+                is_llm = bool(claim.is_correction_or_update)
+                if is_llm or is_lex:
+                    rho_total += 1
+                    rho_llm += int(is_llm)
+                    rho_lex += int(is_lex)
                     rev_queue.append((article, claim))
                 else:
                     self.step(article, pre_extracted_claim=claim)
@@ -238,7 +263,51 @@ class ReviTLSPipeline:
                 self.step(article, pre_extracted_claim=claim)
         else:
             for article in ordered:
-                self.step(article)
+                claim = self.extractor.extract(article)
+                is_lex = any(kw in f"{article.title} {claim.summary}".lower() for kw in self.config.retrieval.revision_keywords)
+                is_llm = bool(claim.is_correction_or_update)
+                if is_llm or is_lex:
+                    rho_total += 1
+                    rho_llm += int(is_llm)
+                    rho_lex += int(is_lex)
+                self.step(article, pre_extracted_claim=claim)
+
         states = self.memory.all_states()
-        timeline = self.ranker.build_timeline(states, num_dates=num_dates)
+        if self.selection_mode == "textrank":
+            valid = [s for s in states if s.status != EventStatus.RETRACTED]
+            top_k = num_dates or self.config.timeline.default_num_dates
+            ranked = sorted(valid, key=lambda s: s.corroboration_count, reverse=True)[:top_k]
+            ranked.sort(key=lambda s: s.event_date)
+            timeline = [
+                TimelineEntry(
+                    event_date=s.event_date,
+                    summary=s.canonical_summary,
+                    status=s.status,
+                    supporting_article_ids=list(s.supporting_article_ids),
+                )
+                for s in ranked
+            ]
+        else:
+            timeline = self.ranker.build_timeline(states, num_dates=num_dates)
+
+        revised_states = [s for s in states if s.status == EventStatus.REVISED]
+        retracted_states = [s for s in states if s.status == EventStatus.RETRACTED]
+        self.last_diagnostics = {
+            "total_articles": len(ordered),
+            "rho_triggered": rho_total,
+            "rho_llm_flag": rho_llm,
+            "rho_lexicon_flag": rho_lex,
+            "actions": dict(self._diag_actions),
+            "total_states": len(states),
+            "revised_count": len(revised_states),
+            "retracted_count": len(retracted_states),
+            "sample_revised": [
+                {"date": s.event_date.isoformat(), "summary": s.canonical_summary[:180], "purged": list(s.purged_claims)[:2]}
+                for s in revised_states[:5]
+            ],
+            "sample_retracted": [
+                {"date": s.event_date.isoformat(), "summary": s.canonical_summary[:180]}
+                for s in retracted_states[:5]
+            ],
+        }
         return timeline, states

@@ -91,38 +91,89 @@ def sample_topic_articles(
     return selected
 
 
-def paired_t_pvalue(a: list[float], b: list[float]) -> float | None:
-    """Compute two-sided paired t-test p-value without hard dependency on scipy."""
+def wilson_ci(k: int, n: int, z: float = 1.96) -> list[float]:
+    """95% Wilson score confidence interval for binomial proportions."""
+    if n <= 0:
+        return [0.0, 0.0]
+    p = k / n
+    denom = 1.0 + (z * z) / n
+    center = (p + (z * z) / (2.0 * n)) / denom
+    half = (z * math.sqrt((p * (1.0 - p) + (z * z) / (4.0 * n)) / n)) / denom
+    return [round(max(0.0, center - half), 3), round(min(1.0, center + half), 3)]
+
+
+def paired_stats(a: list[float], b: list[float]) -> dict[str, float | None]:
+    """Compute paired t-test p-value, Wilcoxon p-value, and Hedges' g effect size."""
     if len(a) != len(b) or len(a) < 2:
-        return None
+        return {"t_p": None, "wilcoxon_p": None, "hedges_g": None}
     diffs = [x - y for x, y in zip(a, b)]
+    n = len(diffs)
     mean_d = statistics.mean(diffs)
     std_d = statistics.stdev(diffs)
     if std_d == 0.0:
-        return 1.0 if mean_d == 0.0 else 0.0
-    t_stat = abs(mean_d) / (std_d / math.sqrt(len(diffs)))
+        t_p = 1.0 if mean_d == 0.0 else 0.0
+        g_val = 0.0
+    else:
+        t_stat = abs(mean_d) / (std_d / math.sqrt(n))
+        j_corr = 1.0 - (3.0 / (4.0 * n - 1.0)) if n > 1 else 1.0
+        g_val = (mean_d / std_d) * j_corr
+        try:
+            from scipy import stats  # type: ignore
+
+            t_p = float(stats.ttest_rel(a, b).pvalue)
+        except Exception:
+            t_p = float(math.erfc(t_stat / math.sqrt(2.0)))
+
     try:
         from scipy import stats  # type: ignore
 
-        return float(stats.ttest_rel(a, b).pvalue)
+        non_zero = [d for d in diffs if abs(d) > 1e-12]
+        w_p = float(stats.wilcoxon(non_zero).pvalue) if len(non_zero) >= 1 else 1.0
     except Exception:
-        # Normal approximation fallback for quick summary when scipy is absent
-        return float(math.erfc(t_stat / math.sqrt(2.0)))
+        w_p = None
+    return {"t_p": t_p, "wilcoxon_p": w_p, "hedges_g": round(g_val, 3)}
+
+
+def apply_holm_bonferroni(raw_pvals: list[tuple[str, str, float | None]]) -> dict[tuple[str, str], float | None]:
+    """Adjust a family of p-values using Holm-Bonferroni step-down correction."""
+    valid = [(k1, k2, p) for k1, k2, p in raw_pvals if p is not None]
+    valid.sort(key=lambda x: x[2])  # type: ignore[arg-type]
+    m = len(valid)
+    adjusted: dict[tuple[str, str], float | None] = {(k1, k2): None for k1, k2, _ in raw_pvals}
+    running_max = 0.0
+    for idx, (k1, k2, p) in enumerate(valid):
+        adj = min(1.0, p * (m - idx))  # type: ignore[operator]
+        running_max = max(running_max, adj)
+        adjusted[(k1, k2)] = running_max
+    return adjusted
 
 
 def build_systems(
     cfg_single: ReviTLSConfig,
     cfg_dual: ReviTLSConfig,
     embedder: SentenceTransformer,
+    include_extended: bool = True,
 ) -> list[tuple[str, Any]]:
-    llm = LLMClient(cfg_single.llm)
-    verifier_llm = LLMClient(cfg_dual.verifier_llm) if cfg_dual.verifier_llm else None
-    return [
-        ("LLM-TLS", TopicLLMTLSBaseline(llm=llm, embedder=embedder)),
-        ("CHRONOS", ClosedDomainCHRONOSBaseline(llm=llm, embedder=embedder)),
-        ("ReviTLS (Single-Scale)", ReviTLSPipeline(cfg_single, llm=llm, embedder=embedder)),
-        ("ReviTLS (Dual-Scale)", ReviTLSPipeline(cfg_dual, llm=llm, embedder=embedder, verifier_llm=verifier_llm)),
+    llm_7b = LLMClient(cfg_single.llm)
+    llm_14b = LLMClient(cfg_dual.verifier_llm) if cfg_dual.verifier_llm else llm_7b
+    systems: list[tuple[str, Any]] = [
+        ("LLM-TLS (7B)", TopicLLMTLSBaseline(llm=llm_7b, embedder=embedder)),
+        ("CHRONOS (7B)", ClosedDomainCHRONOSBaseline(llm=llm_7b, embedder=embedder)),
+        ("ReviTLS (Single-Scale)", ReviTLSPipeline(cfg_single, llm=llm_7b, embedder=embedder)),
+        ("ReviTLS (Dual-Scale)", ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b)),
     ]
+    if include_extended:
+        systems.extend(
+            [
+                ("LLM-TLS (14B)", TopicLLMTLSBaseline(llm=llm_14b, embedder=embedder)),
+                ("CHRONOS (14B)", ClosedDomainCHRONOSBaseline(llm=llm_14b, embedder=embedder)),
+                ("LLM-TLS + 90d + Latest", TopicLLMTLSBaseline(llm=llm_7b, embedder=embedder, window_days=90, selection_mode="latest")),
+                ("LLM-TLS (Recency-TR)", TopicLLMTLSBaseline(llm=llm_7b, embedder=embedder, selection_mode="recency_textrank")),
+                ("LLM-TLS + PostHoc-14B", TopicLLMTLSBaseline(llm=llm_7b, embedder=embedder, post_hoc_verifier_llm=llm_14b)),
+                ("ReviTLS (TextRank Sel.)", ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, selection_mode="textrank")),
+            ]
+        )
+    return systems
 
 
 def eval_topic_stream(
@@ -167,11 +218,14 @@ def eval_topic_stream(
             "concat_r1": max(x["concat_r1"] for x in concats),
             "concat_r2": max(x["concat_r2"] for x in concats),
             "time_s": elapsed,
+            "num_articles": len(articles),
         }
+        if hasattr(runner, "last_diagnostics") and runner.last_diagnostics:
+            results[name]["diagnostics"] = runner.last_diagnostics
     return results
 
 
-def summarize_dataset(per_topic: dict[str, dict[str, dict[str, float]]]) -> dict[str, dict[str, Any]]:
+def summarize_dataset(per_topic: dict[str, dict[str, dict[str, Any]]]) -> dict[str, dict[str, Any]]:
     topics = list(per_topic.keys())
     systems = list(per_topic[topics[0]].keys())
     metrics = ("ar1", "ar2", "concat_r1", "concat_r2", "date_f1", "time_s")
@@ -179,25 +233,44 @@ def summarize_dataset(per_topic: dict[str, dict[str, dict[str, float]]]) -> dict
     for sys_name in systems:
         summary[sys_name] = {}
         for m in metrics:
-            vals = [per_topic[t][sys_name][m] for t in topics]
+            vals = [float(per_topic[t][sys_name][m]) for t in topics]
             summary[sys_name][m] = {
                 "mean": statistics.mean(vals),
                 "std": statistics.stdev(vals) if len(vals) > 1 else 0.0,
             }
-    # Paired significance: ReviTLS (Dual-Scale) vs LLM-TLS & CHRONOS
+    # Paired significance: ReviTLS (Dual-Scale) vs baselines with Holm-Bonferroni, Wilcoxon, and Hedges' g
     if "ReviTLS (Dual-Scale)" in systems:
-        pvals: dict[str, dict[str, float | None]] = {}
-        for base in ("LLM-TLS", "CHRONOS", "ReviTLS (Single-Scale)"):
-            if base not in systems:
-                continue
-            pvals[base] = {
-                m: paired_t_pvalue(
-                    [per_topic[t]["ReviTLS (Dual-Scale)"][m] for t in topics],
-                    [per_topic[t][base][m] for t in topics],
+        raw_stats: dict[str, dict[str, dict[str, float | None]]] = {}
+        raw_p_list: list[tuple[str, str, float | None]] = []
+        bases = [
+            b
+            for b in (
+                "LLM-TLS (7B)",
+                "LLM-TLS (14B)",
+                "CHRONOS (7B)",
+                "CHRONOS (14B)",
+                "ReviTLS (Single-Scale)",
+                "ReviTLS (TextRank Sel.)",
+                "LLM-TLS + 90d + Latest",
+                "LLM-TLS + PostHoc-14B",
+            )
+            if b in systems
+        ]
+        for base in bases:
+            raw_stats[base] = {}
+            for m in ("concat_r1", "date_f1", "ar1"):
+                st = paired_stats(
+                    [float(per_topic[t]["ReviTLS (Dual-Scale)"][m]) for t in topics],
+                    [float(per_topic[t][base][m]) for t in topics],
                 )
-                for m in ("concat_r1", "date_f1", "ar1")
-            }
-        summary["_paired_pvalues_vs_dual"] = pvals
+                raw_stats[base][m] = st
+                raw_p_list.append((base, m, st["t_p"]))
+
+        adj_map = apply_holm_bonferroni(raw_p_list)
+        for base in bases:
+            for m in ("concat_r1", "date_f1", "ar1"):
+                raw_stats[base][m]["holm_p"] = adj_map.get((base, m))
+        summary["_paired_stats_vs_dual"] = raw_stats
     return summary
 
 
@@ -247,7 +320,24 @@ def run_revision_suite(
                 "sflr": sc["stale_fact_leakage_rate"],
             }
 
-    return {"isolated": isolated_res, "embedded": embedded_res}
+    # Compute macro totals + 95% Wilson CIs
+    macro: dict[str, dict[str, Any]] = {"isolated": {}, "embedded": {}}
+    for mode_name, mode_res in (("isolated", isolated_res), ("embedded", embedded_res)):
+        if not mode_res:
+            continue
+        sys_names = list(next(iter(mode_res.values())).keys())
+        for s_name in sys_names:
+            n_total = len(mode_res) * 4
+            rra_k = round(sum(mode_res[t][s_name]["rra"] * 4 for t in mode_res))
+            sflr_k = round(sum(mode_res[t][s_name]["sflr"] * 4 for t in mode_res))
+            macro[mode_name][s_name] = {
+                "rra": round(rra_k / max(1, n_total), 4),
+                "rra_ci95": wilson_ci(rra_k, n_total),
+                "sflr": round(sflr_k / max(1, n_total), 4),
+                "sflr_ci95": wilson_ci(sflr_k, n_total),
+            }
+
+    return {"isolated": isolated_res, "embedded": embedded_res, "macro_with_ci": macro}
 
 
 def run_parametric_memory_control(
@@ -274,13 +364,18 @@ def run_parametric_memory_control(
     )
 
     # 2. Full counterfactual evaluation across systems
-    post_results: dict[str, dict[str, float]] = {}
+    post_results: dict[str, dict[str, Any]] = {}
     for name, runner in build_systems(cfg_single, cfg_dual, embedder):
         _, states = runner.run_stream(articles, num_dates=12)
         sc = evaluate_revision_states(states, cases)
+        n_cases = len(cases)
+        rra_k = round(sc["revision_resolution_accuracy"] * n_cases)
+        sflr_k = round(sc["stale_fact_leakage_rate"] * n_cases)
         post_results[name] = {
             "rra": sc["revision_resolution_accuracy"],
+            "rra_ci95": wilson_ci(rra_k, n_cases),
             "sflr": sc["stale_fact_leakage_rate"],
+            "sflr_ci95": wilson_ci(sflr_k, n_cases),
         }
 
     return {
@@ -291,12 +386,69 @@ def run_parametric_memory_control(
     }
 
 
+def run_t17_component_ablation(
+    t17_streams: dict[str, list[Article]],
+    raw_t17_dir: Path,
+    cfg_dual: ReviTLSConfig,
+    embedder: SentenceTransformer,
+) -> dict[str, Any]:
+    """Run genuine component ablations across all T17 topics (9 topics)."""
+    llm_7b = LLMClient(cfg_dual.llm)
+    llm_14b = LLMClient(cfg_dual.verifier_llm) if cfg_dual.verifier_llm else llm_7b
+
+    cfg_no_ce = cfg_dual.model_copy(deep=True)
+    cfg_no_ce.retrieval.cross_encoder_model = None
+
+    cfg_no_gate = cfg_dual.model_copy(deep=True)
+    cfg_no_gate.retrieval.strict_temporal_gate = False
+    cfg_no_gate.retrieval.routine_lookback_days = 90
+
+    variants: list[tuple[str, Any]] = [
+        ("Full Dual-Scale", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b)),
+        ("w/o 14B Verifier", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_7b)),
+        ("w/o Cross-Encoder", lambda: ReviTLSPipeline(cfg_no_ce, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b)),
+        ("w/o Conditional Gate", lambda: ReviTLSPipeline(cfg_no_gate, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b)),
+        ("w/o Tombstone Purge", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, disable_purge=True)),
+    ]
+
+    per_topic: dict[str, dict[str, dict[str, float]]] = {}
+    for topic, articles in sorted(t17_streams.items()):
+        refs = load_reference_timelines(raw_t17_dir / topic / "timelines.jsonl")
+        target_l = max(1, round(sum(len(r) for r in refs) / len(refs))) if refs else cfg_dual.timeline.default_num_dates
+        per_topic[topic] = {}
+        for v_name, factory in variants:
+            runner = factory()
+            t0 = time.perf_counter()
+            timeline, _ = runner.run_stream(articles, num_dates=target_l)
+            elapsed = time.perf_counter() - t0
+            date_f1 = max(compute_date_f1(timeline, [d for d, _ in ref])["date_f1"] for ref in refs)
+            aligns = [compute_align_rouge(timeline, ref) for ref in refs]
+            concats = [compute_concat_rouge(timeline, ref) for ref in refs]
+            per_topic[topic][v_name] = {
+                "date_f1": date_f1,
+                "ar1": max(x["align_r1"] for x in aligns),
+                "concat_r1": max(x["concat_r1"] for x in concats),
+                "time_s": elapsed,
+            }
+
+    summary: dict[str, dict[str, dict[str, float]]] = {}
+    for v_name, _ in variants:
+        summary[v_name] = {}
+        for m in ("date_f1", "ar1", "concat_r1", "time_s"):
+            vals = [per_topic[t][v_name][m] for t in per_topic]
+            summary[v_name][m] = {
+                "mean": statistics.mean(vals),
+                "std": statistics.stdev(vals) if len(vals) > 1 else 0.0,
+            }
+    return {"per_topic": per_topic, "summary": summary}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run full SCI-E multi-topic + counterfactual suite.")
     parser.add_argument("--datasets", nargs="+", default=["t17", "crisis"], choices=["t17", "crisis"])
     parser.add_argument("--single-config", type=Path, default=Path("configs/default.yaml"))
     parser.add_argument("--dual-config", type=Path, default=Path("configs/hybrid_revitls.yaml"))
-    parser.add_argument("--max-articles", type=int, default=50, help="Max reference-stratified articles per topic")
+    parser.add_argument("--max-articles", type=int, default=100, help="Max reference-stratified articles per topic")
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/scie_results"))
     args = parser.parse_args()
 
@@ -357,6 +509,16 @@ def main() -> None:
 
     print("[Parametric Memory Control] Running 8 counterfactual/fictional scenarios...", flush=True)
     all_output["parametric_control"] = run_parametric_memory_control(cfg_single, cfg_dual, embedder)
+    out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
+
+    if t17_sampled_streams:
+        print("[T17 Component Ablation] Running 5 variants across all 9 T17 topics...", flush=True)
+        all_output["t17_ablation"] = run_t17_component_ablation(
+            t17_sampled_streams,
+            Path("data/raw/t17"),
+            cfg_dual,
+            embedder,
+        )
 
     out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
     print(f"All SCI-E results written to {out_json}", flush=True)
