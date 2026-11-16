@@ -333,3 +333,80 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
   git commit -m "Add RTX 5080 Q2/SCI-E full-corpus v7 experimental results"
   git push origin main
   ```
+
+---
+
+### 🔹 16.11.2026: Tam Veri Seti (`T17` + `Crisis` — `--max-articles 0`) v7 / Q2 SCI-E Koşusu, Kod Düzeltmeleri ve Sonuçları
+* **Amaç:** Örnekleme olmadan `T17` (9 konu, zaman aralığında **3.742** makale) ve `Crisis` (4 konu, zaman aralığında **13.937** makale) veri setlerinin tamamı (toplam **17.679** makale) üzerinde 10 sistemin karşılaştırılması, 16 çoklu-konu revizyon senaryosu, 8 kurgusal/karşı-olgusal önbilgi kontrolü ve `T17` (9 konu) tam bileşen ablation'ının RTX 5080 üzerinde tamamlanması.
+* **Yapılan Kod Düzeltmeleri & İyileştirmeler:**
+  1. `src/revitls/pipeline/runner.py`: `RetrievalConfig` içinde bulunmayan `revision_keywords` yerine `_REVISION_KEYWORDS` / `_is_lex_revision` helper'ı eklendi (`AttributeError` giderildi); `EventState` üzerinde bulunmayan `purged_claims` yerine `revision_history` üzerinden `previous_summary` kayıtları okundu; Phase 1/Phase 2 adımlarına canlı `tqdm` ilerleme çubukları (`clusters`, `rho`, `rev`) eklendi.
+  2. `src/revitls/baselines/llm_tls.py` & `src/revitls/baselines/chronos.py`: Uzun akışların canlı takibi için `tqdm` ilerleme çubukları eklendi.
+  3. `scripts/run_scie_suite.py`: `run_t17_component_ablation` içinde `RetrievalConfig` ile uyumsuz `routine_lookback_days` alanı `max_date_window_days = 90` olarak düzeltildi; `revision_suite`, `parametric_control` ve `t17_ablation` adımlarına checkpoint/devamlılık ve `tqdm` (`Overall Topics`, `Systems`, `T17 Ablation`) eklendi.
+* **Çalıştırılan Komutlar:**
+  ```powershell
+  # 1. Birim testleri doğrulaması
+  .\.venv\Scripts\python.exe -m pytest -v   # 3 passed
+
+  # 2. Tam veri seti (T17 + Crisis, 17.679 makale) v7 SCI-E koşusu
+  .\.venv\Scripts\python.exe scripts/run_scie_suite.py --datasets t17 crisis --max-articles 0 --fresh
+
+  # 3. Son T17 Component Ablation adımının checkpoint üzerinden tamamlanması
+  .\.venv\Scripts\python.exe scripts/run_scie_suite.py --datasets t17 crisis --max-articles 0
+  ```
+* **Üretilen Çıktı:** [`outputs/scie_results/summary.json`](outputs/scie_results/summary.json)
+
+#### A) `T17` Tam Veri Seti (9 Konu, 3.742 Makale — Ortalama ± Std)
+
+| Sistem | Date-F1 (↑) | AR-1 (↑) | AR-2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | Ort. Süre (s) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LLM-TLS (7B)** | 0.542 ± 0.249 | 0.111 ± 0.038 | 0.027 ± 0.011 | 0.402 ± 0.125 | 0.125 ± 0.043 | 236.6 |
+| **CHRONOS (7B)** | 0.297 ± 0.246 | 0.053 ± 0.033 | 0.011 ± 0.009 | 0.191 ± 0.143 | 0.057 ± 0.039 | **30.3** |
+| **ReviTLS (Single-Scale)** | 0.456 ± 0.247 | 0.105 ± 0.050 | 0.020 ± 0.010 | **0.462 ± 0.083** | **0.144 ± 0.034** | 1014.7 |
+| **ReviTLS (Dual-Scale)** | **0.544 ± 0.283** | **0.120 ± 0.041** | 0.022 ± 0.008 | 0.446 ± 0.102 | 0.129 ± 0.035 | 983.2 |
+| **LLM-TLS (14B)** | 0.520 ± 0.254 | **0.120 ± 0.045** | 0.025 ± 0.012 | 0.448 ± 0.121 | 0.132 ± 0.045 | 578.6 |
+| **CHRONOS (14B)** | 0.242 ± 0.163 | 0.048 ± 0.025 | 0.009 ± 0.005 | 0.181 ± 0.131 | 0.051 ± 0.033 | 47.0 |
+| **LLM-TLS + 90d + Latest** | 0.428 ± 0.223 | 0.076 ± 0.022 | 0.014 ± 0.008 | 0.386 ± 0.116 | 0.108 ± 0.041 | 260.5 |
+| **LLM-TLS (Recency-TR)** | 0.542 ± 0.249 | 0.110 ± 0.037 | **0.030 ± 0.014** | 0.405 ± 0.106 | 0.128 ± 0.034 | 235.9 |
+| **LLM-TLS + PostHoc-14B** | 0.542 ± 0.249 | 0.111 ± 0.037 | 0.026 ± 0.011 | 0.402 ± 0.124 | 0.125 ± 0.043 | 266.8 |
+| **ReviTLS (TextRank Sel.)** | 0.467 ± 0.264 | 0.101 ± 0.043 | 0.020 ± 0.007 | 0.449 ± 0.103 | 0.130 ± 0.035 | 982.5 |
+
+#### B) `Crisis` Tam Veri Seti (4 Konu, 13.937 Makale — Ortalama ± Std)
+
+| Sistem | Date-F1 (↑) | AR-1 (↑) | AR-2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | Ort. Süre (s) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LLM-TLS (7B)** | **0.320 ± 0.144** | **0.099 ± 0.044** | 0.023 ± 0.016 | 0.428 ± 0.051 | 0.117 ± 0.025 | 1805.6 |
+| **CHRONOS (7B)** | 0.119 ± 0.062 | 0.029 ± 0.008 | 0.003 ± 0.002 | 0.260 ± 0.070 | 0.048 ± 0.021 | **60.6** |
+| **ReviTLS (Single-Scale)** | 0.213 ± 0.113 | 0.055 ± 0.027 | 0.012 ± 0.010 | 0.427 ± 0.035 | 0.126 ± 0.020 | 8090.4 |
+| **ReviTLS (Dual-Scale)** | 0.242 ± 0.059 | 0.075 ± 0.017 | 0.019 ± 0.010 | **0.487 ± 0.026** | 0.134 ± 0.024 | 7461.2 |
+| **LLM-TLS (14B)** | 0.302 ± 0.134 | 0.096 ± 0.037 | **0.026 ± 0.017** | 0.472 ± 0.038 | **0.142 ± 0.037** | 4524.6 |
+| **CHRONOS (14B)** | 0.105 ± 0.029 | 0.031 ± 0.006 | 0.005 ± 0.003 | 0.217 ± 0.079 | 0.044 ± 0.015 | 67.1 |
+| **LLM-TLS + 90d + Latest** | 0.179 ± 0.122 | 0.048 ± 0.022 | 0.008 ± 0.007 | 0.416 ± 0.025 | 0.099 ± 0.019 | 1918.5 |
+| **LLM-TLS (Recency-TR)** | **0.320 ± 0.144** | 0.092 ± 0.038 | 0.023 ± 0.016 | 0.429 ± 0.027 | 0.119 ± 0.023 | 1793.3 |
+| **LLM-TLS + PostHoc-14B** | **0.320 ± 0.144** | 0.098 ± 0.044 | 0.023 ± 0.016 | 0.430 ± 0.052 | 0.115 ± 0.022 | 1806.3 |
+| **ReviTLS (TextRank Sel.)** | 0.249 ± 0.066 | 0.078 ± 0.022 | 0.022 ± 0.012 | 0.485 ± 0.041 | 0.136 ± 0.031 | 7458.2 |
+
+#### C) 16 Çoklu-Konu Revizyon Senaryosu & 8 Kurgusal/Karşı-Olgusal Önbilgi Kontrolü
+
+* **Düzeltme Öncesi Zamansal Körlük Denetimi (`Temporal Blindness Audit`):** **`0 / 8 (0.000)`** erken önbilgi sızıntısı.
+
+| Sistem | Revizyon İzole RRA (↑) | Revizyon İzole SFLR (↓) | Revizyon Akış İçi RRA (↑) | Revizyon Akış İçi SFLR (↓) | Önbilgi Kontrol RRA (↑) | Önbilgi Kontrol SFLR (↓) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **LLM-TLS (7B)** | 0.125 | 0.875 | 0.125 | 0.750 | 0.125 | 0.875 |
+| **LLM-TLS (14B)** | 0.000 | 1.000 | 0.125 | 0.750 | 0.125 | 0.875 |
+| **LLM-TLS + 90d + Latest** | 0.125 | 0.875 | 0.062 | 0.812 | 0.125 | 0.875 |
+| **LLM-TLS (Recency-TR)** | 0.125 | 0.875 | 0.188 | 0.750 | 0.125 | 0.875 |
+| **LLM-TLS + PostHoc-14B** | 0.188 | 0.812 | 0.188 | 0.688 | 0.250 | 0.375 |
+| **CHRONOS (7B / 14B)** | 0.062 / 0.125 | 0.938 / 0.875 | 0.312 / 0.312 | 0.062 / 0.062 | 0.125 / 0.125 | 0.875 / 0.750 |
+| **ReviTLS (Single-Scale)** | 0.750 | 0.188 | 0.812 | **0.125** | 0.750 | 0.125 |
+| **ReviTLS (Dual-Scale)** | **0.875** | **0.125** | **0.875** | **0.125** | **1.000 (8/8)** | **0.000 (0/8)** |
+| **ReviTLS (TextRank Sel.)** | **0.875** | **0.125** | **0.875** | **0.125** | **1.000 (8/8)** | **0.000 (0/8)** |
+
+#### D) Tam `T17` (`n=9`) Bileşen Ablation'ı (`t17_ablation`)
+
+| Varyant | Date-F1 (↑) | AR-1 (↑) | Concat-R1 (↑) | Ort. Süre (s) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Full Dual-Scale** | 0.544 ± 0.283 | 0.120 ± 0.041 | 0.446 ± 0.102 | 981.6 |
+| **w/o 14B Verifier** | 0.549 ± 0.283 | **0.128 ± 0.045** | 0.464 ± 0.098 | 853.6 |
+| **w/o Cross-Encoder** | **0.554 ± 0.276** | 0.126 ± 0.042 | 0.452 ± 0.101 | 989.8 |
+| **w/o Conditional Gate** | 0.520 ± 0.276 | 0.115 ± 0.047 | 0.446 ± 0.083 | 1187.7 |
+| **w/o Tombstone Purge** | 0.551 ± 0.283 | 0.123 ± 0.040 | **0.493 ± 0.096** | **848.7** |
