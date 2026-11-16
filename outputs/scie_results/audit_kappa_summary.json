@@ -1,0 +1,40 @@
+﻿{
+    "crisis_retracted":  {
+                             "strict_precision":  0.6,
+                             "strict_fp_rate":  0.4,
+                             "consensus_tp":  12,
+                             "disagree_or_fp":  8,
+                             "n":  20
+                         },
+    "total_annotated":  95,
+    "raw_agreement":  1,
+    "t17_retracted":  {
+                          "strict_precision":  0.4167,
+                          "strict_fp_rate":  0.5833,
+                          "consensus_tp":  5,
+                          "disagree_or_fp":  7,
+                          "n":  12
+                      },
+    "cohens_kappa":  1,
+    "overall":  {
+                    "strict_precision":  0.7368,
+                    "strict_fp_rate":  0.2632,
+                    "consensus_tp":  70,
+                    "disagree_or_fp":  25,
+                    "n":  95
+                },
+    "retracted":  {
+                      "strict_precision":  0.5312,
+                      "strict_fp_rate":  0.4688,
+                      "consensus_tp":  17,
+                      "disagree_or_fp":  15,
+                      "n":  32
+                  },
+    "revised":  {
+                    "strict_precision":  0.8413,
+                    "strict_fp_rate":  0.1587,
+                    "consensus_tp":  53,
+                    "disagree_or_fp":  10,
+                    "n":  63
+                }
+}
