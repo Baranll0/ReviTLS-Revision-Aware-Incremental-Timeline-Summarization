@@ -1,6 +1,7 @@
 """End-to-end incremental ReviTLS pipeline orchestrator."""
 
 from datetime import date
+import time
 from typing import Optional
 from tqdm.auto import tqdm
 
@@ -74,22 +75,29 @@ class ReviTLSPipeline:
         selection_mode: str = "eq6",
         disable_purge: bool = False,
         rho_mode: str = "both",
+        defer_phase2: bool = True,
+        purge_mode: str = "clause",
+        guarded_retract: bool = False,
     ) -> None:
         self.config = config
         self.embedder = embedder
         self.selection_mode = selection_mode
         self.disable_purge = disable_purge
         self.rho_mode = rho_mode
+        self.defer_phase2 = defer_phase2
         self.memory = EventMemory(config.retrieval)
         active_verifier_llm = verifier_llm or llm
         self.extractor = EventExtractor(llm)  # type: ignore[arg-type]
         self.routine_classifier = RevisionClassifier(llm)  # type: ignore[arg-type]
         self.classifier = RevisionClassifier(active_verifier_llm)  # type: ignore[arg-type]
         self.verifier = TargetedVerifier(active_verifier_llm, config.verifier)  # type: ignore[arg-type]
-        self.state_mgr = EventStateManager()
+        self.state_mgr = EventStateManager(purge_mode=purge_mode, guarded_retract=guarded_retract)
         self.ranker = TimelineRanker(config.timeline)
         self._seen_articles: list[Article] = []
         self._cluster_seq = 0
+        self._ce_reranked_calls = 0
+        self._ce_top1_flips = 0
+        self._ce_time_s = 0.0
         self.last_diagnostics: dict[str, object] = {}
         self._cross_encoder = None
         if config.retrieval.cross_encoder_model:
@@ -154,6 +162,8 @@ class ReviTLSPipeline:
         if self._cross_encoder is not None and len(candidates) > 1:
             import numpy as np
 
+            t_ce = time.perf_counter()
+            pre_top1_id = candidates[0][0].event_id
             pairs = [(st.canonical_summary, claim.summary) for st, _ in candidates]
             ce_scores = self._cross_encoder.predict(pairs)
             art_tokens = {
@@ -173,6 +183,10 @@ class ReviTLSPipeline:
                 corr_bonus = 0.12 if (is_rev_cand and st.corroboration_count >= 2 and lex_overlap > 0) else 0.0
                 rescored.append((st, 0.65 * bi_sc + 0.20 * ce_prob + 0.15 * lex_overlap + corr_bonus))
             rescored.sort(key=lambda item: item[1], reverse=True)
+            self._ce_reranked_calls += 1
+            if rescored[0][0].event_id != pre_top1_id:
+                self._ce_top1_flips += 1
+            self._ce_time_s += time.perf_counter() - t_ce
             candidates = rescored
 
         max_verify_cands = 3 if is_rev_cand else 1
@@ -250,18 +264,24 @@ class ReviTLSPipeline:
             "UPDATE_PROGRESS": 0,
             "REVISE_CONFLICT": 0,
         }
+        self._ce_reranked_calls = 0
+        self._ce_top1_flips = 0
+        self._ce_time_s = 0.0
         rho_total = 0
         rho_llm = 0
         rho_lex = 0
         ordered = sorted(articles, key=lambda a: (a.publish_date, a.article_id))
         show_pbar = len(ordered) >= 15
-        if self.config.verifier_llm is not None:
-            # Algorithm 1 Two-Phase Schedule:
-            # Phase 1: 7B Extraction & Routine Same-Day Clustering (\rho_{i,j} == 0)
+        per_article_latencies: list[float] = []
+        phase2_reconciliation_s = 0.0
+        if self.config.verifier_llm is not None and self.defer_phase2:
+            # Algorithm 1 Two-Phase Schedule (Streaming Ingestion + Deferred Reconciliation):
             claims: list[ExtractedEvent] = []
             p1_bar = tqdm(ordered, desc="  Phase 1 (7B Extract)", unit="art", leave=False, disable=not show_pbar, dynamic_ncols=True)
             for art in p1_bar:
+                t_art = time.perf_counter()
                 claims.append(self.extractor.extract(art))
+                per_article_latencies.append(time.perf_counter() - t_art)
             rev_queue: list[tuple[Article, ExtractedEvent]] = []
             p2_routine = tqdm(
                 zip(ordered, claims),
@@ -272,7 +292,8 @@ class ReviTLSPipeline:
                 disable=not show_pbar,
                 dynamic_ncols=True,
             )
-            for article, claim in p2_routine:
+            for idx_art, (article, claim) in enumerate(p2_routine):
+                t_step = time.perf_counter()
                 is_lex = self._is_lex_revision(article, claim)
                 is_llm = bool(claim.is_correction_or_update)
                 if self._is_revision_candidate(article, claim):
@@ -282,8 +303,10 @@ class ReviTLSPipeline:
                     rev_queue.append((article, claim))
                 else:
                     self.step(article, pre_extracted_claim=claim)
+                per_article_latencies[idx_art] += time.perf_counter() - t_step
                 p2_routine.set_postfix(clusters=len(self.memory._states), rho=rho_total, refresh=False)
             # Phase 2: Cross-Encoder Reranking & 14B Verification on \mathcal{Q}_{rev} (\rho_{i,j} == 1)
+            t_p2 = time.perf_counter()
             p2_rev = tqdm(
                 rev_queue,
                 desc="  Phase 2 (14B Verify)",
@@ -299,9 +322,11 @@ class ReviTLSPipeline:
                     clusters=len(self.memory._states),
                     refresh=False,
                 )
+            phase2_reconciliation_s = time.perf_counter() - t_p2
         else:
-            s_bar = tqdm(ordered, desc="  ReviTLS Step", unit="art", leave=False, disable=not show_pbar, dynamic_ncols=True)
+            s_bar = tqdm(ordered, desc="  ReviTLS Online", unit="art", leave=False, disable=not show_pbar, dynamic_ncols=True)
             for article in s_bar:
+                t_art = time.perf_counter()
                 claim = self.extractor.extract(article)
                 is_lex = self._is_lex_revision(article, claim)
                 is_llm = bool(claim.is_correction_or_update)
@@ -310,6 +335,7 @@ class ReviTLSPipeline:
                     rho_llm += int(is_llm)
                     rho_lex += int(is_lex)
                 self.step(article, pre_extracted_claim=claim)
+                per_article_latencies.append(time.perf_counter() - t_art)
                 s_bar.set_postfix(
                     clusters=len(self.memory._states),
                     rho=rho_total,
@@ -337,8 +363,20 @@ class ReviTLSPipeline:
 
         revised_states = [s for s in states if s.status == EventStatus.REVISED]
         retracted_states = [s for s in states if s.status == EventStatus.RETRACTED]
+        sorted_lat = sorted(per_article_latencies)
+        mean_lat = sum(sorted_lat) / len(sorted_lat) if sorted_lat else 0.0
+        p95_lat = sorted_lat[min(len(sorted_lat) - 1, int(0.95 * len(sorted_lat)))] if sorted_lat else 0.0
+        max_lat = sorted_lat[-1] if sorted_lat else 0.0
         self.last_diagnostics = {
             "total_articles": len(ordered),
+            "defer_phase2": self.defer_phase2,
+            "mean_article_latency_s": round(mean_lat, 4),
+            "p95_article_latency_s": round(p95_lat, 4),
+            "max_article_latency_s": round(max_lat, 4),
+            "phase2_reconciliation_s": round(phase2_reconciliation_s, 4),
+            "ce_reranked_calls": self._ce_reranked_calls,
+            "ce_top1_flips": self._ce_top1_flips,
+            "ce_time_s": round(self._ce_time_s, 4),
             "rho_triggered": rho_total,
             "rho_llm_flag": rho_llm,
             "rho_lexicon_flag": rho_lex,

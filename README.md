@@ -464,3 +464,26 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
 | **LLM-TLS + 90d + Latest + 14B** | 0.125 [0.022, 0.471] | 0.750 [0.409, 0.929] |
 | **ReviTLS (`rho_llm_only`)** | **0.375** [0.137, 0.694] | **0.625** [0.306, 0.863] |
 | **ReviTLS (Full Dual-Scale)** | **0.375** [0.137, 0.694] | **0.625** [0.306, 0.863] |
+
+
+---
+
+### 🔹 16.11.2026 (Adım C — Online Latency, Güvenli Purge/Retract, Pencere Duyarlılığı & 2-Değerlendirici Denetimi)
+* **RTX 5080 Makinesinde Çalıştırılacak Komutlar (~10–15 dk):**
+  ```powershell
+  git pull origin main
+  .\.venv\Scripts\Activate.ps1
+  python -m pytest -v
+  python scripts/export_synthetic_catalog.py
+  python scripts/run_step_c_suite.py --fresh
+  git add outputs/scie_results/synthetic_suite_catalog.json outputs/scie_results/synthetic_suite_catalog.md outputs/scie_results/step_c_summary.json outputs/scie_results/step_c_report.md
+  git commit -m "Add Step-C online latency, safe purge/retract, window sensitivity, and synthetic catalog"
+  git push origin main
+  ```
+* **2 Değerlendiricili Doğal Akış Denetimi (Sen + Arkadaşın `outputs/scie_results/transition_audit.csv` içindeki `annotator_1_tp_fp` ve `annotator_2_tp_fp` sütunlarını `TP` / `FP` olarak doldurduktan sonra):**
+  ```powershell
+  python scripts/export_transition_audit.py --compute-kappa
+  git add outputs/scie_results/transition_audit.csv outputs/scie_results/audit_kappa_summary.json
+  git commit -m "Add 2-annotator natural-stream audit and Cohen's kappa summary"
+  git push origin main
+  ```

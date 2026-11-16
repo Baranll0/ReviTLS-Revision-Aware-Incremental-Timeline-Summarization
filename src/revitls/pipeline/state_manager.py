@@ -65,6 +65,10 @@ def _purge_stale_clauses(summary: str) -> str:
 class EventStateManager:
     """Applies incremental updates, progressions, and revisions to EventState objects."""
 
+    def __init__(self, purge_mode: str = "clause", guarded_retract: bool = False) -> None:
+        self.purge_mode = purge_mode
+        self.guarded_retract = guarded_retract
+
     def create_state(self, cluster_id: str, topic: str, event: ExtractedEvent) -> EventState:
         """Initialize a new EventState from an isolated event claim."""
         return EventState(
@@ -149,23 +153,40 @@ class EventStateManager:
             if is_retraction:
                 new_summary = resolved_summary or event.summary
                 new_date = resolved_date or state.event_date
-                state.status = EventStatus.RETRACTED
+                if self.guarded_retract and state.corroboration_count >= 3 and not has_negated_occurrence:
+                    state.status = EventStatus.REVISED
+                else:
+                    state.status = EventStatus.RETRACTED
             else:
                 new_summary = resolved_summary or f"{state.canonical_summary} {event.summary}".strip()
                 new_date = resolved_date or state.event_date
                 state.status = resolved_status or EventStatus.ACTIVE
         elif classification.action == RevisionAction.REVISE_CONFLICT:
-            clean_evt = _purge_stale_clauses(event.summary)
-            if resolved_summary:
-                clean_res = _purge_stale_clauses(resolved_summary)
-                evt_nums = set(re.findall(r"\d[\d,]*", clean_evt))
-                res_nums = set(re.findall(r"\d[\d,]*", clean_res))
-                if evt_nums and not res_nums:
-                    new_summary = clean_evt
-                else:
-                    new_summary = clean_res
+            if self.purge_mode == "claim_span":
+                # Keep resolved_summary intact without aggressive regex clause stripping;
+                # retain non-overlapping context sentences from prev_summary if they share <40% tokens.
+                base_new = (resolved_summary or event.summary).strip()
+                new_toks = {t.lower().strip(".,:;()\"'") for t in base_new.split() if len(t) >= 4}
+                prev_sents = [s.strip() for s in re.split(r"(?<=[.!?])\s+", prev_summary) if s.strip()]
+                kept_prev = []
+                for sent in prev_sents:
+                    s_toks = {t.lower().strip(".,:;()\"'") for t in sent.split() if len(t) >= 4}
+                    overlap = len(s_toks & new_toks) / max(1, len(s_toks))
+                    if overlap < 0.40 and not any(w in sent.lower() for w in ("estimate", "reportedly", "rumor", "unconfirmed")):
+                        kept_prev.append(sent)
+                new_summary = f"{base_new} {' '.join(kept_prev[:1])}".strip() if kept_prev else base_new
             else:
-                new_summary = clean_evt
+                clean_evt = _purge_stale_clauses(event.summary)
+                if resolved_summary:
+                    clean_res = _purge_stale_clauses(resolved_summary)
+                    evt_nums = set(re.findall(r"\d[\d,]*", clean_evt))
+                    res_nums = set(re.findall(r"\d[\d,]*", clean_res))
+                    if evt_nums and not res_nums:
+                        new_summary = clean_evt
+                    else:
+                        new_summary = clean_res
+                else:
+                    new_summary = clean_evt
             explicit_date_match = re.search(
                 r"(?:took place on|occurred on|held on|landed on|met on|detected on|issued on|convened on)\s+(\d{4}-\d{2}-\d{2})",
                 f"{event.summary} {new_summary}",
@@ -177,7 +198,13 @@ class EventStateManager:
                 else None
             )
             new_date = explicit_date or resolved_date or event.event_date or state.event_date
-            state.status = EventStatus.RETRACTED if is_retraction else (resolved_status or EventStatus.REVISED)
+            if is_retraction:
+                if self.guarded_retract and state.corroboration_count >= 3 and not has_negated_occurrence:
+                    state.status = EventStatus.REVISED
+                else:
+                    state.status = EventStatus.RETRACTED
+            else:
+                state.status = resolved_status or EventStatus.REVISED
         else:
             return state
 
