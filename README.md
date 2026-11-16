@@ -431,3 +431,36 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
   git commit -m "Add Step-B RRA/SFLR ablations, implicit-cue suite, and transition audit"
   git push origin main
   ```
+* **Yapılan Düzeltme:** `scripts/run_step_b_suite.py` içindeki `RevisionType.RUMOR_RETRACTION` enum adı `src/revitls/schemas.py` ile uyumlu olacak şekilde `RevisionType.RETRACTION` olarak düzeltildi.
+* **Üretilen Çıktılar:**
+  - [`outputs/scie_results/step_b_summary.json`](outputs/scie_results/step_b_summary.json) & [`outputs/scie_results/step_b_report.md`](outputs/scie_results/step_b_report.md)
+  - [`outputs/scie_results/transition_audit.csv`](outputs/scie_results/transition_audit.csv) & [`outputs/scie_results/transition_audit.md`](outputs/scie_results/transition_audit.md) (**95** doğal akış geçişi; `T17` `RETRACTED` tarihlerinin referans tarihlerle çakışması: **7 / 12**)
+
+#### 1. `RRA / SFLR` Bileşen Ablation'ı & Adil Baseline (`16 İzole + 16 Akış İçi + 8 Parametrik Kontrol`)
+
+| Varyant | İzole RRA [95% CI] | İzole SFLR | Akış İçi RRA [95% CI] | Akış İçi SFLR | Önbilgi RRA [95% CI] | Önbilgi SFLR |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Full Dual-Scale** | **0.938** [0.717, 0.989] | **0.062** | **0.938** [0.717, 0.989] | **0.062** | **1.000** [0.676, 1.0] | **0.000** |
+| **w/o 14B Verifier** | 0.812 [0.570, 0.934] | 0.125 | 0.562 [0.332, 0.769] | 0.375 | 0.625 [0.306, 0.863] | 0.250 |
+| **w/o Cross-Encoder** | **0.938** [0.717, 0.989] | **0.062** | 0.875 [0.640, 0.965] | 0.125 | **1.000** [0.676, 1.0] | **0.000** |
+| **w/o Conditional Gate** | **0.938** [0.717, 0.989] | **0.062** | 0.875 [0.640, 0.965] | **0.062** | **1.000** [0.676, 1.0] | **0.000** |
+| **w/o Tombstone Purge** | 0.250 [0.102, 0.495] | 0.688 | 0.250 [0.102, 0.495] | 0.688 | 0.250 [0.071, 0.591] | 0.750 |
+| **LLM-TLS + 90d + Latest + 14B** | 0.312 [0.142, 0.556] | 0.688 | 0.125 [0.035, 0.360] | 0.875 | 0.375 [0.137, 0.694] | 0.500 |
+
+#### 2. Koşullu Kapı ($\rho$) Kaynak Ablation'ı
+
+| $\rho$ Modu | İzole RRA [95% CI] | İzole SFLR | Önbilgi RRA [95% CI] | Önbilgi SFLR |
+| :--- | :---: | :---: | :---: | :---: |
+| **`rho_both` (LLM veya Lexicon)** | **0.938** [0.717, 0.989] | **0.062** | **1.000** [0.676, 1.0] | **0.000** |
+| **`rho_llm_only`** | **0.938** [0.717, 0.989] | **0.062** | **1.000** [0.676, 1.0] | **0.000** |
+| **`rho_lexicon_only`** | 0.875 [0.640, 0.965] | 0.125 | **1.000** [0.676, 1.0] | **0.000** |
+| **`rho_none` (Sürekli Aynı-Gün)** | 0.062 [0.011, 0.283] | 0.938 | 0.125 [0.022, 0.471] | 0.875 |
+
+#### 3. Örtük İpucu (*Implicit-Cue*) & Uzun Gecikmeli ($\Delta t = 15\text{--}35$ Gün, 8 Senaryo) Stres Testi
+
+| Sistem | RRA [95% CI] | SFLR [95% CI] |
+| :--- | :---: | :---: |
+| **LLM-TLS (7B)** | 0.125 [0.022, 0.471] | 0.750 [0.409, 0.929] |
+| **LLM-TLS + 90d + Latest + 14B** | 0.125 [0.022, 0.471] | 0.750 [0.409, 0.929] |
+| **ReviTLS (`rho_llm_only`)** | **0.375** [0.137, 0.694] | **0.625** [0.306, 0.863] |
+| **ReviTLS (Full Dual-Scale)** | **0.375** [0.137, 0.694] | **0.625** [0.306, 0.863] |

@@ -1,0 +1,684 @@
+{
+  "component_ablation_rra": {
+    "isolated": {
+      "Full Dual-Scale": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "w/o 14B Verifier": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 0.75,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 0.5,
+          "sflr": 0.5
+        },
+        "haiti": {
+          "rra": 1.0,
+          "sflr": 0.0
+        }
+      },
+      "w/o Cross-Encoder": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "w/o Conditional Gate": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "w/o Tombstone Purge": {
+        "bpoil": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "finan": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "h1n1": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "haiti": {
+          "rra": 0.25,
+          "sflr": 0.5
+        }
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "bpoil": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "finan": {
+          "rra": 0.5,
+          "sflr": 0.5
+        },
+        "h1n1": {
+          "rra": 0.5,
+          "sflr": 0.5
+        },
+        "haiti": {
+          "rra": 0.0,
+          "sflr": 1.0
+        }
+      }
+    },
+    "embedded": {
+      "Full Dual-Scale": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "w/o 14B Verifier": {
+        "bpoil": {
+          "rra": 0.75,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 0.5,
+          "sflr": 0.5
+        },
+        "h1n1": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "w/o Cross-Encoder": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 0.75,
+          "sflr": 0.25
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "w/o Conditional Gate": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 0.75,
+          "sflr": 0.0
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "w/o Tombstone Purge": {
+        "bpoil": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "finan": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "h1n1": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "haiti": {
+          "rra": 0.25,
+          "sflr": 0.5
+        }
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "bpoil": {
+          "rra": 0.0,
+          "sflr": 1.0
+        },
+        "finan": {
+          "rra": 0.0,
+          "sflr": 1.0
+        },
+        "h1n1": {
+          "rra": 0.5,
+          "sflr": 0.5
+        },
+        "haiti": {
+          "rra": 0.0,
+          "sflr": 1.0
+        }
+      }
+    },
+    "parametric": {
+      "Full Dual-Scale": {
+        "rra": 1.0,
+        "rra_ci95": [
+          0.676,
+          1.0
+        ],
+        "sflr": 0.0,
+        "sflr_ci95": [
+          0.0,
+          0.324
+        ]
+      },
+      "w/o 14B Verifier": {
+        "rra": 0.625,
+        "rra_ci95": [
+          0.306,
+          0.863
+        ],
+        "sflr": 0.25,
+        "sflr_ci95": [
+          0.071,
+          0.591
+        ]
+      },
+      "w/o Cross-Encoder": {
+        "rra": 1.0,
+        "rra_ci95": [
+          0.676,
+          1.0
+        ],
+        "sflr": 0.0,
+        "sflr_ci95": [
+          0.0,
+          0.324
+        ]
+      },
+      "w/o Conditional Gate": {
+        "rra": 1.0,
+        "rra_ci95": [
+          0.676,
+          1.0
+        ],
+        "sflr": 0.0,
+        "sflr_ci95": [
+          0.0,
+          0.324
+        ]
+      },
+      "w/o Tombstone Purge": {
+        "rra": 0.25,
+        "rra_ci95": [
+          0.071,
+          0.591
+        ],
+        "sflr": 0.75,
+        "sflr_ci95": [
+          0.409,
+          0.929
+        ]
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "rra": 0.375,
+        "rra_ci95": [
+          0.137,
+          0.694
+        ],
+        "sflr": 0.5,
+        "sflr_ci95": [
+          0.215,
+          0.785
+        ]
+      }
+    },
+    "macro_with_ci": {
+      "isolated": {
+        "Full Dual-Scale": {
+          "rra": 0.9375,
+          "rra_ci95": [
+            0.717,
+            0.989
+          ],
+          "sflr": 0.0625,
+          "sflr_ci95": [
+            0.011,
+            0.283
+          ]
+        },
+        "w/o 14B Verifier": {
+          "rra": 0.8125,
+          "rra_ci95": [
+            0.57,
+            0.934
+          ],
+          "sflr": 0.125,
+          "sflr_ci95": [
+            0.035,
+            0.36
+          ]
+        },
+        "w/o Cross-Encoder": {
+          "rra": 0.9375,
+          "rra_ci95": [
+            0.717,
+            0.989
+          ],
+          "sflr": 0.0625,
+          "sflr_ci95": [
+            0.011,
+            0.283
+          ]
+        },
+        "w/o Conditional Gate": {
+          "rra": 0.9375,
+          "rra_ci95": [
+            0.717,
+            0.989
+          ],
+          "sflr": 0.0625,
+          "sflr_ci95": [
+            0.011,
+            0.283
+          ]
+        },
+        "w/o Tombstone Purge": {
+          "rra": 0.25,
+          "rra_ci95": [
+            0.102,
+            0.495
+          ],
+          "sflr": 0.6875,
+          "sflr_ci95": [
+            0.444,
+            0.858
+          ]
+        },
+        "LLM-TLS + 90d + Latest + 14B": {
+          "rra": 0.3125,
+          "rra_ci95": [
+            0.142,
+            0.556
+          ],
+          "sflr": 0.6875,
+          "sflr_ci95": [
+            0.444,
+            0.858
+          ]
+        }
+      },
+      "embedded": {
+        "Full Dual-Scale": {
+          "rra": 0.9375,
+          "rra_ci95": [
+            0.717,
+            0.989
+          ],
+          "sflr": 0.0625,
+          "sflr_ci95": [
+            0.011,
+            0.283
+          ]
+        },
+        "w/o 14B Verifier": {
+          "rra": 0.5625,
+          "rra_ci95": [
+            0.332,
+            0.769
+          ],
+          "sflr": 0.375,
+          "sflr_ci95": [
+            0.185,
+            0.614
+          ]
+        },
+        "w/o Cross-Encoder": {
+          "rra": 0.875,
+          "rra_ci95": [
+            0.64,
+            0.965
+          ],
+          "sflr": 0.125,
+          "sflr_ci95": [
+            0.035,
+            0.36
+          ]
+        },
+        "w/o Conditional Gate": {
+          "rra": 0.875,
+          "rra_ci95": [
+            0.64,
+            0.965
+          ],
+          "sflr": 0.0625,
+          "sflr_ci95": [
+            0.011,
+            0.283
+          ]
+        },
+        "w/o Tombstone Purge": {
+          "rra": 0.25,
+          "rra_ci95": [
+            0.102,
+            0.495
+          ],
+          "sflr": 0.6875,
+          "sflr_ci95": [
+            0.444,
+            0.858
+          ]
+        },
+        "LLM-TLS + 90d + Latest + 14B": {
+          "rra": 0.125,
+          "rra_ci95": [
+            0.035,
+            0.36
+          ],
+          "sflr": 0.875,
+          "sflr_ci95": [
+            0.64,
+            0.965
+          ]
+        }
+      }
+    }
+  },
+  "rho_ablation": {
+    "isolated": {
+      "rho_both (LLM or Lex)": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "rho_llm_only": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "rho_lexicon_only": {
+        "bpoil": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "finan": {
+          "rra": 1.0,
+          "sflr": 0.0
+        },
+        "h1n1": {
+          "rra": 0.75,
+          "sflr": 0.25
+        },
+        "haiti": {
+          "rra": 0.75,
+          "sflr": 0.25
+        }
+      },
+      "rho_none (Always Same-Day)": {
+        "bpoil": {
+          "rra": 0.0,
+          "sflr": 1.0
+        },
+        "finan": {
+          "rra": 0.25,
+          "sflr": 0.75
+        },
+        "h1n1": {
+          "rra": 0.0,
+          "sflr": 1.0
+        },
+        "haiti": {
+          "rra": 0.0,
+          "sflr": 1.0
+        }
+      }
+    },
+    "embedded": {},
+    "parametric": {
+      "rho_both (LLM or Lex)": {
+        "rra": 1.0,
+        "rra_ci95": [
+          0.676,
+          1.0
+        ],
+        "sflr": 0.0,
+        "sflr_ci95": [
+          0.0,
+          0.324
+        ]
+      },
+      "rho_llm_only": {
+        "rra": 1.0,
+        "rra_ci95": [
+          0.676,
+          1.0
+        ],
+        "sflr": 0.0,
+        "sflr_ci95": [
+          0.0,
+          0.324
+        ]
+      },
+      "rho_lexicon_only": {
+        "rra": 1.0,
+        "rra_ci95": [
+          0.676,
+          1.0
+        ],
+        "sflr": 0.0,
+        "sflr_ci95": [
+          0.0,
+          0.324
+        ]
+      },
+      "rho_none (Always Same-Day)": {
+        "rra": 0.125,
+        "rra_ci95": [
+          0.022,
+          0.471
+        ],
+        "sflr": 0.875,
+        "sflr_ci95": [
+          0.529,
+          0.978
+        ]
+      }
+    },
+    "macro_with_ci": {
+      "isolated": {
+        "rho_both (LLM or Lex)": {
+          "rra": 0.9375,
+          "rra_ci95": [
+            0.717,
+            0.989
+          ],
+          "sflr": 0.0625,
+          "sflr_ci95": [
+            0.011,
+            0.283
+          ]
+        },
+        "rho_llm_only": {
+          "rra": 0.9375,
+          "rra_ci95": [
+            0.717,
+            0.989
+          ],
+          "sflr": 0.0625,
+          "sflr_ci95": [
+            0.011,
+            0.283
+          ]
+        },
+        "rho_lexicon_only": {
+          "rra": 0.875,
+          "rra_ci95": [
+            0.64,
+            0.965
+          ],
+          "sflr": 0.125,
+          "sflr_ci95": [
+            0.035,
+            0.36
+          ]
+        },
+        "rho_none (Always Same-Day)": {
+          "rra": 0.0625,
+          "rra_ci95": [
+            0.011,
+            0.283
+          ],
+          "sflr": 0.9375,
+          "sflr_ci95": [
+            0.717,
+            0.989
+          ]
+        }
+      }
+    }
+  },
+  "implicit_long_delay": {
+    "num_cases": 8,
+    "delay_range_days": [
+      15,
+      35
+    ],
+    "systems": {
+      "LLM-TLS (7B)": {
+        "rra": 0.125,
+        "rra_ci95": [
+          0.022,
+          0.471
+        ],
+        "sflr": 0.75,
+        "sflr_ci95": [
+          0.409,
+          0.929
+        ]
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "rra": 0.125,
+        "rra_ci95": [
+          0.022,
+          0.471
+        ],
+        "sflr": 0.75,
+        "sflr_ci95": [
+          0.409,
+          0.929
+        ]
+      },
+      "ReviTLS (rho_llm_only)": {
+        "rra": 0.375,
+        "rra_ci95": [
+          0.137,
+          0.694
+        ],
+        "sflr": 0.625,
+        "sflr_ci95": [
+          0.306,
+          0.863
+        ]
+      },
+      "ReviTLS (Full Dual-Scale)": {
+        "rra": 0.375,
+        "rra_ci95": [
+          0.137,
+          0.694
+        ],
+        "sflr": 0.625,
+        "sflr_ci95": [
+          0.306,
+          0.863
+        ]
+      }
+    }
+  }
+}

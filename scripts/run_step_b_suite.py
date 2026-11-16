@@ -152,7 +152,7 @@ IMPLICIT_LONG_DELAY_TEMPLATES: tuple[RevisionScenarioTemplate, ...] = (
     ),
     RevisionScenarioTemplate(
         case_id="imp_retract_bridge",
-        revision_type=RevisionType.RUMOR_RETRACTION,
+        revision_type=RevisionType.RETRACTION,
         event_date_offset_days=10,
         correction_delay_days=16,
         initial_title="Motorists report structural crack on East River suspension bridge",
@@ -172,7 +172,7 @@ IMPLICIT_LONG_DELAY_TEMPLATES: tuple[RevisionScenarioTemplate, ...] = (
     ),
     RevisionScenarioTemplate(
         case_id="imp_retract_vaccine",
-        revision_type=RevisionType.RUMOR_RETRACTION,
+        revision_type=RevisionType.RETRACTION,
         event_date_offset_days=12,
         correction_delay_days=28,
         initial_title="Clinics halt batch K-19 over suspected cold-chain spoilage",
