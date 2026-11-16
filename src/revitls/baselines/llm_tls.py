@@ -4,6 +4,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 from typing import Optional
 import numpy as np
+from tqdm.auto import tqdm
 
 from revitls.protocols import EmbedderProtocol, LLMProtocol
 from revitls.schemas import Article, EventState, EventStatus, TimelineEntry
@@ -102,7 +103,16 @@ class TopicLLMTLSBaseline:
         clusters: list[list[tuple[str, date, str, np.ndarray]]] = []
         nodes_by_date: dict[date, list[tuple[int, str, np.ndarray, str]]] = defaultdict(list)
 
-        for art in sorted(articles, key=lambda a: (a.publish_date, a.article_id)):
+        ordered = sorted(articles, key=lambda a: (a.publish_date, a.article_id))
+        bar = tqdm(
+            ordered,
+            desc="  LLM-TLS Stream",
+            unit="art",
+            leave=False,
+            disable=len(ordered) < 15,
+            dynamic_ncols=True,
+        )
+        for art in bar:
             evt_date, summary = self._summarize_article(art)
             vec = self.embedder.encode(summary, normalize_embeddings=True)
 
@@ -138,6 +148,7 @@ class TopicLLMTLSBaseline:
 
             clusters[assigned_cluster].append((art.article_id, evt_date, summary, vec))
             nodes_by_date[evt_date].append((assigned_cluster, summary, vec, art.article_id))
+            bar.set_postfix(clusters=len(clusters), refresh=False)
 
         # Rank clusters by node count and summarize
         ranked = sorted(clusters, key=len, reverse=True)[:num_dates]

@@ -2,6 +2,7 @@
 
 from datetime import date
 import numpy as np
+from tqdm.auto import tqdm
 
 from revitls.protocols import EmbedderProtocol, LLMProtocol
 from revitls.schemas import Article, EventState, EventStatus, TimelineEntry
@@ -100,7 +101,7 @@ class ClosedDomainCHRONOSBaseline:
         asked: list[str] = []
 
         # Step 2: Iterative self-questioning rounds
-        for _ in range(self.rounds):
+        for _ in tqdm(range(self.rounds), desc="  CHRONOS Rounds", unit="rnd", leave=False, disable=len(articles) < 15, dynamic_ncols=True):
             questions = self._generate_questions(topic, docs, asked)
             asked.extend(questions)
             round_docs: list[Article] = []

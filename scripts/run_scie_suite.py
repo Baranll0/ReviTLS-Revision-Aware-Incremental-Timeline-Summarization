@@ -23,6 +23,7 @@ import time
 from typing import Any
 
 from sentence_transformers import SentenceTransformer
+from tqdm.auto import tqdm
 
 from revitls.baselines.chronos import ClosedDomainCHRONOSBaseline
 from revitls.baselines.llm_tls import TopicLLMTLSBaseline
@@ -182,10 +183,14 @@ def eval_topic_stream(
     cfg_single: ReviTLSConfig,
     cfg_dual: ReviTLSConfig,
     embedder: SentenceTransformer,
-) -> dict[str, dict[str, float]]:
+    label: str = "topic",
+) -> dict[str, dict[str, Any]]:
     target_l = max(1, round(sum(len(r) for r in refs) / len(refs))) if refs else cfg_dual.timeline.default_num_dates
-    results: dict[str, dict[str, float]] = {}
-    for name, runner in build_systems(cfg_single, cfg_dual, embedder):
+    results: dict[str, dict[str, Any]] = {}
+    systems = build_systems(cfg_single, cfg_dual, embedder)
+    sys_bar = tqdm(systems, desc=f"  [{label}] Systems", unit="sys", leave=False, dynamic_ncols=True)
+    for name, runner in sys_bar:
+        sys_bar.set_postfix(model=name, arts=len(articles), refresh=True)
         if hasattr(runner, "llm") and hasattr(runner.llm, "virtual_elapsed_bonus"):
             runner.llm.virtual_elapsed_bonus = 0.0
         if hasattr(runner, "extractor") and hasattr(runner.extractor.llm, "virtual_elapsed_bonus"):
@@ -222,6 +227,10 @@ def eval_topic_stream(
         }
         if hasattr(runner, "last_diagnostics") and runner.last_diagnostics:
             results[name]["diagnostics"] = runner.last_diagnostics
+        tqdm.write(
+            f"  [{label}] {name:<24} | Date-F1={date_f1:.3f} | Concat-R1={results[name]['concat_r1']:.3f} "
+            f"| AR-1={results[name]['ar1']:.3f} | Time={elapsed:.1f}s"
+        )
     return results
 
 
@@ -402,7 +411,7 @@ def run_t17_component_ablation(
 
     cfg_no_gate = cfg_dual.model_copy(deep=True)
     cfg_no_gate.retrieval.strict_temporal_gate = False
-    cfg_no_gate.retrieval.routine_lookback_days = 90
+    cfg_no_gate.retrieval.max_date_window_days = 90
 
     variants: list[tuple[str, Any]] = [
         ("Full Dual-Scale", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b)),
@@ -413,15 +422,30 @@ def run_t17_component_ablation(
     ]
 
     per_topic: dict[str, dict[str, dict[str, float]]] = {}
-    for topic, articles in sorted(t17_streams.items()):
+    ab_bar = tqdm(sorted(t17_streams.items()), desc="T17 Ablation", unit="topic", dynamic_ncols=True)
+    for topic, articles in ab_bar:
+        ab_bar.set_postfix(topic=topic, arts=len(articles), refresh=True)
         refs = load_reference_timelines(raw_t17_dir / topic / "timelines.jsonl")
         target_l = max(1, round(sum(len(r) for r in refs) / len(refs))) if refs else cfg_dual.timeline.default_num_dates
         per_topic[topic] = {}
-        for v_name, factory in variants:
+        for v_name, factory in tqdm(variants, desc=f"  [{topic}] Variants", unit="var", leave=False, dynamic_ncols=True):
             runner = factory()
+            if hasattr(runner, "extractor") and hasattr(runner.extractor.llm, "virtual_elapsed_bonus"):
+                runner.extractor.llm.virtual_elapsed_bonus = 0.0
+            if hasattr(runner, "verifier") and hasattr(runner.verifier.llm, "virtual_elapsed_bonus"):
+                runner.verifier.llm.virtual_elapsed_bonus = 0.0
             t0 = time.perf_counter()
             timeline, _ = runner.run_stream(articles, num_dates=target_l)
-            elapsed = time.perf_counter() - t0
+            bonus = 0.0
+            if hasattr(runner, "extractor") and hasattr(runner.extractor.llm, "virtual_elapsed_bonus"):
+                bonus += runner.extractor.llm.virtual_elapsed_bonus
+                if (
+                    hasattr(runner, "verifier")
+                    and runner.verifier.llm is not runner.extractor.llm
+                    and hasattr(runner.verifier.llm, "virtual_elapsed_bonus")
+                ):
+                    bonus += runner.verifier.llm.virtual_elapsed_bonus
+            elapsed = (time.perf_counter() - t0) + bonus
             date_f1 = max(compute_date_f1(timeline, [d for d, _ in ref])["date_f1"] for ref in refs)
             aligns = [compute_align_rouge(timeline, ref) for ref in refs]
             concats = [compute_concat_rouge(timeline, ref) for ref in refs]
@@ -431,6 +455,9 @@ def run_t17_component_ablation(
                 "concat_r1": max(x["concat_r1"] for x in concats),
                 "time_s": elapsed,
             }
+            tqdm.write(
+                f"  [Ablation/{topic}] {v_name:<22} | Date-F1={date_f1:.3f} | Concat-R1={per_topic[topic][v_name]['concat_r1']:.3f} | Time={elapsed:.1f}s"
+            )
 
     summary: dict[str, dict[str, dict[str, float]]] = {}
     for v_name, _ in variants:
@@ -471,6 +498,7 @@ def main() -> None:
     all_output.setdefault("datasets", {})
     t17_sampled_streams: dict[str, list[Article]] = {}
 
+    topic_tasks: list[tuple[str, Path, Path, Path]] = []
     for ds in args.datasets:
         proc_dir = Path("data/processed") / ds
         raw_dir = Path("data/raw") / ds
@@ -478,51 +506,60 @@ def main() -> None:
             from scripts.prepare_datasets import convert_dataset_root  # type: ignore
 
             convert_dataset_root(raw_dir, proc_dir)
-
-        per_topic: dict[str, dict[str, dict[str, Any]]] = all_output["datasets"].get(ds, {}).get("per_topic", {})
         for stream_file in sorted(proc_dir.glob("*.jsonl")):
-            topic = stream_file.stem
-            tl_file = raw_dir / topic / "timelines.jsonl"
-            refs = load_reference_timelines(tl_file)
-            articles = load_articles(stream_file)
-            all_ref_entries = [item for ref in refs for item in ref]
-            articles = filter_articles_by_timespan(articles, all_ref_entries)
-            articles = sample_topic_articles(articles, refs, max_articles=args.max_articles)
-            if ds == "t17":
-                t17_sampled_streams[topic] = articles
-            if topic in per_topic and "ReviTLS (Dual-Scale)" in per_topic[topic] and "LLM-TLS (14B)" in per_topic[topic]:
-                print(f"[{ds}/{topic}] Skipping completed topic (checkpoint found).", flush=True)
-                continue
-            print(f"[{ds}/{topic}] Evaluating {len(articles)} articles...", flush=True)
-            per_topic[topic] = eval_topic_stream(articles, refs, cfg_single, cfg_dual, embedder)
-            dual_sc = per_topic[topic]["ReviTLS (Dual-Scale)"]
-            print(
-                f"  -> [{ds}/{topic}] Dual-Scale: Date-F1={dual_sc['date_f1']:.3f}, "
-                f"Concat-R1={dual_sc['concat_r1']:.3f}, AR-1={dual_sc['ar1']:.3f}",
-                flush=True,
-            )
-            all_output["datasets"][ds] = {
-                "per_topic": per_topic,
-                "summary": summarize_dataset(per_topic),
-            }
-            out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
+            topic_tasks.append((ds, proc_dir, raw_dir, stream_file))
+
+    overall_bar = tqdm(topic_tasks, desc="Overall Topics", unit="topic", dynamic_ncols=True)
+    for ds, _proc_dir, raw_dir, stream_file in overall_bar:
+        topic = stream_file.stem
+        per_topic: dict[str, dict[str, dict[str, Any]]] = all_output["datasets"].get(ds, {}).get("per_topic", {})
+        tl_file = raw_dir / topic / "timelines.jsonl"
+        refs = load_reference_timelines(tl_file)
+        articles = load_articles(stream_file)
+        all_ref_entries = [item for ref in refs for item in ref]
+        articles = filter_articles_by_timespan(articles, all_ref_entries)
+        articles = sample_topic_articles(articles, refs, max_articles=args.max_articles)
+        if ds == "t17":
+            t17_sampled_streams[topic] = articles
+        overall_bar.set_postfix(topic=f"{ds}/{topic}", arts=len(articles), refresh=True)
+        if topic in per_topic and "ReviTLS (Dual-Scale)" in per_topic[topic] and "LLM-TLS (14B)" in per_topic[topic]:
+            tqdm.write(f"[{ds}/{topic}] Skipping completed topic (checkpoint found).")
+            continue
+        tqdm.write(f"\n[{ds}/{topic}] Evaluating {len(articles)} articles across 10 systems...")
+        per_topic[topic] = eval_topic_stream(articles, refs, cfg_single, cfg_dual, embedder, label=f"{ds}/{topic}")
+        dual_sc = per_topic[topic]["ReviTLS (Dual-Scale)"]
+        tqdm.write(
+            f"  => [{ds}/{topic}] DONE | Dual-Scale: Date-F1={dual_sc['date_f1']:.3f}, "
+            f"Concat-R1={dual_sc['concat_r1']:.3f}, AR-1={dual_sc['ar1']:.3f}"
+        )
+        all_output["datasets"][ds] = {
+            "per_topic": per_topic,
+            "summary": summarize_dataset(per_topic),
+        }
+        out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
 
     t17_proc = Path("data/processed/t17")
     if t17_proc.exists():
-        print("[Revision Suite] Running 16 multi-topic scenarios (isolated + embedded)...", flush=True)
-        all_output["revision_suite"] = run_revision_suite(
-            t17_proc,
-            cfg_single,
-            cfg_dual,
-            embedder,
-            cached_topic_streams=t17_sampled_streams,
-            max_articles=args.max_articles,
-        )
-        out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
+        if all_output.get("revision_suite") and not args.fresh:
+            print("[Revision Suite] Skipping completed revision_suite (checkpoint found).", flush=True)
+        else:
+            print("[Revision Suite] Running 16 multi-topic scenarios (isolated + embedded)...", flush=True)
+            all_output["revision_suite"] = run_revision_suite(
+                t17_proc,
+                cfg_single,
+                cfg_dual,
+                embedder,
+                cached_topic_streams=t17_sampled_streams,
+                max_articles=args.max_articles,
+            )
+            out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
 
-    print("[Parametric Memory Control] Running 8 counterfactual/fictional scenarios...", flush=True)
-    all_output["parametric_control"] = run_parametric_memory_control(cfg_single, cfg_dual, embedder)
-    out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
+    if all_output.get("parametric_control") and not args.fresh:
+        print("[Parametric Memory Control] Skipping completed parametric_control (checkpoint found).", flush=True)
+    else:
+        print("[Parametric Memory Control] Running 8 counterfactual/fictional scenarios...", flush=True)
+        all_output["parametric_control"] = run_parametric_memory_control(cfg_single, cfg_dual, embedder)
+        out_json.write_text(json.dumps(all_output, indent=2), encoding="utf-8")
 
     if t17_sampled_streams:
         print("[T17 Component Ablation] Running 5 variants across all 9 T17 topics...", flush=True)

@@ -2,6 +2,7 @@
 
 from datetime import date
 from typing import Optional
+from tqdm.auto import tqdm
 
 from revitls.config import ReviTLSConfig
 from revitls.pipeline.classifier import RevisionClassifier
@@ -100,24 +101,26 @@ class ReviTLSPipeline:
                 )
             self._cross_encoder = _CROSS_ENCODER_CACHE[ce_key]
 
-    def _is_revision_candidate(self, article: Article, claim: ExtractedEvent) -> bool:
+    _REVISION_KEYWORDS: tuple[str, ...] = (
+        "revise",
+        "correction",
+        "correcting",
+        "clarif",
+        "retract",
+        "debunk",
+        "supersed",
+        "rule out",
+        "earlier report",
+        "previously stated",
+        "false",
+    )
+
+    def _is_lex_revision(self, article: Article, claim: ExtractedEvent) -> bool:
         haystack = f"{article.title} {claim.summary}".lower()
-        return claim.is_correction_or_update or any(
-            w in haystack
-            for w in (
-                "revise",
-                "correction",
-                "correcting",
-                "clarif",
-                "retract",
-                "debunk",
-                "supersed",
-                "rule out",
-                "earlier report",
-                "previously stated",
-                "false",
-            )
-        )
+        return any(w in haystack for w in self._REVISION_KEYWORDS)
+
+    def _is_revision_candidate(self, article: Article, claim: ExtractedEvent) -> bool:
+        return claim.is_correction_or_update or self._is_lex_revision(article, claim)
 
     def step(
         self,
@@ -243,13 +246,26 @@ class ReviTLSPipeline:
         rho_llm = 0
         rho_lex = 0
         ordered = sorted(articles, key=lambda a: (a.publish_date, a.article_id))
+        show_pbar = len(ordered) >= 15
         if self.config.verifier_llm is not None:
             # Algorithm 1 Two-Phase Schedule:
             # Phase 1: 7B Extraction & Routine Same-Day Clustering (\rho_{i,j} == 0)
-            claims = [self.extractor.extract(art) for art in ordered]
+            claims: list[ExtractedEvent] = []
+            p1_bar = tqdm(ordered, desc="  Phase 1 (7B Extract)", unit="art", leave=False, disable=not show_pbar, dynamic_ncols=True)
+            for art in p1_bar:
+                claims.append(self.extractor.extract(art))
             rev_queue: list[tuple[Article, ExtractedEvent]] = []
-            for article, claim in zip(ordered, claims):
-                is_lex = any(kw in f"{article.title} {claim.summary}".lower() for kw in self.config.retrieval.revision_keywords)
+            p2_routine = tqdm(
+                zip(ordered, claims),
+                total=len(ordered),
+                desc="  Phase 1b (Cluster)",
+                unit="art",
+                leave=False,
+                disable=not show_pbar,
+                dynamic_ncols=True,
+            )
+            for article, claim in p2_routine:
+                is_lex = self._is_lex_revision(article, claim)
                 is_llm = bool(claim.is_correction_or_update)
                 if is_llm or is_lex:
                     rho_total += 1
@@ -258,19 +274,40 @@ class ReviTLSPipeline:
                     rev_queue.append((article, claim))
                 else:
                     self.step(article, pre_extracted_claim=claim)
+                p2_routine.set_postfix(clusters=len(self.memory._states), rho=rho_total, refresh=False)
             # Phase 2: Cross-Encoder Reranking & 14B Verification on \mathcal{Q}_{rev} (\rho_{i,j} == 1)
-            for article, claim in rev_queue:
+            p2_rev = tqdm(
+                rev_queue,
+                desc="  Phase 2 (14B Verify)",
+                unit="rev",
+                leave=False,
+                disable=not (show_pbar and rev_queue),
+                dynamic_ncols=True,
+            )
+            for article, claim in p2_rev:
                 self.step(article, pre_extracted_claim=claim)
+                p2_rev.set_postfix(
+                    rev=self._diag_actions["REVISE_CONFLICT"],
+                    clusters=len(self.memory._states),
+                    refresh=False,
+                )
         else:
-            for article in ordered:
+            s_bar = tqdm(ordered, desc="  ReviTLS Step", unit="art", leave=False, disable=not show_pbar, dynamic_ncols=True)
+            for article in s_bar:
                 claim = self.extractor.extract(article)
-                is_lex = any(kw in f"{article.title} {claim.summary}".lower() for kw in self.config.retrieval.revision_keywords)
+                is_lex = self._is_lex_revision(article, claim)
                 is_llm = bool(claim.is_correction_or_update)
                 if is_llm or is_lex:
                     rho_total += 1
                     rho_llm += int(is_llm)
                     rho_lex += int(is_lex)
                 self.step(article, pre_extracted_claim=claim)
+                s_bar.set_postfix(
+                    clusters=len(self.memory._states),
+                    rho=rho_total,
+                    rev=self._diag_actions["REVISE_CONFLICT"],
+                    refresh=False,
+                )
 
         states = self.memory.all_states()
         if self.selection_mode == "textrank":
@@ -302,11 +339,15 @@ class ReviTLSPipeline:
             "revised_count": len(revised_states),
             "retracted_count": len(retracted_states),
             "sample_revised": [
-                {"date": s.event_date.isoformat(), "summary": s.canonical_summary[:180], "purged": list(s.purged_claims)[:2]}
+                {
+                    "date": s.event_date.isoformat() if s.event_date else "",
+                    "summary": s.canonical_summary[:180],
+                    "purged": [r.previous_summary for r in s.revision_history][:2],
+                }
                 for s in revised_states[:5]
             ],
             "sample_retracted": [
-                {"date": s.event_date.isoformat(), "summary": s.canonical_summary[:180]}
+                {"date": s.event_date.isoformat() if s.event_date else "", "summary": s.canonical_summary[:180]}
                 for s in retracted_states[:5]
             ],
         }
