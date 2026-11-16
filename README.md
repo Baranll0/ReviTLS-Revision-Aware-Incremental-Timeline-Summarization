@@ -480,6 +480,34 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
   git commit -m "Add Step-C online latency, safe purge/retract, window sensitivity, and synthetic catalog"
   git push origin main
   ```
+* **Yapılan Düzeltme & Çalıştırma Notu:** `src/revitls/pipeline/runner.py` içinde Cross-Encoder top-1 flip ölçümünde `EventState.event_id` yerine `EventState.cluster_id` kullanılacak şekilde düzeltildi (`pytest` 3/3 geçti). `scripts/export_synthetic_catalog.py` ve `scripts/run_step_c_suite.py` betikleri `PYTHONPATH=.` ile çalıştırıldı.
+* **Üretilen Çıktılar:**
+  - [`outputs/scie_results/synthetic_suite_catalog.json`](outputs/scie_results/synthetic_suite_catalog.json) & [`outputs/scie_results/synthetic_suite_catalog.md`](outputs/scie_results/synthetic_suite_catalog.md) (**32** kontrollü senaryo kataloğu)
+  - [`outputs/scie_results/step_c_summary.json`](outputs/scie_results/step_c_summary.json) & [`outputs/scie_results/step_c_report.md`](outputs/scie_results/step_c_report.md)
+
+#### 1. Online Anlık vs. Ertelenmiş Phase-2 Uzlaştırma & Cross-Encoder Flip Analizi (`16 Embedded`)
+
+| Mod | RRA [95% CI] | SFLR | Toplam Süre (s) | Ort. Makale Gecikmesi (s) | P95 Gecikme (s) | CE Çağrı / Top-1 Flip |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Deferred Phase-2 (Default)** | **0.938** [0.717, 0.989] | **0.062** | **7.5** | **0.010** | **0.016** | 215 / 65 (%30.2) |
+| **Online Immediate Phase-2** | 0.875 [0.640, 0.965] | **0.062** | 385.5 | 0.588 | 3.047 | 211 / 64 (%30.3) |
+
+#### 2. Güvenli Claim-Span Purge & Korumalı Geri Çekme (`T17/egypt` + `16 Embedded`)
+
+| Varyant | `T17/egypt` Date-F1 | `Concat-R1` | Retracted Sayısı | `2011-02-11` Yanlış Silindi mi? | Embedded-16 RRA | Embedded-16 SFLR |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Default (Clause + Unchecked Retract)** | **0.900** | **0.472** | 1 | `True` (Yanlış pozitif) | **0.938** | **0.062** |
+| **Safe (Claim-Span + Guarded Retract)** | **0.900** | 0.452 | **0** | **`False` (Korundu)** | 0.688 | 0.312 |
+
+#### 3. Geriye Dönük Pencere Duyarlılığı (`7 / 30 / 60 / 90 / 180` Gün)
+
+| Pencere | Embedded-16 RRA (↑) | Embedded-16 SFLR (↓) | Örtük İpucu (15–35g) RRA (↑) | Örtük İpucu (15–35g) SFLR (↓) |
+| :--- | :---: | :---: | :---: | :---: |
+| **7d** | 0.812 | 0.188 | **0.375** | **0.625** |
+| **30d** | **0.938** | **0.062** | **0.375** | **0.625** |
+| **60d** | **0.938** | **0.062** | **0.375** | **0.625** |
+| **90d (Default)** | **0.938** | **0.062** | **0.375** | **0.625** |
+| **180d** | **0.938** | **0.062** | **0.375** | **0.625** |
 * **2 Değerlendiricili Doğal Akış Denetimi (Sen + Arkadaşın `outputs/scie_results/transition_audit.csv` içindeki `annotator_1_tp_fp` ve `annotator_2_tp_fp` sütunlarını `TP` / `FP` olarak doldurduktan sonra):**
   ```powershell
   python scripts/export_transition_audit.py --compute-kappa

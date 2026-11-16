@@ -163,7 +163,7 @@ class ReviTLSPipeline:
             import numpy as np
 
             t_ce = time.perf_counter()
-            pre_top1_id = candidates[0][0].event_id
+            pre_top1_id = candidates[0][0].cluster_id
             pairs = [(st.canonical_summary, claim.summary) for st, _ in candidates]
             ce_scores = self._cross_encoder.predict(pairs)
             art_tokens = {
@@ -184,7 +184,7 @@ class ReviTLSPipeline:
                 rescored.append((st, 0.65 * bi_sc + 0.20 * ce_prob + 0.15 * lex_overlap + corr_bonus))
             rescored.sort(key=lambda item: item[1], reverse=True)
             self._ce_reranked_calls += 1
-            if rescored[0][0].event_id != pre_top1_id:
+            if rescored[0][0].cluster_id != pre_top1_id:
                 self._ce_top1_flips += 1
             self._ce_time_s += time.perf_counter() - t_ce
             candidates = rescored

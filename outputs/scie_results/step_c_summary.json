@@ -1,0 +1,98 @@
+{
+  "online_vs_deferred": {
+    "Deferred Phase-2 (Default)": {
+      "rra": 0.9375,
+      "rra_ci95": [
+        0.717,
+        0.989
+      ],
+      "sflr": 0.0625,
+      "total_time_s": 7.45,
+      "mean_article_latency_s": 0.0097,
+      "p95_article_latency_s": 0.016,
+      "ce_reranked_calls": 215,
+      "ce_top1_flips": 65
+    },
+    "Online Immediate Phase-2": {
+      "rra": 0.875,
+      "rra_ci95": [
+        0.64,
+        0.965
+      ],
+      "sflr": 0.0625,
+      "total_time_s": 385.49,
+      "mean_article_latency_s": 0.5876,
+      "p95_article_latency_s": 3.0472,
+      "ce_reranked_calls": 211,
+      "ce_top1_flips": 64
+    }
+  },
+  "safe_purge_retract": {
+    "egypt_t17": {
+      "Default (Clause + Unchecked Retract)": {
+        "date_f1": 0.9,
+        "concat_r1": 0.472,
+        "ar1": 0.1872,
+        "retracted_count": 1,
+        "retracted_2011_02_11": true
+      },
+      "Safe (Claim-Span + Guarded Retract)": {
+        "date_f1": 0.9,
+        "concat_r1": 0.4518,
+        "ar1": 0.1808,
+        "retracted_count": 0,
+        "retracted_2011_02_11": false
+      }
+    },
+    "embedded_16": {
+      "Default (Clause + Unchecked Retract)": {
+        "rra": 0.9375,
+        "rra_ci95": [
+          0.717,
+          0.989
+        ],
+        "sflr": 0.0625
+      },
+      "Safe (Claim-Span + Guarded Retract)": {
+        "rra": 0.6875,
+        "rra_ci95": [
+          0.444,
+          0.858
+        ],
+        "sflr": 0.3125
+      }
+    }
+  },
+  "window_sensitivity": {
+    "7d": {
+      "embedded_16_rra": 0.8125,
+      "embedded_16_sflr": 0.1875,
+      "implicit_15_35d_rra": 0.375,
+      "implicit_15_35d_sflr": 0.625
+    },
+    "30d": {
+      "embedded_16_rra": 0.9375,
+      "embedded_16_sflr": 0.0625,
+      "implicit_15_35d_rra": 0.375,
+      "implicit_15_35d_sflr": 0.625
+    },
+    "60d": {
+      "embedded_16_rra": 0.9375,
+      "embedded_16_sflr": 0.0625,
+      "implicit_15_35d_rra": 0.375,
+      "implicit_15_35d_sflr": 0.625
+    },
+    "90d": {
+      "embedded_16_rra": 0.9375,
+      "embedded_16_sflr": 0.0625,
+      "implicit_15_35d_rra": 0.375,
+      "implicit_15_35d_sflr": 0.625
+    },
+    "180d": {
+      "embedded_16_rra": 0.9375,
+      "embedded_16_sflr": 0.0625,
+      "implicit_15_35d_rra": 0.375,
+      "implicit_15_35d_sflr": 0.625
+    }
+  }
+}
