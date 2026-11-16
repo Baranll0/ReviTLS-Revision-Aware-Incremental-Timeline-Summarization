@@ -410,3 +410,24 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
 | **w/o Cross-Encoder** | **0.554 ± 0.276** | 0.126 ± 0.042 | 0.452 ± 0.101 | 989.8 |
 | **w/o Conditional Gate** | 0.520 ± 0.276 | 0.115 ± 0.047 | 0.446 ± 0.083 | 1187.7 |
 | **w/o Tombstone Purge** | 0.551 ± 0.283 | 0.123 ± 0.040 | **0.493 ± 0.096** | **848.7** |
+
+
+---
+
+### 🔹 16.11.2026 (Adım B — Hızlı Ek Ablation, Örtük/Uzun Gecikme & Doğal Akış Denetim Çıktısı)
+* **Kapsam (~10–15 dk RTX 5080):**
+  1. `RRA/SFLR` bileşen ablation'ı (`w/o 14B`, `w/o Cross-Encoder`, `w/o Gate`, `w/o Purge`) + adil `LLM-TLS + 90d + Latest + 14B` baseline'ı.
+  2. Koşullu kapı ($\rho$) kaynak ablation'ı (`both`, `llm_only`, `lexicon_only`, `none`).
+  3. İpucusuz (*implicit-cue*) ve uzun gecikmeli ($\Delta t = 15\text{--}35$ gün) 8 yeni senaryo.
+  4. `summary.json` içindeki doğal akış `REVISED`/`RETRACTED` örneklerinin insan doğrulaması için dışa aktarımı ve `T17` referans tarih çakışması.
+* **RTX 5080 Makinesinde Çalıştırılacak Komutlar:**
+  ```powershell
+  git pull origin main
+  .\.venv\Scripts\Activate.ps1
+  python -m pytest -v
+  python scripts/export_transition_audit.py
+  python scripts/run_step_b_suite.py --fresh
+  git add outputs/scie_results/step_b_summary.json outputs/scie_results/step_b_report.md outputs/scie_results/transition_audit.csv outputs/scie_results/transition_audit.md
+  git commit -m "Add Step-B RRA/SFLR ablations, implicit-cue suite, and transition audit"
+  git push origin main
+  ```

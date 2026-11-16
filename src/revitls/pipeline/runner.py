@@ -73,11 +73,13 @@ class ReviTLSPipeline:
         verifier_llm: Optional[LLMProtocol] = None,
         selection_mode: str = "eq6",
         disable_purge: bool = False,
+        rho_mode: str = "both",
     ) -> None:
         self.config = config
         self.embedder = embedder
         self.selection_mode = selection_mode
         self.disable_purge = disable_purge
+        self.rho_mode = rho_mode
         self.memory = EventMemory(config.retrieval)
         active_verifier_llm = verifier_llm or llm
         self.extractor = EventExtractor(llm)  # type: ignore[arg-type]
@@ -120,7 +122,13 @@ class ReviTLSPipeline:
         return any(w in haystack for w in self._REVISION_KEYWORDS)
 
     def _is_revision_candidate(self, article: Article, claim: ExtractedEvent) -> bool:
-        return claim.is_correction_or_update or self._is_lex_revision(article, claim)
+        if self.rho_mode == "none":
+            return False
+        if self.rho_mode == "llm":
+            return bool(claim.is_correction_or_update)
+        if self.rho_mode == "lexicon":
+            return self._is_lex_revision(article, claim)
+        return bool(claim.is_correction_or_update) or self._is_lex_revision(article, claim)
 
     def step(
         self,
@@ -267,7 +275,7 @@ class ReviTLSPipeline:
             for article, claim in p2_routine:
                 is_lex = self._is_lex_revision(article, claim)
                 is_llm = bool(claim.is_correction_or_update)
-                if is_llm or is_lex:
+                if self._is_revision_candidate(article, claim):
                     rho_total += 1
                     rho_llm += int(is_llm)
                     rho_lex += int(is_lex)
@@ -297,7 +305,7 @@ class ReviTLSPipeline:
                 claim = self.extractor.extract(article)
                 is_lex = self._is_lex_revision(article, claim)
                 is_llm = bool(claim.is_correction_or_update)
-                if is_llm or is_lex:
+                if self._is_revision_candidate(article, claim):
                     rho_total += 1
                     rho_llm += int(is_llm)
                     rho_lex += int(is_lex)
