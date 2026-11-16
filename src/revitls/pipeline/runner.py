@@ -78,6 +78,8 @@ class ReviTLSPipeline:
         defer_phase2: bool = True,
         purge_mode: str = "clause",
         guarded_retract: bool = False,
+        disable_retract: bool = False,
+        overwrite_only: bool = False,
     ) -> None:
         self.config = config
         self.embedder = embedder
@@ -91,13 +93,19 @@ class ReviTLSPipeline:
         self.routine_classifier = RevisionClassifier(llm)  # type: ignore[arg-type]
         self.classifier = RevisionClassifier(active_verifier_llm)  # type: ignore[arg-type]
         self.verifier = TargetedVerifier(active_verifier_llm, config.verifier)  # type: ignore[arg-type]
-        self.state_mgr = EventStateManager(purge_mode=purge_mode, guarded_retract=guarded_retract)
+        self.state_mgr = EventStateManager(
+            purge_mode=purge_mode,
+            guarded_retract=guarded_retract,
+            disable_retract=disable_retract,
+            overwrite_only=overwrite_only,
+        )
         self.ranker = TimelineRanker(config.timeline)
         self._seen_articles: list[Article] = []
         self._cluster_seq = 0
         self._ce_reranked_calls = 0
         self._ce_top1_flips = 0
         self._ce_time_s = 0.0
+        self._rev_top1_records: list[dict[str, str]] = []
         self.last_diagnostics: dict[str, object] = {}
         self._cross_encoder = None
         if config.retrieval.cross_encoder_model:
@@ -190,6 +198,16 @@ class ReviTLSPipeline:
             candidates = rescored
 
         max_verify_cands = 3 if is_rev_cand else 1
+        if is_rev_cand and candidates:
+            top1_st = candidates[0][0]
+            self._rev_top1_records.append(
+                {
+                    "article_id": article.article_id,
+                    "top1_date": top1_st.event_date.isoformat() if top1_st.event_date else "",
+                    "top1_summary": top1_st.canonical_summary[:120],
+                    "pool_size": str(len(candidates)),
+                }
+            )
         active_cls = self.classifier if is_rev_cand else self.routine_classifier
         for state, _score in candidates[:max_verify_cands]:
             result = active_cls.classify(claim, state)
@@ -267,6 +285,7 @@ class ReviTLSPipeline:
         self._ce_reranked_calls = 0
         self._ce_top1_flips = 0
         self._ce_time_s = 0.0
+        self._rev_top1_records = []
         rho_total = 0
         rho_llm = 0
         rho_lex = 0
@@ -377,6 +396,7 @@ class ReviTLSPipeline:
             "ce_reranked_calls": self._ce_reranked_calls,
             "ce_top1_flips": self._ce_top1_flips,
             "ce_time_s": round(self._ce_time_s, 4),
+            "rev_top1_records": list(self._rev_top1_records),
             "rho_triggered": rho_total,
             "rho_llm_flag": rho_llm,
             "rho_lexicon_flag": rho_lex,

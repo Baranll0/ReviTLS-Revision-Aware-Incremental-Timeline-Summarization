@@ -65,9 +65,17 @@ def _purge_stale_clauses(summary: str) -> str:
 class EventStateManager:
     """Applies incremental updates, progressions, and revisions to EventState objects."""
 
-    def __init__(self, purge_mode: str = "clause", guarded_retract: bool = False) -> None:
+    def __init__(
+        self,
+        purge_mode: str = "clause",
+        guarded_retract: bool = False,
+        disable_retract: bool = False,
+        overwrite_only: bool = False,
+    ) -> None:
         self.purge_mode = purge_mode
         self.guarded_retract = guarded_retract
+        self.disable_retract = disable_retract
+        self.overwrite_only = overwrite_only
 
     def create_state(self, cluster_id: str, topic: str, event: ExtractedEvent) -> EventState:
         """Initialize a new EventState from an isolated event claim."""
@@ -150,7 +158,7 @@ class EventStateManager:
         )
 
         if classification.action == RevisionAction.UPDATE_PROGRESS:
-            if is_retraction:
+            if is_retraction and not self.disable_retract:
                 new_summary = resolved_summary or event.summary
                 new_date = resolved_date or state.event_date
                 if self.guarded_retract and state.corroboration_count >= 3 and not has_negated_occurrence:
@@ -161,8 +169,12 @@ class EventStateManager:
                 new_summary = resolved_summary or f"{state.canonical_summary} {event.summary}".strip()
                 new_date = resolved_date or state.event_date
                 state.status = resolved_status or EventStatus.ACTIVE
+                if self.disable_retract and state.status == EventStatus.RETRACTED:
+                    state.status = EventStatus.REVISED
         elif classification.action == RevisionAction.REVISE_CONFLICT:
-            if self.purge_mode == "claim_span":
+            if self.overwrite_only:
+                new_summary = (resolved_summary or event.summary).strip()
+            elif self.purge_mode == "claim_span":
                 # Keep resolved_summary intact without aggressive regex clause stripping;
                 # retain non-overlapping context sentences from prev_summary if they share <40% tokens.
                 base_new = (resolved_summary or event.summary).strip()
@@ -198,13 +210,15 @@ class EventStateManager:
                 else None
             )
             new_date = explicit_date or resolved_date or event.event_date or state.event_date
-            if is_retraction:
+            if is_retraction and not self.disable_retract:
                 if self.guarded_retract and state.corroboration_count >= 3 and not has_negated_occurrence:
                     state.status = EventStatus.REVISED
                 else:
                     state.status = EventStatus.RETRACTED
             else:
                 state.status = resolved_status or EventStatus.REVISED
+                if self.disable_retract and state.status == EventStatus.RETRACTED:
+                    state.status = EventStatus.REVISED
         else:
             return state
 

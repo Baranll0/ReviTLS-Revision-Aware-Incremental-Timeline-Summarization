@@ -515,3 +515,16 @@ Her gün çalıştırılan komutlar, amaçları ve çıktıları burada kronoloj
   git commit -m "Add 2-annotator natural-stream audit and Cohen's kappa summary"
   git push origin main
   ```
+
+### 17.11.2026 (Adım D — 3-Tekrarlı McNemar, Gerçek Gecikme, Parçalanma Teşhisi & Retract Ayrımı)
+
+RTX 5080 makinesinde v10 değerlendirmesindeki açık deneysel soruları (`use_cache=False` ile 3 tekrarlı revizyon çalıştırması + eşleştirilmiş McNemar testi, Overwrite-only baseline, gerçek önbelleksiz Online vs Deferred gecikmesi, Cross-Encoder Recall@1, T17/Crisis parçalanma teşhisi, izole `Guarded Retract` / `Disable Retract` ablation'ı ve `bpoil`-hariç özet) çalıştırmak için:
+
+```powershell
+git pull origin main
+python -m pytest -v
+python scripts/run_step_d_suite.py --fresh
+git add outputs/scie_results/step_d_summary.json outputs/scie_results/step_d_report.md
+git commit -m "results: add step-d repeated runs, true latency, fragmentation, and retract ablation"
+git push origin main
+```
