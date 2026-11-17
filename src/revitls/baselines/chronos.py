@@ -1,6 +1,7 @@
 """Faithful closed-domain CHRONOS baseline (Wu et al., NAACL 2025) on shared backends."""
 
 from datetime import date
+import os
 import numpy as np
 from tqdm.auto import tqdm
 
@@ -101,7 +102,7 @@ class ClosedDomainCHRONOSBaseline:
         asked: list[str] = []
 
         # Step 2: Iterative self-questioning rounds
-        for _ in tqdm(range(self.rounds), desc="  CHRONOS Rounds", unit="rnd", leave=False, disable=len(articles) < 15, dynamic_ncols=True):
+        for _ in tqdm(range(self.rounds), desc="  CHRONOS Rounds", unit="rnd", leave=False, disable=len(articles) < 15 or os.environ.get("REVITLS_DISABLE_INNER_TQDM") == "1", dynamic_ncols=True):
             questions = self._generate_questions(topic, docs, asked)
             asked.extend(questions)
             round_docs: list[Article] = []

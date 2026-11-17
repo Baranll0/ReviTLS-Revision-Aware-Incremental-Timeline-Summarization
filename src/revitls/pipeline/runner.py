@@ -1,6 +1,7 @@
 """End-to-end incremental ReviTLS pipeline orchestrator."""
 
 from datetime import date
+import os
 import time
 from typing import Optional
 from tqdm.auto import tqdm
@@ -290,7 +291,7 @@ class ReviTLSPipeline:
         rho_llm = 0
         rho_lex = 0
         ordered = sorted(articles, key=lambda a: (a.publish_date, a.article_id))
-        show_pbar = len(ordered) >= 15
+        show_pbar = len(ordered) >= 15 and os.environ.get("REVITLS_DISABLE_INNER_TQDM") != "1"
         per_article_latencies: list[float] = []
         phase2_reconciliation_s = 0.0
         if self.config.verifier_llm is not None and self.defer_phase2:

@@ -1,0 +1,1177 @@
+{
+  "repeated_revisions": {
+    "Full Dual-Scale": {
+      "isolated_16_rra": {
+        "mean": 0.875,
+        "std": 0.0,
+        "runs": [
+          0.875,
+          0.875,
+          0.875
+        ]
+      },
+      "isolated_16_sflr": {
+        "mean": 0.125,
+        "std": 0.0,
+        "runs": [
+          0.125,
+          0.125,
+          0.125
+        ]
+      },
+      "embedded_16_rra": {
+        "mean": 1.0,
+        "std": 0.0,
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "embedded_16_sflr": {
+        "mean": 0.0,
+        "std": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "parametric_8_rra": {
+        "mean": 1.0,
+        "std": 0.0,
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "parametric_8_sflr": {
+        "mean": 0.0,
+        "std": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "implicit_8_rra": {
+        "mean": 0.375,
+        "std": 0.0,
+        "runs": [
+          0.375,
+          0.375,
+          0.375
+        ]
+      },
+      "implicit_8_sflr": {
+        "mean": 0.625,
+        "std": 0.0,
+        "runs": [
+          0.625,
+          0.625,
+          0.625
+        ]
+      },
+      "mcnemar_p_vs_dual": {
+        "isolated_16": 1.0,
+        "embedded_16": 1.0,
+        "parametric_8": 1.0,
+        "implicit_8": 1.0
+      }
+    },
+    "w/o 14B Verifier": {
+      "isolated_16_rra": {
+        "mean": 0.6875,
+        "std": 0.0,
+        "runs": [
+          0.6875,
+          0.6875,
+          0.6875
+        ]
+      },
+      "isolated_16_sflr": {
+        "mean": 0.1875,
+        "std": 0.0,
+        "runs": [
+          0.1875,
+          0.1875,
+          0.1875
+        ]
+      },
+      "embedded_16_rra": {
+        "mean": 0.6875,
+        "std": 0.0,
+        "runs": [
+          0.6875,
+          0.6875,
+          0.6875
+        ]
+      },
+      "embedded_16_sflr": {
+        "mean": 0.25,
+        "std": 0.0,
+        "runs": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "parametric_8_rra": {
+        "mean": 0.5,
+        "std": 0.0,
+        "runs": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      "parametric_8_sflr": {
+        "mean": 0.375,
+        "std": 0.0,
+        "runs": [
+          0.375,
+          0.375,
+          0.375
+        ]
+      },
+      "implicit_8_rra": {
+        "mean": 0.375,
+        "std": 0.0,
+        "runs": [
+          0.375,
+          0.375,
+          0.375
+        ]
+      },
+      "implicit_8_sflr": {
+        "mean": 0.625,
+        "std": 0.0,
+        "runs": [
+          0.625,
+          0.625,
+          0.625
+        ]
+      },
+      "mcnemar_p_vs_dual": {
+        "isolated_16": 0.0352,
+        "embedded_16": 0.0001,
+        "parametric_8": 0.0005,
+        "implicit_8": 1.0
+      }
+    },
+    "w/o Cross-Encoder": {
+      "isolated_16_rra": {
+        "mean": 0.875,
+        "std": 0.0,
+        "runs": [
+          0.875,
+          0.875,
+          0.875
+        ]
+      },
+      "isolated_16_sflr": {
+        "mean": 0.125,
+        "std": 0.0,
+        "runs": [
+          0.125,
+          0.125,
+          0.125
+        ]
+      },
+      "embedded_16_rra": {
+        "mean": 0.9375,
+        "std": 0.0,
+        "runs": [
+          0.9375,
+          0.9375,
+          0.9375
+        ]
+      },
+      "embedded_16_sflr": {
+        "mean": 0.0625,
+        "std": 0.0,
+        "runs": [
+          0.0625,
+          0.0625,
+          0.0625
+        ]
+      },
+      "parametric_8_rra": {
+        "mean": 1.0,
+        "std": 0.0,
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "parametric_8_sflr": {
+        "mean": 0.0,
+        "std": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "implicit_8_rra": {
+        "mean": 0.375,
+        "std": 0.0,
+        "runs": [
+          0.375,
+          0.375,
+          0.375
+        ]
+      },
+      "implicit_8_sflr": {
+        "mean": 0.625,
+        "std": 0.0,
+        "runs": [
+          0.625,
+          0.625,
+          0.625
+        ]
+      },
+      "mcnemar_p_vs_dual": {
+        "isolated_16": 1.0,
+        "embedded_16": 0.25,
+        "parametric_8": 1.0,
+        "implicit_8": 1.0
+      }
+    },
+    "w/o Conditional Gate": {
+      "isolated_16_rra": {
+        "mean": 0.9375,
+        "std": 0.0,
+        "runs": [
+          0.9375,
+          0.9375,
+          0.9375
+        ]
+      },
+      "isolated_16_sflr": {
+        "mean": 0.0625,
+        "std": 0.0,
+        "runs": [
+          0.0625,
+          0.0625,
+          0.0625
+        ]
+      },
+      "embedded_16_rra": {
+        "mean": 0.9375,
+        "std": 0.0,
+        "runs": [
+          0.9375,
+          0.9375,
+          0.9375
+        ]
+      },
+      "embedded_16_sflr": {
+        "mean": 0.0625,
+        "std": 0.0,
+        "runs": [
+          0.0625,
+          0.0625,
+          0.0625
+        ]
+      },
+      "parametric_8_rra": {
+        "mean": 1.0,
+        "std": 0.0,
+        "runs": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "parametric_8_sflr": {
+        "mean": 0.0,
+        "std": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "implicit_8_rra": {
+        "mean": 0.875,
+        "std": 0.0,
+        "runs": [
+          0.875,
+          0.875,
+          0.875
+        ]
+      },
+      "implicit_8_sflr": {
+        "mean": 0.125,
+        "std": 0.0,
+        "runs": [
+          0.125,
+          0.125,
+          0.125
+        ]
+      },
+      "mcnemar_p_vs_dual": {
+        "isolated_16": 0.25,
+        "embedded_16": 0.25,
+        "parametric_8": 1.0,
+        "implicit_8": 0.0005
+      }
+    },
+    "Overwrite (No P_k)": {
+      "isolated_16_rra": {
+        "mean": 0.8125,
+        "std": 0.0,
+        "runs": [
+          0.8125,
+          0.8125,
+          0.8125
+        ]
+      },
+      "isolated_16_sflr": {
+        "mean": 0.1875,
+        "std": 0.0,
+        "runs": [
+          0.1875,
+          0.1875,
+          0.1875
+        ]
+      },
+      "embedded_16_rra": {
+        "mean": 0.8125,
+        "std": 0.0,
+        "runs": [
+          0.8125,
+          0.8125,
+          0.8125
+        ]
+      },
+      "embedded_16_sflr": {
+        "mean": 0.1875,
+        "std": 0.0,
+        "runs": [
+          0.1875,
+          0.1875,
+          0.1875
+        ]
+      },
+      "parametric_8_rra": {
+        "mean": 0.875,
+        "std": 0.0,
+        "runs": [
+          0.875,
+          0.875,
+          0.875
+        ]
+      },
+      "parametric_8_sflr": {
+        "mean": 0.0,
+        "std": 0.0,
+        "runs": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "implicit_8_rra": {
+        "mean": 0.375,
+        "std": 0.0,
+        "runs": [
+          0.375,
+          0.375,
+          0.375
+        ]
+      },
+      "implicit_8_sflr": {
+        "mean": 0.625,
+        "std": 0.0,
+        "runs": [
+          0.625,
+          0.625,
+          0.625
+        ]
+      },
+      "mcnemar_p_vs_dual": {
+        "isolated_16": 0.5078,
+        "embedded_16": 0.0039,
+        "parametric_8": 0.25,
+        "implicit_8": 1.0
+      }
+    },
+    "LLM-TLS + 90d + Latest + 14B": {
+      "isolated_16_rra": {
+        "mean": 0.3125,
+        "std": 0.0,
+        "runs": [
+          0.3125,
+          0.3125,
+          0.3125
+        ]
+      },
+      "isolated_16_sflr": {
+        "mean": 0.625,
+        "std": 0.0,
+        "runs": [
+          0.625,
+          0.625,
+          0.625
+        ]
+      },
+      "embedded_16_rra": {
+        "mean": 0.3125,
+        "std": 0.0,
+        "runs": [
+          0.3125,
+          0.3125,
+          0.3125
+        ]
+      },
+      "embedded_16_sflr": {
+        "mean": 0.5625,
+        "std": 0.0,
+        "runs": [
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      },
+      "parametric_8_rra": {
+        "mean": 0.25,
+        "std": 0.0,
+        "runs": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "parametric_8_sflr": {
+        "mean": 0.5,
+        "std": 0.0,
+        "runs": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      "implicit_8_rra": {
+        "mean": 0.25,
+        "std": 0.0,
+        "runs": [
+          0.25,
+          0.25,
+          0.25
+        ]
+      },
+      "implicit_8_sflr": {
+        "mean": 0.75,
+        "std": 0.0,
+        "runs": [
+          0.75,
+          0.75,
+          0.75
+        ]
+      },
+      "mcnemar_p_vs_dual": {
+        "isolated_16": 0.0,
+        "embedded_16": 0.0,
+        "parametric_8": 0.0,
+        "implicit_8": 0.5078
+      }
+    }
+  },
+  "true_latency_and_ce": {
+    "Deferred Phase-2 (Uncached)": {
+      "rra": 0.875,
+      "total_time_s": 564.11,
+      "mean_article_latency_s": 1.7985,
+      "p95_article_latency_s": 2.8237,
+      "total_phase2_s": 103.69,
+      "ce_reranked_calls": 89,
+      "ce_top1_flips": 20,
+      "rev_recall_at_1": null,
+      "rev_top1_hits": 0,
+      "rev_top1_total": 0
+    },
+    "Online Immediate (Uncached)": {
+      "rra": 0.875,
+      "total_time_s": 643.94,
+      "mean_article_latency_s": 2.5153,
+      "p95_article_latency_s": 7.2165,
+      "total_phase2_s": 0.0,
+      "ce_reranked_calls": 103,
+      "ce_top1_flips": 17,
+      "rev_recall_at_1": null,
+      "rev_top1_hits": 0,
+      "rev_top1_total": 0
+    },
+    "Deferred w/o CE (Uncached)": {
+      "rra": 0.875,
+      "total_time_s": 566.37,
+      "mean_article_latency_s": 1.8029,
+      "p95_article_latency_s": 2.8898,
+      "total_phase2_s": 104.82,
+      "ce_reranked_calls": 0,
+      "ce_top1_flips": 0,
+      "rev_recall_at_1": null,
+      "rev_top1_hits": 0,
+      "rev_top1_total": 0
+    }
+  },
+  "fragmentation_and_retract": {
+    "t17": {
+      "per_topic": {
+        "bpoil": {
+          "num_articles": 1305,
+          "unique_ref_dates": 118,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.439,
+              "ar1": 0.1479,
+              "concat_r1": 0.4653,
+              "total_states": 38,
+              "mean_c_k": 9.03,
+              "nodes_per_ref_date": 0.32,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.3143,
+              "ar1": 0.1005,
+              "concat_r1": 0.5537,
+              "total_states": 902,
+              "mean_c_k": 1.19,
+              "nodes_per_ref_date": 7.64,
+              "retracted_count": 4
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.3143,
+              "ar1": 0.1005,
+              "concat_r1": 0.5537,
+              "total_states": 902,
+              "mean_c_k": 1.19,
+              "nodes_per_ref_date": 7.64,
+              "retracted_count": 4
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.3143,
+              "ar1": 0.0993,
+              "concat_r1": 0.5501,
+              "total_states": 902,
+              "mean_c_k": 1.19,
+              "nodes_per_ref_date": 7.64,
+              "retracted_count": 0
+            }
+          }
+        },
+        "egypt": {
+          "num_articles": 216,
+          "unique_ref_dates": 20,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.8571,
+              "ar1": 0.1796,
+              "concat_r1": 0.3564,
+              "total_states": 20,
+              "mean_c_k": 6.1,
+              "nodes_per_ref_date": 1.0,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.9,
+              "ar1": 0.1872,
+              "concat_r1": 0.472,
+              "total_states": 148,
+              "mean_c_k": 1.25,
+              "nodes_per_ref_date": 7.4,
+              "retracted_count": 1
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.9,
+              "ar1": 0.1872,
+              "concat_r1": 0.472,
+              "total_states": 148,
+              "mean_c_k": 1.25,
+              "nodes_per_ref_date": 7.4,
+              "retracted_count": 0
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.9,
+              "ar1": 0.1872,
+              "concat_r1": 0.472,
+              "total_states": 148,
+              "mean_c_k": 1.25,
+              "nodes_per_ref_date": 7.4,
+              "retracted_count": 0
+            }
+          }
+        },
+        "finan": {
+          "num_articles": 119,
+          "unique_ref_dates": 65,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.4948,
+              "ar1": 0.0599,
+              "concat_r1": 0.2558,
+              "total_states": 65,
+              "mean_c_k": 1.15,
+              "nodes_per_ref_date": 1.0,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.6984,
+              "ar1": 0.1026,
+              "concat_r1": 0.29,
+              "total_states": 111,
+              "mean_c_k": 1.03,
+              "nodes_per_ref_date": 1.71,
+              "retracted_count": 0
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.6984,
+              "ar1": 0.1026,
+              "concat_r1": 0.29,
+              "total_states": 111,
+              "mean_c_k": 1.03,
+              "nodes_per_ref_date": 1.71,
+              "retracted_count": 0
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.6984,
+              "ar1": 0.1026,
+              "concat_r1": 0.29,
+              "total_states": 111,
+              "mean_c_k": 1.03,
+              "nodes_per_ref_date": 1.71,
+              "retracted_count": 0
+            }
+          }
+        },
+        "h1n1": {
+          "num_articles": 160,
+          "unique_ref_dates": 21,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.8,
+              "ar1": 0.1342,
+              "concat_r1": 0.5403,
+              "total_states": 11,
+              "mean_c_k": 6.27,
+              "nodes_per_ref_date": 0.52,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.6667,
+              "ar1": 0.1667,
+              "concat_r1": 0.4704,
+              "total_states": 102,
+              "mean_c_k": 1.27,
+              "nodes_per_ref_date": 4.86,
+              "retracted_count": 1
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.7778,
+              "ar1": 0.1755,
+              "concat_r1": 0.4664,
+              "total_states": 102,
+              "mean_c_k": 1.27,
+              "nodes_per_ref_date": 4.86,
+              "retracted_count": 0
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.7778,
+              "ar1": 0.1755,
+              "concat_r1": 0.4664,
+              "total_states": 102,
+              "mean_c_k": 1.27,
+              "nodes_per_ref_date": 4.86,
+              "retracted_count": 0
+            }
+          }
+        },
+        "haiti": {
+          "num_articles": 216,
+          "unique_ref_dates": 11,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.9091,
+              "ar1": 0.0996,
+              "concat_r1": 0.1552,
+              "total_states": 11,
+              "mean_c_k": 14.45,
+              "nodes_per_ref_date": 1.0,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 1.0,
+              "ar1": 0.1627,
+              "concat_r1": 0.2601,
+              "total_states": 114,
+              "mean_c_k": 1.52,
+              "nodes_per_ref_date": 10.36,
+              "retracted_count": 0
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 1.0,
+              "ar1": 0.1627,
+              "concat_r1": 0.2601,
+              "total_states": 114,
+              "mean_c_k": 1.52,
+              "nodes_per_ref_date": 10.36,
+              "retracted_count": 0
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 1.0,
+              "ar1": 0.1627,
+              "concat_r1": 0.2601,
+              "total_states": 114,
+              "mean_c_k": 1.52,
+              "nodes_per_ref_date": 10.36,
+              "retracted_count": 0
+            }
+          }
+        },
+        "iraq": {
+          "num_articles": 315,
+          "unique_ref_dates": 155,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.3346,
+              "ar1": 0.0893,
+              "concat_r1": 0.4847,
+              "total_states": 155,
+              "mean_c_k": 1.08,
+              "nodes_per_ref_date": 1.0,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.4581,
+              "ar1": 0.1144,
+              "concat_r1": 0.52,
+              "total_states": 295,
+              "mean_c_k": 1.01,
+              "nodes_per_ref_date": 1.9,
+              "retracted_count": 2
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.4581,
+              "ar1": 0.1144,
+              "concat_r1": 0.52,
+              "total_states": 295,
+              "mean_c_k": 1.01,
+              "nodes_per_ref_date": 1.9,
+              "retracted_count": 2
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.4581,
+              "ar1": 0.1131,
+              "concat_r1": 0.5198,
+              "total_states": 295,
+              "mean_c_k": 1.01,
+              "nodes_per_ref_date": 1.9,
+              "retracted_count": 0
+            }
+          }
+        },
+        "libya": {
+          "num_articles": 716,
+          "unique_ref_dates": 59,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.4615,
+              "ar1": 0.1126,
+              "concat_r1": 0.4451,
+              "total_states": 33,
+              "mean_c_k": 4.85,
+              "nodes_per_ref_date": 0.56,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.338,
+              "ar1": 0.0809,
+              "concat_r1": 0.4776,
+              "total_states": 596,
+              "mean_c_k": 1.09,
+              "nodes_per_ref_date": 10.1,
+              "retracted_count": 2
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.338,
+              "ar1": 0.0809,
+              "concat_r1": 0.4776,
+              "total_states": 596,
+              "mean_c_k": 1.09,
+              "nodes_per_ref_date": 10.1,
+              "retracted_count": 2
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.338,
+              "ar1": 0.0824,
+              "concat_r1": 0.4879,
+              "total_states": 596,
+              "mean_c_k": 1.09,
+              "nodes_per_ref_date": 10.1,
+              "retracted_count": 0
+            }
+          }
+        },
+        "mj": {
+          "num_articles": 120,
+          "unique_ref_dates": 38,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.3529,
+              "ar1": 0.0958,
+              "concat_r1": 0.4289,
+              "total_states": 38,
+              "mean_c_k": 1.63,
+              "nodes_per_ref_date": 1.0,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.2895,
+              "ar1": 0.0963,
+              "concat_r1": 0.5118,
+              "total_states": 85,
+              "mean_c_k": 1.18,
+              "nodes_per_ref_date": 2.24,
+              "retracted_count": 1
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.2895,
+              "ar1": 0.0959,
+              "concat_r1": 0.5104,
+              "total_states": 85,
+              "mean_c_k": 1.18,
+              "nodes_per_ref_date": 2.24,
+              "retracted_count": 0
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.2895,
+              "ar1": 0.0959,
+              "concat_r1": 0.5104,
+              "total_states": 85,
+              "mean_c_k": 1.18,
+              "nodes_per_ref_date": 2.24,
+              "retracted_count": 0
+            }
+          }
+        },
+        "syria": {
+          "num_articles": 575,
+          "unique_ref_dates": 86,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.2295,
+              "ar1": 0.0762,
+              "concat_r1": 0.4877,
+              "total_states": 28,
+              "mean_c_k": 2.68,
+              "nodes_per_ref_date": 0.33,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.2295,
+              "ar1": 0.0713,
+              "concat_r1": 0.4573,
+              "total_states": 533,
+              "mean_c_k": 1.03,
+              "nodes_per_ref_date": 6.2,
+              "retracted_count": 1
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.2295,
+              "ar1": 0.0713,
+              "concat_r1": 0.4573,
+              "total_states": 533,
+              "mean_c_k": 1.03,
+              "nodes_per_ref_date": 6.2,
+              "retracted_count": 1
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.1967,
+              "ar1": 0.0662,
+              "concat_r1": 0.459,
+              "total_states": 533,
+              "mean_c_k": 1.03,
+              "nodes_per_ref_date": 6.2,
+              "retracted_count": 0
+            }
+          }
+        }
+      },
+      "summary": {
+        "LLM-TLS (7B)": {
+          "date_f1_mean": 0.5421,
+          "ar1_mean": 0.1106,
+          "concat_r1_mean": 0.4022,
+          "total_states_sum": 399,
+          "mean_c_k_avg": 5.25,
+          "nodes_per_ref_date_avg": 0.75,
+          "retracted_sum": 0
+        },
+        "ReviTLS (Dual-Scale)": {
+          "date_f1_mean": 0.5438,
+          "ar1_mean": 0.1203,
+          "concat_r1_mean": 0.4459,
+          "total_states_sum": 2886,
+          "mean_c_k_avg": 1.17,
+          "nodes_per_ref_date_avg": 5.82,
+          "retracted_sum": 12
+        },
+        "ReviTLS (Guarded Retract)": {
+          "date_f1_mean": 0.5562,
+          "ar1_mean": 0.1212,
+          "concat_r1_mean": 0.4453,
+          "total_states_sum": 2886,
+          "mean_c_k_avg": 1.17,
+          "nodes_per_ref_date_avg": 5.82,
+          "retracted_sum": 9
+        },
+        "ReviTLS (Disable Retract)": {
+          "date_f1_mean": 0.5525,
+          "ar1_mean": 0.1205,
+          "concat_r1_mean": 0.4462,
+          "total_states_sum": 2886,
+          "mean_c_k_avg": 1.17,
+          "nodes_per_ref_date_avg": 5.82,
+          "retracted_sum": 0
+        }
+      }
+    },
+    "crisis": {
+      "per_topic": {
+        "egypt": {
+          "num_articles": 3681,
+          "unique_ref_dates": 122,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.4074,
+              "ar1": 0.1214,
+              "concat_r1": 0.4031,
+              "total_states": 21,
+              "mean_c_k": 36.52,
+              "nodes_per_ref_date": 0.17,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.2807,
+              "ar1": 0.0957,
+              "concat_r1": 0.5137,
+              "total_states": 2659,
+              "mean_c_k": 1.23,
+              "nodes_per_ref_date": 21.8,
+              "retracted_count": 9
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.2807,
+              "ar1": 0.0957,
+              "concat_r1": 0.5137,
+              "total_states": 2659,
+              "mean_c_k": 1.23,
+              "nodes_per_ref_date": 21.8,
+              "retracted_count": 9
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.2807,
+              "ar1": 0.0957,
+              "concat_r1": 0.5137,
+              "total_states": 2659,
+              "mean_c_k": 1.23,
+              "nodes_per_ref_date": 21.8,
+              "retracted_count": 0
+            }
+          }
+        },
+        "libya": {
+          "num_articles": 3037,
+          "unique_ref_dates": 118,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.3667,
+              "ar1": 0.0852,
+              "concat_r1": 0.4654,
+              "total_states": 24,
+              "mean_c_k": 17.5,
+              "nodes_per_ref_date": 0.2,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.2558,
+              "ar1": 0.0719,
+              "concat_r1": 0.4975,
+              "total_states": 2456,
+              "mean_c_k": 1.12,
+              "nodes_per_ref_date": 20.81,
+              "retracted_count": 7
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.2558,
+              "ar1": 0.0719,
+              "concat_r1": 0.4975,
+              "total_states": 2456,
+              "mean_c_k": 1.12,
+              "nodes_per_ref_date": 20.81,
+              "retracted_count": 7
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.2558,
+              "ar1": 0.0719,
+              "concat_r1": 0.4975,
+              "total_states": 2456,
+              "mean_c_k": 1.12,
+              "nodes_per_ref_date": 20.81,
+              "retracted_count": 0
+            }
+          }
+        },
+        "syria": {
+          "num_articles": 4960,
+          "unique_ref_dates": 106,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.1053,
+              "ar1": 0.0438,
+              "concat_r1": 0.3678,
+              "total_states": 13,
+              "mean_c_k": 17.54,
+              "nodes_per_ref_date": 0.12,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.1538,
+              "ar1": 0.0536,
+              "concat_r1": 0.4514,
+              "total_states": 3662,
+              "mean_c_k": 1.21,
+              "nodes_per_ref_date": 34.55,
+              "retracted_count": 12
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.1538,
+              "ar1": 0.0536,
+              "concat_r1": 0.4514,
+              "total_states": 3662,
+              "mean_c_k": 1.21,
+              "nodes_per_ref_date": 34.55,
+              "retracted_count": 8
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.1538,
+              "ar1": 0.0536,
+              "concat_r1": 0.4514,
+              "total_states": 3662,
+              "mean_c_k": 1.21,
+              "nodes_per_ref_date": 34.55,
+              "retracted_count": 0
+            }
+          }
+        },
+        "yemen": {
+          "num_articles": 2259,
+          "unique_ref_dates": 81,
+          "systems": {
+            "LLM-TLS (7B)": {
+              "date_f1": 0.4,
+              "ar1": 0.1443,
+              "concat_r1": 0.4746,
+              "total_states": 15,
+              "mean_c_k": 14.6,
+              "nodes_per_ref_date": 0.19,
+              "retracted_count": 0
+            },
+            "ReviTLS (Dual-Scale)": {
+              "date_f1": 0.2759,
+              "ar1": 0.0782,
+              "concat_r1": 0.4842,
+              "total_states": 1727,
+              "mean_c_k": 1.17,
+              "nodes_per_ref_date": 21.32,
+              "retracted_count": 5
+            },
+            "ReviTLS (Guarded Retract)": {
+              "date_f1": 0.2759,
+              "ar1": 0.0782,
+              "concat_r1": 0.4842,
+              "total_states": 1727,
+              "mean_c_k": 1.17,
+              "nodes_per_ref_date": 21.32,
+              "retracted_count": 4
+            },
+            "ReviTLS (Disable Retract)": {
+              "date_f1": 0.2759,
+              "ar1": 0.0782,
+              "concat_r1": 0.4842,
+              "total_states": 1727,
+              "mean_c_k": 1.17,
+              "nodes_per_ref_date": 21.32,
+              "retracted_count": 0
+            }
+          }
+        }
+      },
+      "summary": {
+        "LLM-TLS (7B)": {
+          "date_f1_mean": 0.3199,
+          "ar1_mean": 0.0987,
+          "concat_r1_mean": 0.4277,
+          "total_states_sum": 73,
+          "mean_c_k_avg": 21.54,
+          "nodes_per_ref_date_avg": 0.17,
+          "retracted_sum": 0
+        },
+        "ReviTLS (Dual-Scale)": {
+          "date_f1_mean": 0.2415,
+          "ar1_mean": 0.0748,
+          "concat_r1_mean": 0.4867,
+          "total_states_sum": 10504,
+          "mean_c_k_avg": 1.18,
+          "nodes_per_ref_date_avg": 24.62,
+          "retracted_sum": 33
+        },
+        "ReviTLS (Guarded Retract)": {
+          "date_f1_mean": 0.2415,
+          "ar1_mean": 0.0748,
+          "concat_r1_mean": 0.4867,
+          "total_states_sum": 10504,
+          "mean_c_k_avg": 1.18,
+          "nodes_per_ref_date_avg": 24.62,
+          "retracted_sum": 28
+        },
+        "ReviTLS (Disable Retract)": {
+          "date_f1_mean": 0.2415,
+          "ar1_mean": 0.0748,
+          "concat_r1_mean": 0.4867,
+          "total_states_sum": 10504,
+          "mean_c_k_avg": 1.18,
+          "nodes_per_ref_date_avg": 24.62,
+          "retracted_sum": 0
+        }
+      }
+    }
+  },
+  "bpoil_excluded": {
+    "t17_n8": {
+      "LLM-TLS (7B)": {
+        "date_f1": "0.555 +/- 0.263",
+        "ar1": "0.106 +/- 0.037",
+        "concat_r1": "0.394 +/- 0.131"
+      },
+      "LLM-TLS (14B)": {
+        "date_f1": "0.529 +/- 0.269",
+        "ar1": "0.116 +/- 0.046",
+        "concat_r1": "0.435 +/- 0.122"
+      },
+      "ReviTLS (Dual-Scale)": {
+        "date_f1": "0.573 +/- 0.288",
+        "ar1": "0.123 +/- 0.044",
+        "concat_r1": "0.432 +/- 0.100"
+      }
+    },
+    "revision_n12": {
+      "isolated": 0.8333,
+      "embedded": 0.8333
+    }
+  }
+}

@@ -532,3 +532,40 @@ git push origin main
 ```
 
 *(Yarıda kesilirse kaldığı sistemden devam etmek için `--fresh` olmadan `python scripts/run_step_d_suite.py` çalıştır.)*
+
+* **Yapılan İyileştirme:** `scripts/run_step_d_suite.py` içine genel ilerlemeyi (34 adım, `%`, geçen/kalan süre ve aktif aşama) tek satırda gösteren `Step-D Overall` `tqdm` çubuğu eklendi (`REVITLS_DISABLE_INNER_TQDM=1` ile iç içe çubuklar kapatıldı) ve çıktı `outputs/scie_results/step_d_run.log` dosyasına kaydedildi.
+* **Üretilen Çıktılar:** [`outputs/scie_results/step_d_summary.json`](outputs/scie_results/step_d_summary.json) & [`outputs/scie_results/step_d_report.md`](outputs/scie_results/step_d_report.md)
+
+#### 1. 3-Tekrarlı Önbelleksiz Revizyon Ablation'ı (`use_cache=False`, Ort. ± Std & McNemar $p$ vs Dual-Scale)
+
+| Sistem | İzole-16 RRA | McNemar $p$ | Akış İçi-16 RRA | McNemar $p$ | Parametrik-8 RRA | Örtük-8 RRA |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Full Dual-Scale** | 0.875 ± 0.000 | 1.0000 | **1.000 ± 0.000** | 1.0000 | **1.000 ± 0.000** | 0.375 ± 0.000 |
+| **w/o 14B Verifier** | 0.688 ± 0.000 | 0.0352 | 0.688 ± 0.000 | 0.0001 | 0.500 ± 0.000 | 0.375 ± 0.000 |
+| **w/o Cross-Encoder** | 0.875 ± 0.000 | 1.0000 | 0.938 ± 0.000 | 0.2500 | **1.000 ± 0.000** | 0.375 ± 0.000 |
+| **w/o Conditional Gate** | **0.938 ± 0.000** | 0.2500 | 0.938 ± 0.000 | 0.2500 | **1.000 ± 0.000** | **0.875 ± 0.000** |
+| **Overwrite (No $P_k$)** | 0.812 ± 0.000 | 0.5078 | 0.812 ± 0.000 | 0.0039 | 0.875 ± 0.000 | 0.375 ± 0.000 |
+| **LLM-TLS + 90d + Latest + 14B** | 0.312 ± 0.000 | 0.0000 | 0.312 ± 0.000 | 0.0000 | 0.250 ± 0.000 | 0.250 ± 0.000 |
+
+#### 2. Gerçek Önbelleksiz Gecikme (`Online Immediate` vs `Deferred Phase-2`, `16 Embedded`)
+
+| Mod | RRA | Toplam (s) | Ort. Makale Gecikmesi (s) | P95 Gecikme (s) | CE Çağrı / Flip |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Deferred Phase-2 (Uncached)** | **0.875** | **564.1** | **1.798** | **2.824** | 89 / 20 |
+| **Online Immediate (Uncached)** | **0.875** | 643.9 | 2.515 | 7.216 | 103 / 17 |
+| **Deferred w/o CE (Uncached)** | **0.875** | 566.4 | 1.803 | 2.890 | 0 / 0 |
+
+#### 3. `T17` & `Crisis` Parçalanma Teşhisi + `Guarded` / `Disable Retract` Ablation'ı
+
+| Veri Seti / Sistem | Date-F1 (↑) | AR-1 (↑) | Concat-R1 (↑) | Toplam Durum | Ort. $c_k$ | Düğüm / RefTarih | Retracted |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`T17` — LLM-TLS (7B)** | 0.542 | 0.111 | 0.402 | 399 | 5.25 | 0.75 | 0 |
+| **`T17` — ReviTLS (Dual-Scale)** | 0.544 | 0.120 | **0.446** | 2886 | 1.17 | 5.82 | 12 |
+| **`T17` — ReviTLS (Guarded Retract)** | **0.556** | **0.121** | 0.445 | 2886 | 1.17 | 5.82 | 9 |
+| **`T17` — ReviTLS (Disable Retract)** | 0.552 | 0.120 | **0.446** | 2886 | 1.17 | 5.82 | 0 |
+| **`Crisis` — LLM-TLS (7B)** | **0.320** | **0.099** | 0.428 | 73 | 21.54 | 0.17 | 0 |
+| **`Crisis` — ReviTLS (Dual-Scale / Guarded / Disable)** | 0.241 | 0.075 | **0.487** | 10504 | 1.18 | 24.62 | 33 / 28 / 0 |
+
+#### 4. `bpoil`-Hariç Özet (`T17 n=8`, `Revision n=12`)
+* **`T17` (`n=8`):** `ReviTLS (Dual-Scale)` **`Date-F1 = 0.573 ± 0.288`**, **`AR-1 = 0.123 ± 0.044`**, `Concat-R1 = 0.432 ± 0.100` (`LLM-TLS 7B`: `0.555 / 0.106 / 0.394`; `LLM-TLS 14B`: `0.529 / 0.116 / 0.435`).
+* **Revizyon (`n=12`):** İzole **`0.8333`**, Akış İçi **`0.8333`**.

@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 from datetime import date, timedelta
+import os
 from typing import Optional
 import numpy as np
 from tqdm.auto import tqdm
@@ -109,7 +110,7 @@ class TopicLLMTLSBaseline:
             desc="  LLM-TLS Stream",
             unit="art",
             leave=False,
-            disable=len(ordered) < 15,
+            disable=len(ordered) < 15 or os.environ.get("REVITLS_DISABLE_INNER_TQDM") == "1",
             dynamic_ncols=True,
         )
         for art in bar:

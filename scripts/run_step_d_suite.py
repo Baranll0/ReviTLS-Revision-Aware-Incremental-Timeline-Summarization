@@ -19,6 +19,7 @@ import argparse
 from datetime import date
 import json
 import math
+import os
 from pathlib import Path
 import statistics
 import time
@@ -108,6 +109,7 @@ def run_repeated_revisions(
     processed_dir: Path,
     repeats: int = 3,
     ckpt_path: Path | None = None,
+    pbar: Any = None,
 ) -> dict[str, Any]:
     factories = build_uncached_factories(cfg_single, cfg_dual, embedder)
     # Preload streams once (20 background distractors/topic -> 80 distractors + 48 revision articles)
@@ -140,11 +142,15 @@ def run_repeated_revisions(
         pooled_hits = {name: {s: [] for s in suites} for name, _ in factories}
         completed = set()
 
-    for rep in tqdm(range(repeats), desc="  Repeated Uncached Runs", unit="rep"):
-        for name, factory in tqdm(factories, desc=f"    Rep {rep+1}/{repeats}", unit="sys", leave=False):
+    for rep in range(repeats):
+        for name, factory in factories:
             key = f"{rep}::{name}"
             if key in completed:
+                if pbar is not None:
+                    pbar.update(1)
                 continue
+            if pbar is not None:
+                pbar.set_postfix_str(f"[1/4] Rep {rep+1}/{repeats} | {name}", refresh=True)
             # 1. Isolated & Embedded 16
             iso_hits: list[int] = []
             emb_hits: list[int] = []
@@ -184,6 +190,8 @@ def run_repeated_revisions(
                     json.dumps({"raw_runs": raw_runs, "pooled_hits": pooled_hits, "completed": sorted(completed)}),
                     encoding="utf-8",
                 )
+            if pbar is not None:
+                pbar.update(1)
 
     summary: dict[str, Any] = {}
     dual_hits = pooled_hits["Full Dual-Scale"]
@@ -206,6 +214,7 @@ def run_true_latency_and_ce_recall(
     cfg_dual: ReviTLSConfig,
     embedder: SentenceTransformer,
     processed_dir: Path,
+    pbar: Any = None,
 ) -> dict[str, Any]:
     llm_7b = LLMClient(cfg_dual.llm, use_cache=False)
     llm_14b = LLMClient(cfg_dual.verifier_llm, use_cache=False) if cfg_dual.verifier_llm else llm_7b
@@ -219,6 +228,8 @@ def run_true_latency_and_ce_recall(
     ]
     out: dict[str, Any] = {}
     for label, cfg, defer in configs:
+        if pbar is not None:
+            pbar.set_postfix_str(f"[2/4] Latency | {label}", refresh=True)
         rra_hits = 0
         total_cases = 0
         total_time = 0.0
@@ -230,7 +241,7 @@ def run_true_latency_and_ce_recall(
         top1_date_hits = 0
         top1_total = 0
 
-        for topic, templates in tqdm(TOPIC_SCENARIO_SUITES.items(), desc=f"  {label}", unit="topic", leave=False):
+        for topic, templates in TOPIC_SCENARIO_SUITES.items():
             sp = processed_dir / f"{topic}.jsonl"
             if not sp.exists():
                 continue
@@ -277,12 +288,15 @@ def run_true_latency_and_ce_recall(
             "rev_top1_hits": top1_date_hits,
             "rev_top1_total": top1_total,
         }
+        if pbar is not None:
+            pbar.update(1)
     return out
 
 
 def run_fragmentation_and_retract_ablation(
     cfg_dual: ReviTLSConfig,
     embedder: SentenceTransformer,
+    pbar: Any = None,
 ) -> dict[str, Any]:
     """Use warm deterministic cache (use_cache=True) to extract LLM-TLS vs ReviTLS state counts & retract ablations."""
     llm_7b = LLMClient(cfg_dual.llm, use_cache=True)
@@ -308,7 +322,9 @@ def run_fragmentation_and_retract_ablation(
             target_l = max(1, round(sum(len(r) for r in refs) / len(refs))) if refs else 30
             unique_ref_dates = len({d for ref in refs for d, _ in ref})
             per_topic[topic] = {"num_articles": len(arts), "unique_ref_dates": unique_ref_dates, "systems": {}}
-            for s_name, factory in tqdm(systems, desc=f"  [{ds}/{topic}]", unit="sys", leave=False):
+            if pbar is not None:
+                pbar.set_postfix_str(f"[3/4] Frag | {ds}/{topic} ({len(arts)} arts)", refresh=True)
+            for s_name, factory in systems:
                 tl, states = factory().run_stream(arts, num_dates=target_l)
                 df1 = max(compute_date_f1(tl, [d for d, _ in ref])["date_f1"] for ref in refs)
                 ar1 = max(compute_align_rouge(tl, ref)["align_r1"] for ref in refs)
@@ -324,6 +340,8 @@ def run_fragmentation_and_retract_ablation(
                     "nodes_per_ref_date": round(len(states) / max(1, unique_ref_dates), 2),
                     "retracted_count": ret_cnt,
                 }
+            if pbar is not None:
+                pbar.update(1)
         # Aggregate
         agg: dict[str, Any] = {}
         for s_name, _ in systems:
@@ -443,23 +461,29 @@ def main() -> None:
     else:
         summary = {}
 
+    os.environ["REVITLS_DISABLE_INNER_TQDM"] = "1"
+    total_steps = (args.repeats * 6) + 3 + 13
     t17_proc = Path("data/processed/t17")
-    if "repeated_revisions" not in summary or args.fresh:
-        print(f"[1/4] Running {args.repeats}-repeat uncached revision ablation + Overwrite...", flush=True)
-        summary["repeated_revisions"] = run_repeated_revisions(
-            cfg_single, cfg_dual, embedder, t17_proc, repeats=args.repeats, ckpt_path=rep_ckpt
-        )
-        out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    with tqdm(total=total_steps, desc="Step-D Overall", unit="step", ascii=True, ncols=110) as pbar:
+        if "repeated_revisions" not in summary or args.fresh:
+            summary["repeated_revisions"] = run_repeated_revisions(
+                cfg_single, cfg_dual, embedder, t17_proc, repeats=args.repeats, ckpt_path=rep_ckpt, pbar=pbar
+            )
+            out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        else:
+            pbar.update(args.repeats * 6)
 
-    if "true_latency_and_ce" not in summary or args.fresh:
-        print("[2/4] Measuring true uncached latency (Online vs Deferred) & CE Recall@1...", flush=True)
-        summary["true_latency_and_ce"] = run_true_latency_and_ce_recall(cfg_dual, embedder, t17_proc)
-        out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        if "true_latency_and_ce" not in summary or args.fresh:
+            summary["true_latency_and_ce"] = run_true_latency_and_ce_recall(cfg_dual, embedder, t17_proc, pbar=pbar)
+            out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        else:
+            pbar.update(3)
 
-    if "fragmentation_and_retract" not in summary or args.fresh:
-        print("[3/4] Running T17+Crisis fragmentation diagnosis & Guarded/Disable Retract...", flush=True)
-        summary["fragmentation_and_retract"] = run_fragmentation_and_retract_ablation(cfg_dual, embedder)
-        out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        if "fragmentation_and_retract" not in summary or args.fresh:
+            summary["fragmentation_and_retract"] = run_fragmentation_and_retract_ablation(cfg_dual, embedder, pbar=pbar)
+            out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        else:
+            pbar.update(13)
 
     summary["bpoil_excluded"] = compute_bpoil_excluded_summary(args.output_dir / "summary.json")
     out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
