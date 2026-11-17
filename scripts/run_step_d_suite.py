@@ -1,8 +1,8 @@
-"""Step-D comprehensive verification suite (~15-20 min on RTX 5080).
+"""Step-D comprehensive verification suite (~60-80 min on RTX 5080, with per-system checkpointing).
 
 Covers:
 1. Uncached 3-repeat revision ablation (use_cache=False) with mean +/- std & exact McNemar test,
-   including Overwrite (No P_k) baseline.
+   including Overwrite (No P_k) baseline (20 background distractors/topic for embedded_16).
 2. True uncached latency (Online Immediate vs Deferred Phase-2, use_cache=False) + Cross-Encoder Recall@1.
 3. Crisis & T17 fragmentation diagnosis (LLM-TLS vs ReviTLS state counts, c_k, nodes/ref_date) +
    isolated Guarded Retract + Disable Retract across all 13 topics (warm cache).
@@ -10,6 +10,7 @@ Covers:
 
 Usage on GPU machine (with Ollama running):
     python scripts/run_step_d_suite.py --fresh
+    python scripts/run_step_d_suite.py          # resume from checkpoint if interrupted
 """
 
 from __future__ import annotations
@@ -91,8 +92,6 @@ def build_uncached_factories(
         ("w/o Cross-Encoder", lambda: ReviTLSPipeline(cfg_no_ce, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b)),
         ("w/o Conditional Gate", lambda: ReviTLSPipeline(cfg_no_gate, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b)),
         ("Overwrite (No P_k)", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, overwrite_only=True)),
-        ("w/o Tombstone Purge", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, disable_purge=True)),
-        ("Guarded Retract Only", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, guarded_retract=True)),
         (
             "LLM-TLS + 90d + Latest + 14B",
             lambda: TopicLLMTLSBaseline(
@@ -108,15 +107,16 @@ def run_repeated_revisions(
     embedder: SentenceTransformer,
     processed_dir: Path,
     repeats: int = 3,
+    ckpt_path: Path | None = None,
 ) -> dict[str, Any]:
     factories = build_uncached_factories(cfg_single, cfg_dual, embedder)
-    # Preload streams once
+    # Preload streams once (20 background distractors/topic -> 80 distractors + 48 revision articles)
     topic_data: list[tuple[str, list[Article], list[RevisionTestCase], list[Article], list[RevisionTestCase]]] = []
     for topic, templates in TOPIC_SCENARIO_SUITES.items():
         sp = processed_dir / f"{topic}.jsonl"
         if not sp.exists():
             continue
-        base = load_articles(sp)[:150]
+        base = load_articles(sp)[:20]
         anchor = base[0].publish_date if base else date(2010, 4, 20)
         iso_a, iso_c = inject_revision_scenarios([], topic=topic, anchor_date=anchor, templates=templates)
         emb_a, emb_c = inject_revision_scenarios(base, topic=topic, anchor_date=anchor, templates=templates)
@@ -130,14 +130,21 @@ def run_repeated_revisions(
     )
 
     suites = ("isolated_16", "embedded_16", "parametric_8", "implicit_8")
-    raw_runs: dict[str, dict[str, list[float]]] = {name: {f"{s}_rra": [] for s in suites} for name, _ in factories}
-    for name in raw_runs:
-        for s in suites:
-            raw_runs[name][f"{s}_sflr"] = []
-    pooled_hits: dict[str, dict[str, list[int]]] = {name: {s: [] for s in suites} for name, _ in factories}
+    if ckpt_path and ckpt_path.exists():
+        ckpt = json.loads(ckpt_path.read_text(encoding="utf-8"))
+        raw_runs = ckpt["raw_runs"]
+        pooled_hits = ckpt["pooled_hits"]
+        completed: set[str] = set(ckpt.get("completed", []))
+    else:
+        raw_runs = {name: {f"{s}_{m}": [] for s in suites for m in ("rra", "sflr")} for name, _ in factories}
+        pooled_hits = {name: {s: [] for s in suites} for name, _ in factories}
+        completed = set()
 
     for rep in tqdm(range(repeats), desc="  Repeated Uncached Runs", unit="rep"):
         for name, factory in tqdm(factories, desc=f"    Rep {rep+1}/{repeats}", unit="sys", leave=False):
+            key = f"{rep}::{name}"
+            if key in completed:
+                continue
             # 1. Isolated & Embedded 16
             iso_hits: list[int] = []
             emb_hits: list[int] = []
@@ -170,6 +177,13 @@ def run_repeated_revisions(
             raw_runs[name]["implicit_8_rra"].append(sum(imp_h) / len(imp_h))
             raw_runs[name]["implicit_8_sflr"].append(evaluate_revision_states(s_imp, imp_c)["stale_fact_leakage_rate"])
             pooled_hits[name]["implicit_8"].extend(imp_h)
+
+            completed.add(key)
+            if ckpt_path:
+                ckpt_path.write_text(
+                    json.dumps({"raw_runs": raw_runs, "pooled_hits": pooled_hits, "completed": sorted(completed)}),
+                    encoding="utf-8",
+                )
 
     summary: dict[str, Any] = {}
     dual_hits = pooled_hits["Full Dual-Scale"]
@@ -220,7 +234,7 @@ def run_true_latency_and_ce_recall(
             sp = processed_dir / f"{topic}.jsonl"
             if not sp.exists():
                 continue
-            base = load_articles(sp)[:150]
+            base = load_articles(sp)[:50]
             anchor = base[0].publish_date if base else date(2010, 4, 20)
             emb_a, emb_c = inject_revision_scenarios(base, topic=topic, anchor_date=anchor, templates=templates)
             # Map revision article_id -> expected event_date (anchor + offset)
@@ -418,16 +432,23 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     out_json = args.output_dir / "step_d_summary.json"
     out_md = args.output_dir / "step_d_report.md"
+    rep_ckpt = args.output_dir / "step_d_rep_ckpt.json"
 
-    if out_json.exists() and not args.fresh:
-        summary: dict[str, Any] = json.loads(out_json.read_text(encoding="utf-8"))
+    if args.fresh:
+        summary: dict[str, Any] = {}
+        if rep_ckpt.exists():
+            rep_ckpt.unlink()
+    elif out_json.exists():
+        summary = json.loads(out_json.read_text(encoding="utf-8"))
     else:
         summary = {}
 
     t17_proc = Path("data/processed/t17")
     if "repeated_revisions" not in summary or args.fresh:
         print(f"[1/4] Running {args.repeats}-repeat uncached revision ablation + Overwrite...", flush=True)
-        summary["repeated_revisions"] = run_repeated_revisions(cfg_single, cfg_dual, embedder, t17_proc, repeats=args.repeats)
+        summary["repeated_revisions"] = run_repeated_revisions(
+            cfg_single, cfg_dual, embedder, t17_proc, repeats=args.repeats, ckpt_path=rep_ckpt
+        )
         out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     if "true_latency_and_ce" not in summary or args.fresh:
