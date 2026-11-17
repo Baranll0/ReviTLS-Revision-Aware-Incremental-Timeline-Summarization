@@ -43,7 +43,7 @@
 \maketitle
 
 \begin{abstract}
-Timeline summarization (TLS) condenses evolving news streams into chronologically ordered milestone summaries. Existing large language model (LLM) approaches implicitly assume that reported facts accumulate monotonically, whereas breaking news frequently revises or retracts earlier estimates and rumors days later. Same-day clustering prevents delayed corrections from updating earlier events, while an unconstrained multi-month window induces cross-date over-merging. We present \textbf{ReviTLS}, a revision-aware framework using streaming ingestion with deferred Phase-2 reconciliation. ReviTLS models events as mutable $5\text{W}1\text{H}$ state nodes with tombstone sets to purge superseded claims and filter retracted rumors, governed by a conditional dual-horizon temporal gate, optional cross-encoder reranking, and deferred $14\text{B}$ conflict verification. Across the full span-filtered \textbf{Timeline17} and \textbf{Crisis} corpora ($17{,}679$ articles, $13$ topics, no sampling), ReviTLS achieves parity with $7\text{B}/14\text{B}$ baselines on Timeline17 date accuracy ($0.544$ vs.\ $0.542$) and obtains the highest observed mean global coverage on Crisis ($0.487$, non-significant), while trailing same-day baselines in Crisis date accuracy ($0.242$ vs.\ $0.320$) and incurring $\sim 4.1\times$ higher runtime than $7\text{B}$ baselines. On controlled synthetic suites, ReviTLS resolves $87.5\%\text{--}93.8\%$ of $16$ multi-topic revisions and $8/8$ ($95\%$ CI $[0.676, 1.000]$) counterfactual controls (vs.\ $0.0\%\text{--}31.2\%$ for baselines), dropping to $37.5\%$ on $8$ implicit-cue long-delay cases.
+Timeline summarization (TLS) condenses evolving news streams into chronologically ordered milestone summaries. Existing large language model (LLM) approaches implicitly assume that reported facts accumulate monotonically, whereas breaking news frequently revises or retracts earlier estimates and rumors days later. Same-day clustering prevents delayed corrections from updating earlier events, while an unconstrained multi-month window induces cross-date over-merging. We present \textbf{ReviTLS}, a revision-aware framework using streaming ingestion with deferred Phase-2 reconciliation. ReviTLS models events as mutable $5\text{W}1\text{H}$ state nodes with tombstone sets to purge superseded claims and filter retracted rumors, governed by a conditional dual-horizon temporal gate, optional cross-encoder reranking, and deferred $14\text{B}$ conflict verification. Across the full span-filtered \textbf{Timeline17} and \textbf{Crisis} corpora ($17{,}679$ articles, $13$ topics, no sampling), ReviTLS achieves parity with $7\text{B}/14\text{B}$ baselines on Timeline17 date accuracy ($0.544$ vs.\ $0.542$; $0.573$ vs.\ $0.555$ excluding \texttt{bpoil}) and obtains the highest observed mean global coverage on Crisis ($0.487$, non-significant), while trailing same-day baselines in Crisis date accuracy ($0.241$ vs.\ $0.320$) due to state fragmentation ($10{,}504$ vs.\ $73$ states) and incurring $\sim 4.1\times$ higher runtime than $7\text{B}$ baselines. Across $3$-repeat uncached evaluations ($\text{temperature}=0.0$, $\text{SD}=0.000$), ReviTLS resolves $87.5\%$ of $16$ isolated revisions, $100.0\%$ ($87.5\%$ with $150$ distractors/topic) of $16$ embedded revisions, and $100.0\%$ ($8/8$) of counterfactual controls (vs.\ $25.0\%\text{--}31.2\%$ for baselines, McNemar $p < 0.001$; $81.2\%$ for an overwrite-only baseline without provenance, $p = 0.0039$ on embedded), dropping to $37.5\%$ on $8$ implicit-cue long-delay cases.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -103,7 +103,7 @@ Despite their effectiveness on static narratives, current LLM-based TLS framewor
 
 As illustrated in Fig.~\ref{fig:paradigm}(a), existing pipelines struggle with such updates. Because LLM-TLS~\cite{hu2024moments} restricts candidate matching to the same publication date and selects summary sentences via TextRank centrality, a correction published at $t + \Delta t$ cannot access the original cluster at $t$; moreover, heavily repeated early estimates outscore single authoritative corrections, resulting in severe \textit{Stale Fact Leakage}. Similarly, CHRONOS~\cite{wu2025unfolding} merges round-level timelines via surface-level deduplication without explicit conflict verification.
 
-Our empirical analysis also highlights a second challenge, which we term \textbf{Cross-Date Over-Merging} (Fig.~\ref{fig:paradigm}(b)). When the same-day constraint is relaxed to a multi-month lookback window (e.g., $90$~days) without gating, broader semantic associativity can cause subsequent daily developments within a single-topic stream to be misclassified as ongoing narrative updates of earlier clusters, collapsing distinct milestone dates into existing nodes.
+Our empirical analysis also highlights two opposing clustering failure modes. First, when the same-day constraint is relaxed to a multi-month lookback window (e.g., $90$~days) without gating, broader semantic associativity can cause subsequent daily developments within a single-topic stream to be misclassified as ongoing narrative updates of earlier clusters, collapsing distinct milestone dates into existing nodes (\textbf{Cross-Date Over-Merging}, Fig.~\ref{fig:paradigm}(b)). Second, enforcing strict same-day routine matching ($\Delta t_{\text{routine}}=0$) alongside multi-claim extraction in ultra-dense streams (such as Crisis) induces \textbf{State Fragmentation}, splitting same-day developments across many low-corroboration nodes and weakening Eq.~\eqref{eq:salience} frequency signals.
 
 To address both challenges, we propose \textbf{ReviTLS} (Fig.~\ref{fig:paradigm}(c)), designed as a streaming-ingestion pipeline with deferred Phase-2 reconciliation. Rather than treating event clusters as immutable bags of sentences, ReviTLS ingests articles chronologically into a dynamic repository of mutable \texttt{EventState} nodes containing structured $5\text{W}1\text{H}$ slots, active and purged claim sets, and discrete lifecycle statuses (\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}). To prevent cross-date over-merging while supporting long-range revisions, ReviTLS introduces a \textit{Conditional Dual-Horizon Temporal Gate} that enforces same-day matching for routine events while queuing revision-cued articles for a 90-day lookback window coupled with optional cross-encoder reranking and deferred $14\text{B}$ verification, avoiding per-article model swapping.
 
@@ -112,7 +112,7 @@ Our study investigates three research questions: \textbf{RQ1:} Can conditional t
 Our main contributions are summarized as follows:
 \begin{itemize}
     \item We formulate non-monotonic timeline summarization and propose \textbf{ReviTLS}, modeling events as mutable $5\text{W}1\text{H}$ state nodes with explicit tombstone purging, conditional temporal gating, and streaming ingestion with deferred Phase-2 reconciliation.
-    \item We empirically characterize \textit{Cross-Date Over-Merging} via state-count diagnostics and evaluate a two-phase $7\text{B}/14\text{B}$ schedule against scale-matched and post-hoc baselines.
+    \item We empirically characterize both \textit{Cross-Date Over-Merging} (under unconstrained $90$-day matching) and \textit{State Fragmentation} (in dense Crisis streams) via state-count diagnostics, evaluating a two-phase $7\text{B}/14\text{B}$ schedule against scale-matched, post-hoc, and overwrite-only baselines.
     \item We provide a full-corpus evaluation across $13$ standard TLS topics ($17{,}679$ articles), alongside revision accuracy measured on controlled synthetic suites ($16$ multi-topic, $8$ counterfactual, and $8$ implicit-cue long-delay scenarios), component ablations, and real-stream error analyses.
 \end{itemize}
 
@@ -195,7 +195,7 @@ Early research approached timeline summarization (TLS) over static document coll
 Recent studies have leveraged instruction-tuned LLMs for incremental and open-domain timeline generation. Hu et al.~\cite{hu2024moments} introduced \textbf{LLM-TLS}, which clusters incoming news articles incrementally under a same-date heuristic before selecting milestone summaries via TextRank. In the retrieval-augmented paradigm, Wu et al.~\cite{wu2025unfolding} proposed \textbf{CHRONOS}, which iteratively generates $5\text{W}1\text{H}$ self-questions over a document collection and merges round-level timelines. Orthogonal extensions include \textbf{DTELS}~\cite{dtels2025}, which adapts timeline granularity to user-specified compression levels, and \textbf{TimelineReasoner}~\cite{zhang2026timelinereasoner}, which leverages reasoning models with global event memory for gap-filling. While these frameworks advance incremental clustering, granularity control, and iterative retrieval, none explicitly incorporate tombstone-based claim purging or lifecycle retraction for non-monotonic cross-date corrections.
 
 \subsection{Update Summarization, Belief Revision, and Knowledge Conflicts}
-Non-monotonic information evolution has been studied across several related traditions. Early Topic Detection and Tracking (TDT)~\cite{allan2002topic}, TAC Update Summarization~\cite{dang2008overview}, and TREC Temporal Summarization~\cite{aslam2013trec, kedzie2015predicting} focused on emitting novel updates in disaster streams while avoiding redundancy, rather than retracting invalidated claims in historical milestones. Conceptually closest to our tombstone mechanism are classical Truth Maintenance Systems~\cite{doyle1979truth} and AGM belief revision~\cite{alchourron1985logic}, which explicitly track and retract invalidated justifications when contradicting evidence arrives. In modern NLP, rumor verification~\cite{zubiaga2016analysing, kochkina2018all, thorne2018fever}, truth discovery~\cite{li2016survey}, temporal KB updating~\cite{dhingra2022time, kasai2023realtime}, and LLM knowledge-conflict resolution~\cite{xu2024knowledge, meng2022locating, mitchell2022fast} address conflicting assertions at the claim or parameter level. ReviTLS brings explicit state retraction and conflict verification to streaming timeline summarization, as contrasted in Table~\ref{tab:related_work}.
+Non-monotonic information evolution has been studied across several related traditions. Early Topic Detection and Tracking (TDT)~\cite{allan2002topic}, TAC Update Summarization~\cite{dang2008overview}, and TREC Temporal Summarization~\cite{aslam2013trec, kedzie2015predicting} focused on emitting novel updates in disaster streams while avoiding redundancy, rather than retracting invalidated claims in historical milestones. Conceptually closest to our tombstone mechanism are classical Truth Maintenance Systems~\cite{doyle1979truth} and AGM belief revision~\cite{alchourron1985logic}, which explicitly track and retract invalidated justifications when contradicting evidence arrives. In modern NLP, rumor verification~\cite{zubiaga2016analysing, kochkina2018all, thorne2018fever}, truth discovery~\cite{li2016survey}, temporal KB updating~\cite{dhingra2022time, kasai2023realtime}, contextual knowledge-conflict resolution~\cite{xu2024knowledge}, and parametric model editing~\cite{meng2022locating, mitchell2022fast} address conflicting assertions at the claim or weight level. ReviTLS brings explicit state retraction and conflict verification to streaming timeline summarization, as contrasted in Table~\ref{tab:related_work}.
 
 \begin{table}[t]
 \centering
@@ -278,7 +278,12 @@ $\mathcal{M} \leftarrow \emptyset$, $\mathcal{Q}_{\text{rev}} \leftarrow \emptys
             $\mathcal{Q}_{\text{rev}} \leftarrow \mathcal{Q}_{\text{rev}} \cup \{(m_{i,j}, \mathcal{R}_1)\}$\;
         }{
             $a, e^* \leftarrow \textsc{ClassifyRoutine}(m_{i,j}, \mathcal{R}_1, \theta_1)$\;
-            $\mathcal{M} \leftarrow \textsc{UpdateState}(\mathcal{M}, m_{i,j}, e^*, a)$\;
+            \eIf{$a == \texttt{REVISE\_CONFLICT}$}{
+                $\Delta\mathcal{F}_{\text{stale}}, \mathcal{F}_{\text{new}}, \sigma_k \leftarrow \textsc{Verify5W1H}(m_{i,j}, e^*, \theta_1)$\;
+                $\mathcal{M} \leftarrow \textsc{PurgeUpdate}(\mathcal{M}, e^*, \Delta\mathcal{F}_{\text{stale}}, \mathcal{F}_{\text{new}}, \sigma_k)$\;
+            }{
+                $\mathcal{M} \leftarrow \textsc{UpdateState}(\mathcal{M}, m_{i,j}, e^*, a)$\;
+            }
         }
     }
 }
@@ -378,39 +383,19 @@ where $\mathbb{I}(\sigma_k\!=\!\texttt{REVISED})$ indicates a revised state, $|\
 \subsection{Datasets and Controlled Suite Protocol}
 \label{subsec:datasets}
 
-Following prior TLS evaluations~\cite{hu2024moments, wu2025unfolding}, we evaluate across the \textbf{full span-filtered corpora} (no subsampling) of all $9$ topics in \textbf{T17}~\cite{tran2013leveraging} ($3{,}742$ articles within reference datespans out of $4{,}197$ raw) and all $4$ topics in \textbf{Crisis}~\cite{tran2015timeline} ($13{,}937$ span-filtered out of $17{,}573$ raw), totaling $17{,}679$ articles (Table~\ref{tab:datasets}). Because standard TLS benchmarks provide static reference timelines without native revision logs, we construct three synthetic suites authored from structured scenario templates and cross-checked by the author against explicit target-state invariants: (1) a \textbf{16-Scenario Multi-Topic Revision Suite} across four T17 disaster/crisis topics (\texttt{bpoil}, \texttt{finan}, \texttt{h1n1}, \texttt{haiti}; $4$ cases/topic covering numeric, temporal, causal, and retraction updates with $\Delta t \in [2, 8]$~days), evaluated both in \textit{isolated} mode and \textit{embedded} inside $150$-article noisy streams; (2) an \textbf{8-Scenario Parametric Memory Control Suite} ($4$ unseen fictional-entity events and $4$ counterfactual real-world perturbations contradicting pretraining priors), paired with a pre-correction temporal blindness audit; and (3) an \textbf{8-Scenario Implicit-Cue \& Long-Delay Suite} containing zero $\mathcal{V}_{\text{rev}}$ lexicon markers and delays of $\Delta t \in [15, 35]$~days. The complete $32$-scenario catalog (source texts, injected claims, corrective evidence, expected facts, and forbidden substrings) is published in the repository (\texttt{outputs/scie\_results/synthetic\_suite\_catalog.md}). Separately, we retain the legacy $164$-article \texttt{T17/bpoil} stream solely for exploratory cross-backbone ($7\text{B}\text{--}14\text{B}$) comparison.
+Following prior TLS evaluations~\cite{hu2024moments, wu2025unfolding}, we evaluate across the \textbf{full span-filtered corpora} (no subsampling) of all $9$ topics in \textbf{T17}~\cite{tran2013leveraging} ($3{,}742$ articles within reference datespans out of $4{,}197$ raw) and all $4$ topics in \textbf{Crisis}~\cite{tran2015timeline} ($13{,}937$ span-filtered out of $17{,}573$ raw), totaling $17{,}679$ articles (Table~\ref{tab:datasets}). Because standard TLS benchmarks provide static reference timelines without native revision logs, we construct three synthetic suites authored from structured scenario templates and cross-checked by the author against explicit target-state invariants: (1) a \textbf{16-Scenario Multi-Topic Revision Suite} across four T17 disaster/crisis topics (\texttt{bpoil}, \texttt{finan}, \texttt{h1n1}, \texttt{haiti}; $4$ cases/topic covering numeric, temporal, causal, and retraction updates with $\Delta t \in [2, 8]$~days), evaluated both in \textit{isolated} mode and \textit{embedded} inside $150$-article (and $20$-distractor/topic repeated) noisy streams; (2) an \textbf{8-Scenario Parametric Memory Control Suite} ($4$ unseen fictional-entity events and $4$ counterfactual real-world perturbations contradicting pretraining priors), paired with a pre-correction temporal blindness audit; and (3) an \textbf{8-Scenario Implicit-Cue \& Long-Delay Suite} containing zero $\mathcal{V}_{\text{rev}}$ lexicon markers and delays of $\Delta t \in [15, 35]$~days.\footnote{The complete $32$-scenario catalog is published in \texttt{outputs/scie\_results/synthetic\_suite\_catalog.md}.} Separately, we retain the legacy $164$-article \texttt{T17/bpoil} stream in Appendix~\ref{app:legacy} solely for exploratory cross-backbone ($7\text{B}\text{--}14\text{B}$) comparison.
 
 \subsection{Baselines and Selection Variants}
 \label{subsec:baselines}
 
-We report classical and LLM literature scores separately in Table~\ref{tab:lit_results} for contextual reference only, and evaluate $10$ systems under identical local hardware and span-filtered streams (Table~\ref{tab:main_results}):
+We report classical and LLM literature scores in Appendix~\ref{app:legacy} (Table~\ref{tab:lit_results}) for contextual reference only, and evaluate $10$ systems under identical local hardware and span-filtered streams (Table~\ref{tab:main_results}):
 \begin{itemize}
     \item \textbf{LLM-TLS (7B / 14B)}~\cite{hu2024moments}: Incremental same-date clustering with \texttt{ISSAMEEVENT} verification and TextRank selection using \texttt{Qwen2.5-7B} and parameter-scale-matched \texttt{Qwen2.5-14B}.
     \item \textbf{LLM-TLS + 90d + Latest / + 14B}: Relaxes LLM-TLS's same-day filter to a $90$-day window with latest-sentence selection; in the revision ablation (Table~\ref{tab:step_b_ablation}), we also evaluate \textbf{LLM-TLS + 90d + Latest + 14B}, pairing the $90$-day window with the same $14\text{B}$ verifier without mutable \texttt{EventState} or tombstone purging.
     \item \textbf{LLM-TLS (Recency-TR) / PostHoc-14B}: Recency-weighted TextRank, and \texttt{LLM-TLS (7B)} followed by a post-hoc $14\text{B}$ consistency check.
     \item \textbf{CHRONOS (7B / 14B, impl.-limited)}~\cite{wu2025unfolding}: Implementation-limited local adaptation to bounded streams via closed-domain $5\text{W}1\text{H}$ iterative RAG ($2$ rounds, top-$15$ retrieval per query) on \texttt{7B} and \texttt{14B} (not directly comparable to the original $72\text{B}$ open-domain setup).
-    \item \textbf{ReviTLS (Single / Dual / TextRank Sel.)}: Single-Scale ($7\text{B}$, $90\text{d}$ window), full Dual-Scale ($7\text{B}+14\text{B}$ + Gate + Cross-Encoder), and an ablation replacing Eq.~\eqref{eq:salience_score} with TextRank selection to isolate the source of $\text{Date-F1}$ recovery.
+    \item \textbf{ReviTLS (Single / Dual / TextRank Sel.) \& Overwrite (No $\mathcal{P}_k$)}: Single-Scale ($7\text{B}$, $90\text{d}$ window), full Dual-Scale ($7\text{B}+14\text{B}$ + Gate + Cross-Encoder), an ablation replacing Eq.~\eqref{eq:salience_score} with TextRank selection, and an \textbf{Overwrite (No $\mathcal{P}_k$)} baseline that replaces prior claims in place without maintaining tombstone provenance sets.
 \end{itemize}
-
-\begin{table}[t]
-\centering
-\caption{Published Literature Reference Scores on \textbf{T17} ($9$ Topics --- Different Backbones/Static Settings, Contextual Only)}
-\label{tab:lit_results}
-\renewcommand{\arraystretch}{1.12}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}llccccc@{}}
-\toprule
-\textbf{Method} & \textbf{Backbone / Paradigm} & \textbf{AR-1} & \textbf{AR-2} & \textbf{Concat-R1} & \textbf{Concat-R2} & \textbf{Date-F1} \\
-\midrule
-\textbf{DATEWISE}~\cite{ghalandari2020examining} & Supervised Regression & 0.120 & 0.035 & 0.415 & 0.112 & 0.544 \\
-\textbf{EGC}~\cite{li2021timeline} & Event Graph Compression & 0.103 & 0.024 & 0.420 & 0.118 & 0.550 \\
-\textbf{LLM-TLS}~\cite{hu2024moments} & \texttt{Llama2-13B} Incremental & 0.118 & 0.036 & --- & --- & 0.528 \\
-\textbf{CHRONOS}~\cite{wu2025unfolding} & \texttt{Qwen2.5-72B} Iter.\ RAG & 0.116 & 0.042 & --- & --- & 0.522 \\
-\textbf{TimelineReasoner}~\cite{zhang2026timelinereasoner} & \texttt{QwQ-32B} Reasoning & 0.122 & 0.041 & --- & --- & 0.545 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
 
 \begin{table*}[t]
 \centering
@@ -496,97 +481,21 @@ To evaluate non-monotonic revision handling over the synthetic revision suite $\
 
 All local experiments run on a single NVIDIA RTX 5080 GPU (16~GB VRAM) via an OpenAI-compatible Ollama server using 4-bit \texttt{Q4\_K\_M} quantization, decoding temperature $0.0$, \texttt{max\_tokens} $= 1024$, and $4{,}000$-character article truncation. Hyperparameters ($\gamma_{\text{sim}}=0.45$, $\lambda_{\text{ent}}=0.05$, $\alpha_{1..3}$, $w_{c,s,r}$, $\Delta t_{\text{rev}}=90\text{d}$) were fixed heuristically on an exploratory development slice of \texttt{bpoil} prior to multi-topic evaluation; no hyperparameter tuning was performed on the remaining T17 or Crisis topics. We evaluate four open-weight backbones spanning Dense Grouped-Query Attention (\texttt{Qwen2.5-7B-Instruct}, \texttt{Qwen2.5-14B-Instruct}~\cite{qwen25}, \texttt{Llama-3.1-8B-Instruct}~\cite{llama3}) and 5:1 Local-Global Sliding Window Attention (\texttt{Gemma-3-12B}~\cite{gemma3}). For retrieval, we use \texttt{BAAI/bge-base-en-v1.5}~\cite{xiao2024cpack} ($K_1 = 10$), \texttt{cross-encoder/ms-marco-MiniLM-L-6-v2}~\cite{wang2020minilm, nguyen2016msmarco} for Stage-2 reranking, and up to $10$ retrieved evidence documents in verification. The corrective cue lexicon $\mathcal{V}_{\text{rev}}$ was curated a priori from general journalistic correction markers (\textit{revise, upward, downward, correct, retract, debunk, false alarm, rule out, previously estimated}). All LLM modules communicate via strict JSON schemas (\textsc{Extract5W1H}, \textsc{ClassifyRoutine}, \textsc{Verify5W1H}); markdown fences are stripped via regular expressions, malformed outputs trigger up to $2$ automatic retries, and persistent failures fall back deterministically (article title/publish date, \texttt{NEW\_EVENT}, or \texttt{REVISED}) so long streams never halt. Runtimes (\texttt{Time (s)}) are measured via \texttt{time.perf\_counter()} around end-to-end per-topic execution, excluding one-time encoder loading and disk I/O.
 
-\begin{table*}[t]
-\centering
-\caption{Legacy Single-Topic Backbone and Attention-Mechanism Study (\texttt{T17/bpoil}, $164$ Articles + \texttt{REV-1..4}; Exploratory Comparison Separate From Full-Corpus Table~\ref{tab:main_results}).}
-\label{tab:ablation_study}
-\renewcommand{\arraystretch}{1.14}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lllcccccccc@{}}
-\toprule
-\textbf{LLM Backbone} & \textbf{Attention Architecture} & \textbf{Method} & \textbf{AR-1} $\uparrow$ & \textbf{AR-2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{Date-F1} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ & \textbf{Time (s)} $\downarrow$ \\
-\midrule
-\multirow{3}{*}{\texttt{Qwen2.5-7B-Instruct}} & \multirow{3}{*}{Dense GQA ($7.6\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.086 & 0.019 & 0.410 & 0.152 & 0.600 & 0.000 & 1.000 & 99.7 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.026 & 0.006 & 0.232 & 0.036 & 0.191 & 0.250 & 0.250 & 19.6 \\
-  & & \textbf{ReviTLS (Single-Scale)} & 0.070 & 0.011 & \underline{0.540} & \textbf{0.195} & 0.438 & \textbf{0.750} & \textbf{0.000} & 619.1 \\
-\midrule
-\multirow{3}{*}{\texttt{Llama-3.1-8B-Instruct}} & \multirow{3}{*}{Dense GQA ($8.0\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.082 & 0.020 & 0.442 & 0.158 & 0.550 & 0.000 & 1.000 & 239.0 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.031 & 0.008 & 0.357 & 0.081 & 0.200 & 0.250 & 0.250 & 21.0 \\
-  & & \textbf{ReviTLS (Single-Scale)} & 0.050 & 0.009 & 0.312 & 0.049 & 0.222 & 0.500 & 0.250 & \textbf{444.1} \\
-\midrule
-\multirow{3}{*}{\texttt{Gemma-3-12B}} & \multirow{3}{*}{5:1 Sliding Window ($12.2\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.089 & 0.018 & 0.420 & 0.147 & 0.476 & 0.000 & 1.000 & 200.1 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.037 & 0.009 & 0.288 & 0.055 & 0.191 & 0.250 & 0.250 & 64.6 \\
-  & & \textbf{ReviTLS (Single-Scale)} & 0.044 & \textbf{0.016} & 0.387 & 0.076 & 0.118 & 0.250 & 0.500 & 1067.7 \\
-\midrule
-\multirow{3}{*}{\texttt{Qwen2.5-14B-Instruct}} & \multirow{3}{*}{Dense GQA ($14.7\text{B}$)} 
-  & LLM-TLS~\cite{hu2024moments} & 0.096 & 0.019 & 0.493 & 0.184 & 0.619 & 0.000 & 1.000 & 227.5 \\
-  & & CHRONOS~\cite{wu2025unfolding} & 0.042 & 0.010 & 0.316 & 0.084 & 0.211 & 0.250 & 0.250 & 33.5 \\
-  & & \textbf{ReviTLS (Single-Scale)} & 0.039 & 0.006 & 0.443 & 0.165 & 0.316 & \textbf{0.750} & \textbf{0.000} & 706.3 \\
-\midrule
-\textbf{\texttt{Qwen2.5-7B + 14B}} & \textbf{Dual-Scale + CrossEnc + Gate} & \textbf{ReviTLS (Full)} & \textbf{0.081} & \underline{0.016} & \textbf{0.559} & \underline{0.187} & \textbf{0.571} & \textbf{0.750} & 0.250 & \underline{488.5} \\
-\bottomrule
-\end{tabular}%
-}
-\end{table*}
-
 \section{Results and Analysis}
 \label{sec:results}
 
 \subsection{Main Multi-Topic TLS and Revision Performance}
 \label{subsec:main_results}
 
-Table~\ref{tab:lit_results} provides published literature scores on T17 for broader context, while Table~\ref{tab:main_results} reports our identical-environment full-corpus evaluation across $10$ systems ($7$ baseline variants and $3$ ReviTLS variants) on \textbf{T17} ($3{,}742$ articles) and \textbf{Crisis} ($13{,}937$ articles) without subsampling. Table~\ref{tab:revision_control} summarizes synthetic multi-topic revision resolution and parametric-memory control with $95\%$ Wilson confidence intervals.
+Table~\ref{tab:main_results} reports our identical-environment full-corpus evaluation across $10$ systems ($7$ baseline variants and $3$ ReviTLS variants) on \textbf{T17} ($3{,}742$ articles) and \textbf{Crisis} ($13{,}937$ articles) without subsampling (literature reference scores are provided in Appendix~\ref{app:legacy}, Table~\ref{tab:lit_results}). Table~\ref{tab:revision_control} summarizes synthetic multi-topic revision resolution and parametric-memory control with $95\%$ Wilson confidence intervals.
 
 \subsubsection{Full-Corpus Content Coverage, Date Selection, and Statistical Analysis}
-On the full $9$-topic \textbf{T17} corpus (Table~\ref{tab:main_results}), \textbf{ReviTLS (Dual-Scale)} achieves parity with scale-matched baselines ($\text{Date-F1} = 0.544 \pm 0.283$ vs.\ $0.542$ for \texttt{LLM-TLS (7B)} and $0.520$ for \texttt{LLM-TLS (14B)}; $\text{AR-1} = 0.120$ vs.\ $0.120$). Paired tests against \texttt{LLM-TLS (7B/14B)} show no statistically significant difference on $\text{Date-F1}$ ($t\text{-}p = 0.967 / 0.535$, Wilcoxon $p = 0.844 / 0.570$, Hedges' $g = 0.01 / 0.20$) or $\text{Concat-R1}$ ($t\text{-}p = 0.068 / 0.834$). Comparing \texttt{ReviTLS (Dual-Scale)} against \texttt{ReviTLS (TextRank Sel.)} ($\text{Date-F1} = 0.467$) and \texttt{Single-Scale} ($0.456$) shows that Eq.~\eqref{eq:salience_score} recovers the $\text{Date-F1}$ drop induced by opening a $90$-day revision window on T17 ($+0.077$), bringing ReviTLS back to LLM-TLS parity. Dual-Scale significantly outperforms \texttt{CHRONOS (7B/14B)} on $\text{Concat-R1}$ ($p_{\text{Holm}} = 0.0098$ and $0.0036$; Wilcoxon $p = 0.0039$, $g = 1.76$ and $2.05$); however, our closed-domain local \texttt{CHRONOS} reproduction ($0.297$ $\text{Date-F1}$) trails its published $72\text{B}$ score ($0.522$), making \texttt{LLM-TLS (7B/14B)} the primary informative baseline.
+On the full $9$-topic \textbf{T17} corpus (Table~\ref{tab:main_results}), \textbf{ReviTLS (Dual-Scale)} achieves parity with scale-matched baselines ($\text{Date-F1} = 0.544 \pm 0.283$ vs.\ $0.542$ for \texttt{LLM-TLS (7B)} and $0.520$ for \texttt{LLM-TLS (14B)}; $\text{AR-1} = 0.120$ vs.\ $0.120$). Excluding the development-reference topic \texttt{bpoil} ($n=8$ held-out topics) preserves this parity: \texttt{ReviTLS (Dual-Scale)} attains $\text{Date-F1} = 0.573 \pm 0.288$ and $\text{AR-1} = 0.123 \pm 0.044$ vs.\ $0.555 \pm 0.263$ / $0.106 \pm 0.037$ for \texttt{LLM-TLS (7B)} and $0.529 \pm 0.269$ / $0.116 \pm 0.046$ for \texttt{LLM-TLS (14B)}. Paired tests across all $9$ T17 topics against \texttt{LLM-TLS (7B/14B)} show no statistically significant difference on $\text{Date-F1}$ ($t\text{-}p = 0.967 / 0.535$, Wilcoxon $p = 0.844 / 0.570$, Hedges' $g = 0.01 / 0.20$) or $\text{Concat-R1}$ ($t\text{-}p = 0.068 / 0.834$). Comparing \texttt{ReviTLS (Dual-Scale)} against \texttt{ReviTLS (TextRank Sel.)} ($\text{Date-F1} = 0.467$) and \texttt{Single-Scale} ($0.456$) shows that Eq.~\eqref{eq:salience_score} recovers the $\text{Date-F1}$ drop induced by opening a $90$-day revision window on T17 ($+0.077$), bringing ReviTLS back to LLM-TLS parity. Dual-Scale significantly outperforms \texttt{CHRONOS (7B/14B)} on $\text{Concat-R1}$ ($p_{\text{Holm}} = 0.0098$ and $0.0036$; Wilcoxon $p = 0.0039$, $g = 1.76$ and $2.05$); however, our closed-domain local \texttt{CHRONOS} reproduction ($0.297$ $\text{Date-F1}$) trails its published $72\text{B}$ score ($0.522$), making \texttt{LLM-TLS (7B/14B)} the primary informative baseline.
 
-On the denser \textbf{Crisis} corpus ($13{,}937$ articles across $4$ topics), \textbf{ReviTLS (Dual-Scale)} achieves the highest observed mean $\text{Concat-R1}$ ($0.487 \pm 0.026$), though differences against \texttt{TextRank Sel.} ($0.485$) and \texttt{LLM-TLS (14B)} ($0.472$) are not statistically significant ($t\text{-}p \ge 0.084$ vs.\ $7\text{B}/14\text{B}$, Wilcoxon $p \ge 0.125$ at $n=4$). Meanwhile, same-day \texttt{LLM-TLS (7B)} achieves the highest observed mean $\text{Date-F1}$ ($0.320$ vs.\ $0.242$) and $\text{AR-1}$ ($0.099$ vs.\ $0.075$), and Eq.~\eqref{eq:salience_score} does not improve $\text{Date-F1}$ over \texttt{TextRank Sel.} ($0.249$) on Crisis. Table~\ref{tab:crisis_topics} breaks down Crisis by topic: on the largest stream (\texttt{syria}, $4{,}960$ articles), Dual-Scale actually exceeds \texttt{LLM-TLS (7B/14B)} on all three metrics ($\text{Date-F1}=0.154$ vs.\ $0.105/0.103$; $\text{Concat-R1}=0.451$ vs.\ $0.368/0.442$), whereas the aggregate $\text{Date-F1}$ deficit concentrates in \texttt{egypt} ($0.281$ vs.\ $0.407$, affected by false retractions such as 2011-02-11 and Eq.~\eqref{eq:salience_score} vs.\ \texttt{TextRank Sel.} $0.321$), \texttt{libya}, and \texttt{yemen}. Across both corpora, ReviTLS incurs $\sim 4.1\times$ higher per-topic runtime than $7\text{B}$ \texttt{LLM-TLS} ($983.2\text{s}$ vs.\ $236.6\text{s}$ on T17; $7461.2\text{s}$ vs.\ $1805.6\text{s}$ on Crisis) and $\sim 1.7\times$ vs.\ $14\text{B}$ \texttt{LLM-TLS}. Overall, Table~\ref{tab:main_results} and Table~\ref{tab:revision_control} reveal a clear cost--quality trade-off: implementation-limited \texttt{CHRONOS} is fastest ($30\text{--}67\text{s}$) but under-covers dense streams, \texttt{LLM-TLS (7B/14B)} offers strong static date precision at moderate cost ($237\text{--}579\text{s}$ on T17) without revision resolution ($0.00\text{--}0.19$ RRA), and \textbf{ReviTLS} trades $\sim 1.7\text{--}4.1\times$ latency for $0.875\text{--}0.938$ synthetic revision accuracy. Compared to our earlier $50$-article stratified pilot runs ($26.1\text{s}$ / $117.0\text{s}$ on T17), full-corpus execution processes $415\text{--}4{,}960$ articles/topic, explaining the $\sim 8\text{--}9\times$ (T17) and $\sim 75\times$ (Crisis) runtime scaling and increased cross-topic variance.
+On the denser \textbf{Crisis} corpus ($13{,}937$ articles across $4$ topics), \textbf{ReviTLS (Dual-Scale)} achieves the highest observed mean $\text{Concat-R1}$ ($0.487 \pm 0.026$), though differences against \texttt{TextRank Sel.} ($0.485$) and \texttt{LLM-TLS (14B)} ($0.472$) are not statistically significant ($t\text{-}p \ge 0.084$ vs.\ $7\text{B}/14\text{B}$, Wilcoxon $p \ge 0.125$ at $n=4$). Meanwhile, same-day \texttt{LLM-TLS (7B)} achieves the highest observed mean $\text{Date-F1}$ ($0.320$ vs.\ $0.241$) and $\text{AR-1}$ ($0.099$ vs.\ $0.075$), and Eq.~\eqref{eq:salience_score} does not improve $\text{Date-F1}$ over \texttt{TextRank Sel.} ($0.249$) on Crisis. Table~\ref{tab:crisis_topics} breaks down Crisis by topic: ReviTLS loses $\text{Date-F1}$ on three of the four topics---\texttt{egypt} ($0.281$ vs.\ $0.407$), \texttt{libya} ($0.256$ vs.\ $0.367$), and \texttt{yemen} ($0.276$ vs.\ $0.400$)---while exceeding \texttt{LLM-TLS (7B/14B)} only on \texttt{syria} ($0.154$ vs.\ $0.105/0.103$). As shown in our fragmentation diagnostics (Table~\ref{tab:frag_retract}), this Crisis $\text{Date-F1}$ deficit stems from extreme state fragmentation ($10{,}504$ states vs.\ $73$ for \texttt{LLM-TLS}) rather than false retractions. Across both corpora, ReviTLS incurs $\sim 4.1\times$ higher per-topic runtime than $7\text{B}$ \texttt{LLM-TLS} ($983.2\text{s}$ vs.\ $236.6\text{s}$ on T17; $7461.2\text{s}$ vs.\ $1805.6\text{s}$ on Crisis) and $\sim 1.7\times$ vs.\ $14\text{B}$ \texttt{LLM-TLS}. Overall, Table~\ref{tab:main_results} and Table~\ref{tab:revision_control} reveal a clear cost--quality trade-off: implementation-limited \texttt{CHRONOS} is fastest ($30\text{--}67\text{s}$) but under-covers dense streams, \texttt{LLM-TLS (7B/14B)} offers strong static date precision at moderate cost ($237\text{--}579\text{s}$ on T17) without revision resolution ($0.00\text{--}0.19$ RRA), and \textbf{ReviTLS} trades $\sim 1.7\text{--}4.1\times$ latency for $0.875\text{--}1.000$ synthetic revision accuracy. Compared to our earlier $50$-article stratified pilot runs ($26.1\text{s}$ / $117.0\text{s}$ on T17), full-corpus execution processes $415\text{--}4{,}960$ articles/topic, explaining the $\sim 8\text{--}9\times$ (T17) and $\sim 75\times$ (Crisis) runtime scaling and increased cross-topic variance.
 
 \subsubsection{Multi-Topic Revision Resolution and Parametric Memory Control}
-As shown in Table~\ref{tab:revision_control}, same-day \texttt{LLM-TLS (7B)} and \texttt{LLM-TLS (14B)} resolve only $0.0\%\text{--}12.5\%$ of synthetic multi-topic revisions ($\text{SFLR} = 0.750\text{--}1.000$). Relaxing the window (\texttt{90d + Latest}), re-weighting TextRank (\texttt{Recency-TR}), or adding a post-hoc $14\text{B}$ pass (\texttt{PostHoc-14B}) yields at most $0.188$ $\text{RRA}$ ($95\%$ CI $[0.066, 0.430]$), suggesting that scale or post-hoc prompting alone is insufficient without mutable state tracking and tombstone purging. \texttt{CHRONOS (7B/14B)} exhibits low $\text{SFLR}$ ($0.062$) in embedded streams only because it omits many target events altogether ($\text{RRA} = 0.312$). In contrast, \textbf{ReviTLS (Dual-Scale)} achieves $\mathbf{0.875}$ $\text{RRA}$ ($14/16$, $95\%$ CI $[0.640, 0.965]$) and $\mathbf{0.125}$ $\text{SFLR}$ in \textit{both} isolated and $150$-article stream-embedded settings (reaching $1.00/0.00$ on \texttt{bpoil} and \texttt{finan}, vs.\ $0.75/0.25$ on the legacy $164$-article \texttt{bpoil} stream in Table~\ref{tab:ablation_study}; \texttt{TextRank Sel.} matches Dual-Scale on Table~\ref{tab:revision_control} because selection ranking does not alter state transitions). On the $8$-case \textbf{Parametric Memory Control} suite, the pre-correction temporal blindness audit confirms $\mathbf{0/8}$ premature leaks, and \textbf{ReviTLS (Dual-Scale)} reaches $\mathbf{1.000}$ $\text{RRA}$ ($8/8$, $95\%$ CI $[0.676, 1.000]$) with $\mathbf{0.000}$ $\text{SFLR}$ vs.\ $0.250$ for \texttt{PostHoc-14B} and $0.125$ for $7\text{B}/14\text{B}$ baselines.
-
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    ybar,
-    bar width=5.5pt,
-    width=\columnwidth,
-    height=4.8cm,
-    ymin=0, ymax=1.18,
-    ylabel={Score},
-    symbolic x coords={LLM-TLS, CHRONOS, Llama-8B, Gemma-12B, Qwen-14B, Qwen-7B, ReviTLS},
-    xtick=data,
-    x tick label style={font=\tiny, rotate=18, anchor=east},
-    y tick label style={font=\scriptsize},
-    ylabel style={font=\scriptsize\bfseries},
-    legend style={at={(0.5,1.03)}, anchor=south, legend columns=4, font=\tiny, draw=gray!50, inner sep=1.5pt},
-    ymajorgrids=true,
-    grid style={dashed, gray!35},
-    nodes near coords,
-    every node near coord/.append style={font=\tiny, rotate=90, anchor=west, /pgf/number format/fixed, /pgf/number format/precision=2}
-]
-\addplot[fill=blue!65, draw=blue!85!black] coordinates {
-    (LLM-TLS, 0.60) (CHRONOS, 0.19) (Llama-8B, 0.22) (Gemma-12B, 0.12) (Qwen-14B, 0.32) (Qwen-7B, 0.44) (ReviTLS, 0.57)
-};
-\addplot[fill=teal!70, draw=teal!90!black] coordinates {
-    (LLM-TLS, 0.41) (CHRONOS, 0.23) (Llama-8B, 0.31) (Gemma-12B, 0.39) (Qwen-14B, 0.44) (Qwen-7B, 0.54) (ReviTLS, 0.56)
-};
-\addplot[fill=orange!80, draw=orange!95!black] coordinates {
-    (LLM-TLS, 0.00) (CHRONOS, 0.25) (Llama-8B, 0.50) (Gemma-12B, 0.25) (Qwen-14B, 0.75) (Qwen-7B, 0.75) (ReviTLS, 0.75)
-};
-\addplot[fill=purple!65, draw=purple!85!black] coordinates {
-    (LLM-TLS, 0.00) (CHRONOS, 0.75) (Llama-8B, 0.75) (Gemma-12B, 0.50) (Qwen-14B, 1.00) (Qwen-7B, 1.00) (ReviTLS, 0.75)
-};
-\legend{Date-F1, Concat-R1, RRA, $1-\text{SFLR}$}
-\end{axis}
-\end{tikzpicture}
-\caption{Legacy single-topic (\texttt{T17/bpoil}, $164$ articles) backbone and attention-mechanism comparison (separate from full-corpus Table~\ref{tab:main_results}).}
-\label{fig:backbone_chart}
-\end{figure}
+As shown in Table~\ref{tab:revision_control}, same-day \texttt{LLM-TLS (7B)} and \texttt{LLM-TLS (14B)} resolve only $0.0\%\text{--}12.5\%$ of synthetic multi-topic revisions ($\text{SFLR} = 0.750\text{--}1.000$). Relaxing the window (\texttt{90d + Latest}), re-weighting TextRank (\texttt{Recency-TR}), or adding a post-hoc $14\text{B}$ pass (\texttt{PostHoc-14B}) yields at most $0.188$ $\text{RRA}$ ($95\%$ CI $[0.066, 0.430]$), suggesting that scale or post-hoc prompting alone is insufficient without mutable state tracking and tombstone purging. \texttt{CHRONOS (7B/14B)} exhibits low $\text{SFLR}$ ($0.062$) in embedded streams only because it omits many target events altogether ($\text{RRA} = 0.312$). In contrast, \textbf{ReviTLS (Dual-Scale)} achieves $\mathbf{0.875}$ $\text{RRA}$ ($14/16$, $95\%$ CI $[0.640, 0.965]$) and $\mathbf{0.125}$ $\text{SFLR}$ in both isolated and $150$-article stream-embedded settings ($0.833$ on the $n=12$ non-\texttt{bpoil} subset; \texttt{TextRank Sel.} matches Dual-Scale on Table~\ref{tab:revision_control} because selection ranking does not alter state transitions). On the $8$-case \textbf{Parametric Memory Control} suite, the pre-correction temporal blindness audit confirms $\mathbf{0/8}$ premature leaks, and \textbf{ReviTLS (Dual-Scale)} reaches $\mathbf{1.000}$ $\text{RRA}$ ($8/8$, $95\%$ CI $[0.676, 1.000]$) with $\mathbf{0.000}$ $\text{SFLR}$ vs.\ $0.250$ for \texttt{PostHoc-14B} and $0.125$ for $7\text{B}/14\text{B}$ baselines.
 
 \begin{table}[t]
 \centering
@@ -610,23 +519,23 @@ As shown in Table~\ref{tab:revision_control}, same-day \texttt{LLM-TLS (7B)} and
 
 \begin{table*}[t]
 \centering
-\caption{Revision-Suite Component Ablation, $\rho$-Source Ablation, and Implicit-Cue / Long-Delay ($15\text{--}35$~Days) Evaluation With $95\%$ Wilson Confidence Intervals.}
+\caption{$3$-Repeat Uncached Revision-Suite Component Ablation (Mean $\pm$ Std, $\text{SD}=0.000$ at $\text{temp}=0.0$, Exact McNemar $p$ vs.\ \texttt{Full Dual-Scale}), $\rho$-Source Ablation, and Implicit-Cue / Long-Delay ($15\text{--}35$~Days) Evaluation.}
 \label{tab:step_b_ablation}
 \renewcommand{\arraystretch}{1.12}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}ll cc cc cc@{}}
 \toprule
-\textbf{Study} & \textbf{Variant / System} & \multicolumn{2}{c}{\textbf{Isolated ($16$ / $8$ Cases)}} & \multicolumn{2}{c}{\textbf{Embedded ($16$ Cases)}} & \multicolumn{2}{c}{\textbf{Parametric Control ($8$ Cases)}} \\
+\textbf{Study} & \textbf{Variant / System} & \multicolumn{2}{c}{\textbf{Isolated ($16$ / $8$ Cases)}} & \multicolumn{2}{c}{\textbf{Embedded ($16$ Cases, $20$ dist./topic)}} & \multicolumn{2}{c}{\textbf{Parametric Control ($8$ Cases)}} \\
 \cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8}
-& & \textbf{RRA} $\uparrow$ [95\% CI] & \textbf{SFLR} $\downarrow$ & \textbf{RRA} $\uparrow$ [95\% CI] & \textbf{SFLR} $\downarrow$ & \textbf{RRA} $\uparrow$ [95\% CI] & \textbf{SFLR} $\downarrow$ \\
+& & \textbf{RRA} $\uparrow$ ($p_{\text{McN}}$) & \textbf{SFLR} $\downarrow$ & \textbf{RRA} $\uparrow$ ($p_{\text{McN}}$) & \textbf{SFLR} $\downarrow$ & \textbf{RRA} $\uparrow$ ($p_{\text{McN}}$) & \textbf{SFLR} $\downarrow$ \\
 \midrule
-\multirow{6}{*}{\textbf{Component Ablation}}
-  & \textbf{Full Dual-Scale} & \textbf{0.938} [0.717, 0.989] & \textbf{0.062} & \textbf{0.938} [0.717, 0.989] & \textbf{0.062} & \textbf{1.000} [0.676, 1.000] & \textbf{0.000} \\
-  & \quad w/o 14B Verifier & 0.812 [0.570, 0.934] & 0.125 & 0.562 [0.332, 0.769] & 0.375 & 0.625 [0.306, 0.863] & 0.250 \\
-  & \quad w/o Cross-Encoder & \textbf{0.938} [0.717, 0.989] & \textbf{0.062} & 0.875 [0.640, 0.965] & 0.125 & \textbf{1.000} [0.676, 1.000] & \textbf{0.000} \\
-  & \quad w/o Conditional Gate & \textbf{0.938} [0.717, 0.989] & \textbf{0.062} & 0.875 [0.640, 0.965] & \textbf{0.062} & \textbf{1.000} [0.676, 1.000] & \textbf{0.000} \\
-  & \quad w/o Tombstone Purge & 0.250 [0.102, 0.495] & 0.688 & 0.250 [0.102, 0.495] & 0.688 & 0.250 [0.071, 0.591] & 0.750 \\
-  & \textbf{LLM-TLS + 90d + Latest + 14B} & 0.312 [0.142, 0.556] & 0.688 & 0.125 [0.035, 0.360] & 0.875 & 0.375 [0.137, 0.694] & 0.500 \\
+\multirow{6}{*}{\textbf{3-Repeat Uncached}}
+  & \textbf{Full Dual-Scale} & 0.875{\tiny$\pm$0.000} (---) & \textbf{0.125} & \textbf{1.000}{\tiny$\pm$0.000} (---) & \textbf{0.000} & \textbf{1.000}{\tiny$\pm$0.000} (---) & \textbf{0.000} \\
+  & \quad w/o 14B Verifier & 0.688{\tiny$\pm$0.000} ($p{=}0.0352$) & 0.188 & 0.688{\tiny$\pm$0.000} ($p{=}0.0001$) & 0.250 & 0.500{\tiny$\pm$0.000} ($p{=}0.0005$) & 0.375 \\
+  & \quad w/o Cross-Encoder & 0.875{\tiny$\pm$0.000} ($p{=}1.000$) & \textbf{0.125} & 0.938{\tiny$\pm$0.000} ($p{=}0.250$) & 0.062 & \textbf{1.000}{\tiny$\pm$0.000} ($p{=}1.000$) & \textbf{0.000} \\
+  & \quad w/o Conditional Gate & \textbf{0.938}{\tiny$\pm$0.000} ($p{=}0.250$) & \textbf{0.125} & 0.938{\tiny$\pm$0.000} ($p{=}0.250$) & \textbf{0.000} & \textbf{1.000}{\tiny$\pm$0.000} ($p{=}1.000$) & \textbf{0.000} \\
+  & \quad \textbf{Overwrite (No $\mathcal{P}_k$)} & 0.812{\tiny$\pm$0.000} ($p{=}0.508$) & 0.125 & 0.812{\tiny$\pm$0.000} ($p{=}0.0039$) & 0.125 & 0.875{\tiny$\pm$0.000} ($p{=}0.250$) & 0.125 \\
+  & \textbf{LLM-TLS + 90d + Latest + 14B} & 0.312{\tiny$\pm$0.000} ($p{<}0.0001$) & 0.688 & 0.312{\tiny$\pm$0.000} ($p{<}0.0001$) & 0.688 & 0.250{\tiny$\pm$0.000} ($p{<}0.0001$) & 0.625 \\
 \midrule
 \multirow{4}{*}{\textbf{$\rho$-Source Ablation}}
   & $\rho_{\text{both}}$ (LLM $\lor$ Lexicon) & \textbf{0.938} [0.717, 0.989] & \textbf{0.062} & --- & --- & \textbf{1.000} [0.676, 1.000] & \textbf{0.000} \\
@@ -636,9 +545,9 @@ As shown in Table~\ref{tab:revision_control}, same-day \texttt{LLM-TLS (7B)} and
 \midrule
 \multirow{4}{*}{\textbf{Implicit \& $15\text{--}35\text{d}$ ($n=8$)}}
   & \textbf{LLM-TLS (7B)} & 0.125 [0.022, 0.471] & 0.750 & --- & --- & --- & --- \\
-  & \textbf{LLM-TLS + 90d + Latest + 14B} & 0.125 [0.022, 0.471] & 0.750 & --- & --- & --- & --- \\
+  & \textbf{LLM-TLS + 90d + Latest + 14B} & 0.250{\tiny$\pm$0.000} & 0.750 & --- & --- & --- & --- \\
   & \textbf{ReviTLS ($\rho_{\text{llm\_only}}$)} & \textbf{0.375} [0.137, 0.694] & \textbf{0.625} & --- & --- & --- & --- \\
-  & \textbf{ReviTLS (Full Dual-Scale)} & \textbf{0.375} [0.137, 0.694] & \textbf{0.625} & --- & --- & --- & --- \\
+  & \textbf{ReviTLS (Full Dual-Scale)} & \textbf{0.375}{\tiny$\pm$0.000} & \textbf{0.625} & --- & --- & --- & --- \\
 \bottomrule
 \end{tabular}%
 }
@@ -680,25 +589,63 @@ As shown in Table~\ref{tab:revision_control}, same-day \texttt{LLM-TLS (7B)} and
 
 \begin{table}[t]
 \centering
-\caption{Latency, Safe-Purge/Guarded-Retract, and Lookback-Window Sensitivity Studies}
-\label{tab:step_c_studies}
+\caption{True Uncached Per-Article Latency ($16$ Embedded Scenarios, $50$ Distractors/Topic, \texttt{use\_cache=False})}
+\label{tab:latency_study}
 \renewcommand{\arraystretch}{1.12}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-\multicolumn{5}{@{}l}{\textbf{(a) Online Immediate vs.\ Deferred Phase-2 ($16$ Embedded Scenarios)}} \\
 \textbf{Schedule Mode} & \textbf{RRA} $\uparrow$ & \textbf{Total (s)} & \textbf{Mean / P95 Lat.\ (s)} & \textbf{CE Calls / Flips} \\
 \midrule
-Deferred Phase-2 (Default) & \textbf{0.938} & \textbf{7.5} & \textbf{0.010 / 0.016} & 215 / 65 \\
-Online Immediate Phase-2 & 0.875 & 385.5 & 0.588 / 3.047 & 211 / 64 \\
+\textbf{Deferred Phase-2 (Uncached)} & \textbf{0.875} & \textbf{564.1} & \textbf{1.798 / 2.824} & 89 / 20 \\
+\textbf{Online Immediate (Uncached)} & \textbf{0.875} & 643.9 & 2.515 / 7.216 & 103 / 17 \\
+\textbf{Deferred w/o CE (Uncached)} & \textbf{0.875} & 566.4 & 1.803 / 2.890 & 0 / 0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{\textbf{T17} ($n=9$) and \textbf{Crisis} ($n=4$) State Fragmentation and Isolated Retraction Ablation}
+\label{tab:frag_retract}
+\renewcommand{\arraystretch}{1.12}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llcccccc@{}}
+\toprule
+\textbf{Corpus} & \textbf{System} & \textbf{Date-F1} & \textbf{AR-1} & \textbf{Concat-R1} & \textbf{States} & \textbf{Mean $c_k$} & \textbf{Nodes/RefDt (Ret.)} \\
 \midrule
-\multicolumn{5}{@{}l}{\textbf{(b) Claim-Span Purge \& Guarded Retraction (\texttt{T17/egypt} \& $16$ Embedded)}} \\
+\multirow{4}{*}{\textbf{T17}}
+  & \textbf{LLM-TLS (7B)} & 0.542 & 0.111 & 0.402 & 399 & 5.25 & 0.75 (0) \\
+  & \textbf{ReviTLS (Dual-Scale)} & 0.544 & 0.120 & \textbf{0.446} & 2,886 & 1.17 & 5.82 (12) \\
+  & \textbf{ReviTLS (Guarded Retract)} & \textbf{0.556} & \textbf{0.121} & 0.445 & 2,886 & 1.17 & 5.82 (9) \\
+  & \textbf{ReviTLS (Disable Retract)} & 0.552 & 0.120 & \textbf{0.446} & 2,886 & 1.17 & 5.82 (0) \\
+\midrule
+\multirow{4}{*}{\textbf{Crisis}}
+  & \textbf{LLM-TLS (7B)} & \textbf{0.320} & \textbf{0.099} & 0.428 & 73 & 21.54 & 0.17 (0) \\
+  & \textbf{ReviTLS (Dual-Scale)} & 0.241 & 0.075 & \textbf{0.487} & 10,504 & 1.18 & 24.62 (33) \\
+  & \textbf{ReviTLS (Guarded Retract)} & 0.241 & 0.075 & \textbf{0.487} & 10,504 & 1.18 & 24.62 (28) \\
+  & \textbf{ReviTLS (Disable Retract)} & 0.241 & 0.075 & \textbf{0.487} & 10,504 & 1.18 & 24.62 (0) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Safe-Purge / Guarded-Retract (\texttt{T17/egypt} \& $16$ Embedded) and Lookback-Window Sensitivity}
+\label{tab:window_purge_study}
+\renewcommand{\arraystretch}{1.12}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\multicolumn{5}{@{}l}{\textbf{(a) Claim-Span Purge \& Guarded Retraction}} \\
 \textbf{Purge / Retract Mode} & \textbf{\texttt{egypt} DF1 / CR1} & \textbf{Retracted} & \textbf{2011-02-11 Lost?} & \textbf{Emb.-16 RRA / SFLR} \\
 \midrule
 Default (Clause + Unchecked) & 0.900 / \textbf{0.472} & 1 & Yes & \textbf{0.938 / 0.062} \\
 Safe (Claim-Span + Guarded) & 0.900 / 0.452 & \textbf{0} & \textbf{No} & 0.688 / 0.312 \\
 \midrule
-\multicolumn{5}{@{}l}{\textbf{(c) Lookback Window Sensitivity ($\Delta t_{\text{rev}} \in \{7, 30, 60, 90, 180\}$ Days)}} \\
+\multicolumn{5}{@{}l}{\textbf{(b) Lookback Window Sensitivity ($\Delta t_{\text{rev}} \in \{7, 30, 60, 90, 180\}$ Days)}} \\
 \textbf{Window} & \textbf{Emb.-16 RRA} & \textbf{Emb.-16 SFLR} & \textbf{Implicit 15--35d RRA} & \textbf{Implicit SFLR} \\
 \midrule
 $7\text{d}$ & 0.812 & 0.188 & 0.375 & 0.625 \\
@@ -732,15 +679,15 @@ $30\text{d}$ / $60\text{d}$ / $90\text{d}$ / $180\text{d}$ & \textbf{0.938} & \t
 }
 \end{table*}
 
-\subsection{Component Ablation, Stream Diagnostics, and Over-Merging}
+\subsection{Component Ablation, Stream Diagnostics, and Fragmentation}
 \label{subsec:ablation}
 
 \begin{enumerate}
-    \item \textbf{Full \textbf{T17} ($n=9$) vs.\ Revision-Suite Component Ablation:} Table~\ref{tab:component_ablation} (independent T17 pass; $981.6\text{s}$ vs.\ $983.2\text{s}$ in Table~\ref{tab:main_results} reflects $<0.2\%$ variance) shows that removing the \textit{Conditional Temporal Gate} degrades $\text{Date-F1}$ ($0.544 \to 0.520$) and increases runtime by $21.0\%$ ($981.6\text{s} \to 1187.7\text{s}$), whereas removing \textit{Tombstone Purge} raises static $\text{Concat-R1}$ ($0.446 \to 0.493$) and removing the $14\text{B}$ verifier slightly raises $\text{AR-1}$ ($0.120 \to 0.128$). Table~\ref{tab:step_b_ablation} resolves this apparent paradox by measuring $\text{RRA}$ and $\text{SFLR}$ directly across all components (note that \texttt{Full Dual-Scale} reaches $0.938$ vs.\ $0.875$ in Table~\ref{tab:revision_control} due to minor LLM session variance). Removing \textit{Tombstone Purge} collapses $\text{RRA}$ from $0.938$ to $0.250$ across all suites ($\text{SFLR} = 0.688\text{--}0.750$), and removing the $14\text{B}$ verifier degrades stream-embedded $\text{RRA}$ from $0.938$ to $0.562$ ($\text{SFLR} = 0.375$) and parametric-control $\text{RRA}$ from $1.000$ to $0.625$. Moreover, the closest fair baseline---\texttt{LLM-TLS + 90d + Latest + 14B}, which has both a $90$-day window and the same $14\text{B}$ verifier---reaches only $0.312$ isolated and $0.125$ embedded $\text{RRA}$, confirming that mutable \texttt{EventState} nodes and tombstone purging are essential. By contrast, removing the \textit{Cross-Encoder} yields slightly higher T17 $\text{Date-F1}$ ($0.554$ vs.\ $0.544$) and unchanged runtime ($989.8\text{s}$ vs.\ $981.6\text{s}$), and affects $\text{RRA}$ only in noisy stream-embedded settings ($0.875 \to 0.938$), indicating that it acts as an optional lightweight reranker for crowded candidate pools rather than an essential core component.
-    \item \textbf{$\rho$-Source Ablation \& Implicit Long-Delay Stress Test:} Table~\ref{tab:step_b_ablation} also isolates $\rho_{i,j}$: using only the LLM flag ($\rho_{\text{llm\_only}}$, zero lexicon keywords) achieves the exact same $0.938$ isolated and $1.000$ parametric $\text{RRA}$ as $\rho_{\text{both}}$, demonstrating that revision detection does not depend circularly on $\mathcal{V}_{\text{rev}}$ (whereas $\rho_{\text{none}}$ collapses to $0.062$). On the harder $8$-case \textit{Implicit-Cue \& Long-Delay} ($15\text{--}35$~days) suite with zero lexicon markers, ReviTLS still triples baseline accuracy ($0.375$ vs.\ $0.125$), but drops substantially from $0.938$ when both explicit cues and short horizons are absent.
-    \item \textbf{Over-Merging State Counts \& Natural-Stream Diagnostics:} State-count diagnostics directly confirm cross-date over-merging under unconstrained $90$-day matching: \texttt{ReviTLS (Single-Scale)} collapses $3{,}742$ T17 articles into $1{,}952$ states and $13{,}937$ Crisis articles into $5{,}547$ states, whereas \texttt{ReviTLS (Dual-Scale)} with the Conditional Temporal Gate preserves $2{,}886$ T17 states ($+47.8\%$) and $10{,}504$ Crisis states ($+89.4\%$). Across all $17{,}679$ articles, Dual-Scale routes $513$ cross-date articles ($\rho_{i,j}=1$: $194$ T17 [$172$ LLM, $40$ lexicon]; $319$ Crisis [$272$ LLM, $76$ lexicon]) to Phase~2 $\mathcal{Q}_{\text{rev}}$. Combined with Phase-1 same-day \texttt{REVISE\_CONFLICT} transitions ($\rho_{i,j}=0$), total conflict actions reach $236$ on T17 and $706$ on Crisis, yielding $495$ \texttt{REVISED} states ($129$ T17, $366$ Crisis) and $45$ \texttt{RETRACTED} states ($12$ T17, $33$ Crisis).
-    \item \textbf{Schedule Latency, Safe Purge/Retract, and Window Sensitivity:} Table~\ref{tab:step_c_studies} quantifies three engineering trade-offs. First, running Phase~2 strictly online (\texttt{defer\_phase2=False}) achieves $0.875$ $\text{RRA}$ ($95\%$ CI $[0.640, 0.965]$) vs.\ $0.938$ for deferred Phase~2, while incurring $51.4\times$ higher total time ($385.5\text{s}$ vs.\ $7.5\text{s}$) and $190\times$ higher P95 per-article latency ($3.047\text{s}$ vs.\ $0.016\text{s}$) due to $7\text{B}\leftrightarrow 14\text{B}$ model swapping; across crowded pools, the Cross-Encoder alters the Top-1 candidate in $65/215$ ($30.2\%$) calls. Second, enabling guarded retraction and claim-span purging (\texttt{Safe}) prevents the false-positive retraction of \texttt{2011-02-11} on \texttt{T17/egypt} ($1 \to 0$ retractions), but retaining non-overlapping context sentences increases stale-fact leakage on synthetic streams ($\text{SFLR}$ $0.062 \to 0.312$). Third, shrinking the lookback window to $7\text{d}$ drops Embedded-16 $\text{RRA}$ to $0.812$, whereas $30\text{d}\text{--}180\text{d}$ plateaus at $0.938$ (while Implicit $15\text{--}35\text{d}$ stays at $0.375$ across all windows because the bottleneck is cue detection rather than window length).
-    \item \textbf{Exploratory \texttt{bpoil} ($164$ Articles) Backbone Observation:} Table~\ref{tab:ablation_study} and Fig.~\ref{fig:backbone_chart} report an exploratory single-topic comparison across four backbones. Under an unconstrained $90$-day window on \texttt{bpoil}, \texttt{ReviTLS (Single-Scale)} exhibits lower $\text{Date-F1}$ at $14\text{B}$ ($0.316$) and $12\text{B}$ ($0.118$) than at $7\text{B}$ ($0.438$), whereas \texttt{LLM-TLS (14B)} improves ($0.600 \to 0.619$). Because model scale, family, and attention type (\texttt{Gemma-3-12B} $5{:}1$ sliding window vs.\ \texttt{Qwen2.5} Dense GQA) are confounded on a single topic, we treat this as an exploratory observation rather than a causal proof of attention architecture.
+    \item \textbf{Full \textbf{T17} ($n=9$) vs.\ $3$-Repeat Uncached Revision Ablation:} Table~\ref{tab:component_ablation} (independent T17 pass; $981.6\text{s}$ vs.\ $983.2\text{s}$ in Table~\ref{tab:main_results} reflects $<0.2\%$ variance under deterministic caching) shows that removing the \textit{Conditional Temporal Gate} degrades $\text{Date-F1}$ ($0.544 \to 0.520$) and increases runtime by $21.0\%$ ($981.6\text{s} \to 1187.7\text{s}$), whereas removing \textit{Tombstone Purge} raises static $\text{Concat-R1}$ ($0.446 \to 0.493$) and removing the $14\text{B}$ verifier slightly raises $\text{AR-1}$ ($0.120 \to 0.128$). Table~\ref{tab:step_b_ablation} resolves this trade-off across $3$-repeat uncached runs ($\text{temperature}=0.0$, $\text{SD}=0.000$ across all repeats) with exact two-sided McNemar tests against \texttt{Full Dual-Scale}. Removing the $14\text{B}$ verifier significantly degrades $\text{RRA}$ across isolated ($0.875 \to 0.688$, $p=0.0352$), embedded ($1.000 \to 0.688$, $p=0.0001$), and parametric ($1.000 \to 0.500$, $p=0.0005$) suites. Critically, the \textbf{Overwrite (No $\mathcal{P}_k$)} baseline---which updates claims in place without maintaining tombstone provenance---drops to $0.812$ on embedded streams ($p=0.0039$), while removing \textit{Tombstone Purge} altogether collapses $\text{RRA}$ to $0.250$ in single-pass runs and \texttt{LLM-TLS + 90d + Latest + 14B} reaches only $0.250\text{--}0.312$ ($p < 0.0001$). By contrast, single-case differences for removing the \textit{Cross-Encoder} ($p=0.250$ on embedded) or \textit{Conditional Gate} ($p=0.250$) are not statistically significant at $n=16$; we treat the Cross-Encoder as an optional lightweight reranker for crowded pools rather than an essential core component.
+    \item \textbf{$\rho$-Source Ablation \& Implicit Long-Delay Stress Test:} Table~\ref{tab:step_b_ablation} also isolates $\rho_{i,j}$: using only the LLM flag ($\rho_{\text{llm\_only}}$, zero lexicon keywords) matches $\rho_{\text{both}}$ ($0.938$ isolated, $1.000$ parametric), confirming that revision detection does not depend circularly on $\mathcal{V}_{\text{rev}}$ (whereas $\rho_{\text{none}}$ collapses to $0.062$). On the $8$-case \textit{Implicit-Cue \& Long-Delay} ($15\text{--}35$~days) suite with zero lexicon markers, ReviTLS reaches $0.375 \pm 0.000$ vs.\ $0.250$ for \texttt{LLM-TLS + 90d + Latest + 14B}.
+    \item \textbf{State Fragmentation vs.\ Over-Merging \& Retraction Ablation:} Table~\ref{tab:frag_retract} diagnoses why Crisis $\text{Date-F1}$ drops ($0.320 \to 0.241$). While unconstrained $90$-day matching in \texttt{Single-Scale} merges states ($1{,}952$ on T17; $5{,}547$ on Crisis), \texttt{Dual-Scale} with $\Delta t_{\text{routine}}=0$ and multi-claim extraction produces \textit{severe fragmentation}: $2{,}886$ states on T17 (vs.\ $399$ for \texttt{LLM-TLS}, mean $c_k = 1.17$ vs.\ $5.25$, $5.82$ vs.\ $0.75$ nodes/reference date) and $10{,}504$ states on Crisis (vs.\ $73$ for \texttt{LLM-TLS}, mean $c_k = 1.18$ vs.\ $21.54$, $24.62$ vs.\ $0.17$ nodes/reference date). This fragmentation dilutes $\log(1+c_k)$ salience in Eq.~\eqref{eq:salience_score}. Across all $17{,}679$ articles, Dual-Scale routes $513$ cross-date articles ($194$ T17, $319$ Crisis) to Phase~2 and yields $495$ \texttt{REVISED} and $45$ \texttt{RETRACTED} states ($12$ T17, $33$ Crisis). Isolating \textbf{Guarded Retract} raises T17 $\text{Date-F1}$ from $0.544$ to $0.556$ ($12 \to 9$ retractions; \textbf{Disable Retract}: $0.552$), whereas on Crisis all three variants (\texttt{Dual-Scale}, \texttt{Guarded}, \texttt{Disable}) yield identical scores ($\text{Date-F1}=0.241$, $\text{AR-1}=0.075$, $\text{Concat-R1}=0.487$), proving that Crisis's $\text{Date-F1}$ deficit is driven by fragmentation rather than retractions.
+    \item \textbf{True Uncached Schedule Latency, Safe Purge, and Window Sensitivity:} Table~\ref{tab:latency_study} measures true uncached per-article processing latency (\texttt{use\_cache=False}) on $16$ embedded scenarios ($50$ distractors/topic). (Our preliminary report of $7.5\text{s}$ / $0.010\text{s}$ reflected a deterministic Phase-1 cache hit.) With caching disabled, \textbf{Deferred Phase-2} processes the stream in $564.1\text{s}$ ($1.798\text{s}$ mean, $2.824\text{s}$ P95 per-article latency) vs.\ $643.9\text{s}$ ($2.515\text{s}$ mean, $7.216\text{s}$ P95) for \textbf{Online Immediate}, achieving a $2.55\times$ reduction in P95 per-article latency by avoiding per-article $7\text{B}\leftrightarrow 14\text{B}$ model swapping at identical $0.875$ $\text{RRA}$ (Cross-Encoder alters Top-1 in $20/89$ calls). Note that end-of-stream correction visibility in Deferred mode remains bounded by stream length. Table~\ref{tab:window_purge_study} confirms that pairing \texttt{Claim-Span Purge + Guarded Retract} (\texttt{Safe}) protects \texttt{T17/egypt} \texttt{2011-02-11} at the cost of higher synthetic $\text{SFLR}$ ($0.062 \to 0.312$; $\text{RRA}$ $0.938 \to 0.688$), and that $30\text{d}\text{--}180\text{d}$ windows plateau while $7\text{d}$ drops Embedded-16 $\text{RRA}$ to $0.812$.
+    \item \textbf{Exploratory \texttt{bpoil} ($164$ Articles) Backbone Observation:} Appendix~\ref{app:legacy} (Table~\ref{tab:ablation_study}, Fig.~\ref{fig:backbone_chart}) reports an exploratory single-topic comparison across four backbones, retained separately because model scale, family, and attention type are confounded on a single topic.
 \end{enumerate}
 
 \subsection{Case Study}
@@ -751,30 +698,138 @@ Table~\ref{tab:case_study} compares partial timelines on the injected \texttt{T1
 \subsection{Natural-Stream Human Audit and Error Analysis}
 \label{subsec:error_analysis}
 
-To quantify real-stream transition precision beyond synthetic suites, two evaluators (the author and faculty advisor Furkan \"{O}ztemiz) audited all $95$ exported natural-stream transition samples ($63$ \texttt{REVISED}, $32$ \texttt{RETRACTED}) across all $13$ topics (\texttt{outputs/scie\_results/transition\_audit.csv}; full agreement $\kappa = 1.000$). Overall precision is $73.7\%$ ($70/95$), breaking down into $84.1\%$ ($53/63$) on \texttt{REVISED} transitions (with $15.9\%$ false positives from unrelated event merging) and $53.1\%$ ($17/32$) on \texttt{RETRACTED} transitions ($41.7\%$ [$5/12$] on T17 and $60.0\%$ [$12/20$] on Crisis), revealing three concrete failure modes:
+To quantify real-stream transition precision beyond synthetic suites, two evaluators audited $95$ stratified natural-stream transition samples across all $13$ topics: all $12$ T17 retractions, $20/33$ Crisis retractions, and $63/495$ \texttt{REVISED} transitions.\footnote{Audit table and agreement statistics: \texttt{outputs/scie\_results/transition\_audit.csv}.} Annotators labeled each transition independently against source articles using a binary TP/FP rubric (full agreement, $\kappa = 1.000$; because both annotators were internal to the project, external blind validation remains future work). Overall precision is $73.7\%$ ($70/95$, $95\%$ Wilson CI $[0.640, 0.815]$), breaking down into $84.1\%$ ($53/63$, $[0.732, 0.911]$) on \texttt{REVISED} transitions and $53.1\%$ ($17/32$, $[0.364, 0.691]$) on \texttt{RETRACTED} transitions ($41.7\%$ [$5/12$] on T17, $60.0\%$ [$12/20$] on Crisis). Note that our rubric counted retracted official proposals or statements (e.g., an Israeli official's retracted ``Mexican flu'' renaming proposal on \texttt{h1n1} 2009-04-28, Rep.\ Joe Barton's retracted apology on \texttt{bpoil} 2010-06-17, and Sarkozy's retracted statement on \texttt{syria} 2012-03-01) as true positives; under a stricter Eq.~\eqref{eq:state_update} criterion requiring refutation of a physical claim, $53.1\%$ represents an upper bound. Three concrete failure modes emerge:
 \begin{enumerate}
-    \item \textbf{False-Positive Irreversible Retractions ($46.9\%$ FP Rate):} Across T17, $7/12$ ($58.3\%$) of sampled \texttt{RETRACTED} dates overlap ground-truth reference dates. While $17/32$ retractions catch genuine debunked claims---such as an Israeli official's retracted ``Mexican flu'' renaming proposal (\texttt{h1n1}, 2009-04-28), Rep.\ Joe Barton's retracted apology (\texttt{bpoil}, 2010-06-17), and Sarkozy's retracted evacuation statement (\texttt{syria}, 2012-03-01)---$15/32$ are false positives on real milestones: on both T17 and Crisis \texttt{egypt} (2011-02-11), the milestone reporting Hosni Mubarak's resignation was falsely transitioned to \texttt{RETRACTED} because surrounding denial/reversal phrasing triggered conflict verification; similarly, Conrad Murray's manslaughter verdict (\texttt{mj}, 2011-11-08) was falsely retracted. Because \texttt{RETRACTED} permanently excludes a node from $\mathcal{T}$, these false retractions directly harm $\text{Date-F1}$ and $\text{AR-1}$.
-    \item \textbf{Implicit Corrections Over Long Delays:} As quantified in Table~\ref{tab:step_b_ablation}, when corrective articles lack explicit revision markers over $15\text{--}35$~day gaps, $\text{RRA}$ drops from $0.938$ to $0.375$ because Phase~1 misses cross-date linking ($\rho_{i,j}=0$) or misclassifies the update as \texttt{NEW\_EVENT}.
-    \item \textbf{Over-Aggressive Substring Purging:} Removing every sentence containing a tombstoned number drives $\text{SFLR}$ down on controlled suites, but in dense natural streams (e.g., Crisis) can strip valid secondary context sharing the same figure, contributing to the static $\text{Concat-R1}$ drop observed when purging is enabled ($0.493 \to 0.446$ on T17).
+    \item \textbf{False-Positive Irreversible Retractions ($46.9\%$ FP Rate):} $15/32$ sampled retractions are false positives on genuine milestones (e.g., \texttt{egypt} 2011-02-11 Mubarak resignation and \texttt{mj} 2011-11-08 Conrad Murray verdict) triggered by surrounding denial phrasing. Isolated ablation (Table~\ref{tab:frag_retract}) shows that guarding retractions improves T17 $\text{Date-F1}$ ($0.544 \to 0.556$) while leaving Crisis unchanged ($0.241$).
+    \item \textbf{Implicit Corrections Over Long Delays:} When corrective articles lack explicit revision markers over $15\text{--}35$~day gaps, $\text{RRA}$ drops to $0.375$ because Phase~1 misses cross-date linking ($\rho_{i,j}=0$) or misclassifies the update as \texttt{NEW\_EVENT}.
+    \item \textbf{Over-Aggressive Substring Purging:} Removing every sentence containing a tombstoned number drives $\text{SFLR}$ down on controlled suites, but in dense natural streams can strip valid secondary context sharing the same figure, explaining the $\text{Concat-R1}$ drop on T17 ($0.493 \to 0.446$).
 \end{enumerate}
+
+\subsection{Discussion}
+\label{subsec:discussion}
+
+Our combined multi-run, uncached latency, and fragmentation results clarify the practical scope of ReviTLS. First, on static standard TLS benchmarks (\textbf{RQ1}), ReviTLS does not outperform same-day \texttt{LLM-TLS} on date selection and loses $\text{Date-F1}$ on Crisis ($0.241$ vs.\ $0.320$); its core value lies in resolving delayed factual revisions and counterfactual updates ($0.875\text{--}1.000$ vs.\ $0.250\text{--}0.312$, McNemar $p < 0.0001$), where even an in-place \textbf{Overwrite (No $\mathcal{P}_k$)} baseline trails significantly on embedded streams ($0.812$, $p = 0.0039$). Second, regarding \textbf{RQ2}, while unconstrained $90$-day matching risks cross-date over-merging, strict same-day routine gating ($\Delta t_{\text{routine}}=0$) combined with multi-claim extraction induces severe state fragmentation on ultra-dense streams ($10{,}504$ vs.\ $73$ states on Crisis), which degrades Eq.~\eqref{eq:salience_score} frequency ranking independently of retractions. Third, on \textbf{RQ3}, $8/8$ accuracy with $0/8$ pre-correction leaks on parametric controls confirms reliance on in-stream evidence, and excluding the development-reference topic \texttt{bpoil} ($n=8$ T17, $n=12$ revision) preserves our conclusions ($0.573$ vs.\ $0.555$ Date-F1; $0.833$ RRA).
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented \textbf{ReviTLS}, a revision-aware two-phase timeline summarization framework modeling events as mutable $5\text{W}1\text{H}$ state nodes with tombstone purging, conditional temporal gating, and deferred $14\text{B}$ conflict verification. Returning to our research questions: for \textbf{RQ1}, conditional gating resolves $87.5\%\text{--}93.8\%$ of synthetic multi-topic revisions (vs.\ $0.0\%\text{--}31.2\%$ for baselines, including a $90$-day $14\text{B}$-verified baseline) while preserving $\text{Date-F1}$ parity on T17 ($0.544$ vs.\ $0.542$), but trades off date accuracy on denser Crisis streams ($0.242$ vs.\ $0.320$), drops to $37.5\%$ on implicit long-delay revisions, and incurs $\sim 4.1\times$ higher runtime; for \textbf{RQ2}, state-count diagnostics confirm that gating preserves $+47.8\%\text{--}+89.4\%$ more distinct states than unconstrained $90$-day matching, while \texttt{bpoil} backbone differences remain exploratory; for \textbf{RQ3}, ReviTLS resolves $100\%$ ($8/8$) of fictional and counterfactual controls with zero pre-correction leakage, indicating reliance on in-stream evidence rather than parametric memorization.
+We presented \textbf{ReviTLS}, a revision-aware two-phase timeline summarization framework modeling events as mutable $5\text{W}1\text{H}$ state nodes with tombstone purging, conditional temporal gating, and deferred $14\text{B}$ conflict verification. Across $17{,}679$ span-filtered articles and $3$-repeat uncached synthetic evaluations ($\text{SD}=0.000$), ReviTLS resolves $87.5\%$ of isolated revisions, $87.5\%\text{--}100.0\%$ of embedded revisions, and $100.0\%$ ($8/8$) of counterfactual controls (McNemar $p < 0.0001$ vs.\ $90$-day $14\text{B}$ baselines; $p = 0.0039$ vs.\ overwrite-only on embedded), while maintaining T17 $\text{Date-F1}$ parity ($0.544$ vs.\ $0.542$; $0.573$ vs.\ $0.555$ excluding \texttt{bpoil}) and reducing uncached P95 per-article latency by $2.55\times$ ($2.824\text{s}$ vs.\ $7.216\text{s}$) via deferred Phase-2 scheduling. At the same time, ReviTLS incurs $\sim 4.1\times$ total runtime overhead, drops to $37.5\%$ on implicit long-delay revisions, exhibits $53.1\%$ precision on natural-stream \texttt{RETRACTED} transitions, and suffers from state fragmentation on dense Crisis streams ($0.241$ vs.\ $0.320$ $\text{Date-F1}$).
 
 \subsection{Limitations and Future Work}
 \label{subsec:limitations}
 
 Our study has six primary limitations:
 \begin{enumerate}
-    \item \textbf{Computational Overhead:} Structured $5\text{W}1\text{H}$ extraction and $14\text{B}$ verification make ReviTLS $\sim 4.1\times$ slower than $7\text{B}$ LLM-TLS (over $2$ hours per Crisis topic) and defer Phase~2 revisions until stream end.
-    \item \textbf{Natural-Stream Retraction False Positives:} Our $95$-sample human audit reveals $84.1\%$ precision on \texttt{REVISED} transitions but only $53.1\%$ precision ($46.9\%$ false positives) on \texttt{RETRACTED} transitions; auditing the remaining $445$ transitions in full natural streams remains future work.
-    \item \textbf{Implicit Cues and Long Horizons:} As shown in Table~\ref{tab:step_b_ablation}, performance drops to $37.5\%$ on implicit corrections over $15\text{--}35$~days, motivating stronger cross-date semantic triggers.
+    \item \textbf{Computational Overhead \& Visibility Delay:} Structured $5\text{W}1\text{H}$ extraction and $14\text{B}$ verification make ReviTLS $\sim 4.1\times$ slower than $7\text{B}$ LLM-TLS (over $2$ hours per Crisis topic), and deferred Phase-2 revisions become visible only at stream end.
+    \item \textbf{State Fragmentation \& Retraction False Positives:} Strict $\Delta t_{\text{routine}}=0$ splits dense Crisis streams into $10{,}504$ low-corroboration nodes, and natural-stream \texttt{RETRACTED} precision is $53.1\%$ ($46.9\%$ FP); adaptive same-day consolidation and external blind auditing of the remaining $445$ transitions remain future work.
+    \item \textbf{Implicit Cues and Long Horizons:} Performance drops to $37.5\%$ on implicit corrections over $15\text{--}35$~days, motivating stronger cross-date semantic triggers.
     \item \textbf{Synthetic Suite \& Single-Author Verification:} Because standard TLS corpora lack native revision logs, our synthetic suites are author-constructed and single-author verified.
     \item \textbf{Corpus Age and Sample Size:} T17 and Crisis contain English news from 2005--2013, and small topic counts ($n=9, 4$) limit statistical power.
     \item \textbf{Automated Evaluation:} Large-scale human evaluation of generated timelines remains an important direction for future work.
 \end{enumerate}
+
+\section*{Acknowledgment}
+The author thanks faculty advisor Furkan \"{O}ztemiz for guidance and for serving as the second annotator in the $95$-sample natural-stream transition audit.
+
+\appendix
+\section{Literature Reference Scores and Legacy \texttt{bpoil} Backbone Study}
+\label{app:legacy}
+
+\begin{table}[h]
+\centering
+\caption{Published Literature Reference Scores on \textbf{T17} ($9$ Topics --- Different Backbones/Static Settings, Contextual Only)}
+\label{tab:lit_results}
+\renewcommand{\arraystretch}{1.12}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+\textbf{Method} & \textbf{Backbone / Paradigm} & \textbf{AR-1} & \textbf{AR-2} & \textbf{Concat-R1} & \textbf{Concat-R2} & \textbf{Date-F1} \\
+\midrule
+\textbf{DATEWISE}~\cite{ghalandari2020examining} & Supervised Regression & 0.120 & 0.035 & 0.415 & 0.112 & 0.544 \\
+\textbf{EGC}~\cite{li2021timeline} & Event Graph Compression & 0.103 & 0.024 & 0.420 & 0.118 & 0.550 \\
+\textbf{LLM-TLS}~\cite{hu2024moments} & \texttt{Llama2-13B} Incremental & 0.118 & 0.036 & --- & --- & 0.528 \\
+\textbf{CHRONOS}~\cite{wu2025unfolding} & \texttt{Qwen2.5-72B} Iter.\ RAG & 0.116 & 0.042 & --- & --- & 0.522 \\
+\textbf{TimelineReasoner}~\cite{zhang2026timelinereasoner} & \texttt{QwQ-32B} Reasoning & 0.122 & 0.041 & --- & --- & 0.545 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table*}[h]
+\centering
+\caption{Legacy Single-Topic Backbone and Attention-Mechanism Study (\texttt{T17/bpoil}, $164$ Articles + \texttt{REV-1..4}; Exploratory Comparison Separate From Full-Corpus Table~\ref{tab:main_results}).}
+\label{tab:ablation_study}
+\renewcommand{\arraystretch}{1.14}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllcccccccc@{}}
+\toprule
+\textbf{LLM Backbone} & \textbf{Attention Architecture} & \textbf{Method} & \textbf{AR-1} $\uparrow$ & \textbf{AR-2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{Date-F1} $\uparrow$ & \textbf{RRA} $\uparrow$ & \textbf{SFLR} $\downarrow$ & \textbf{Time (s)} $\downarrow$ \\
+\midrule
+\multirow{3}{*}{\texttt{Qwen2.5-7B-Instruct}} & \multirow{3}{*}{Dense GQA ($7.6\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.086 & 0.019 & 0.410 & 0.152 & 0.600 & 0.000 & 1.000 & 99.7 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.026 & 0.006 & 0.232 & 0.036 & 0.191 & 0.250 & 0.250 & 19.6 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.070 & 0.011 & \underline{0.540} & \textbf{0.195} & 0.438 & \textbf{0.750} & \textbf{0.000} & 619.1 \\
+\midrule
+\multirow{3}{*}{\texttt{Llama-3.1-8B-Instruct}} & \multirow{3}{*}{Dense GQA ($8.0\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.082 & 0.020 & 0.442 & 0.158 & 0.550 & 0.000 & 1.000 & 239.0 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.031 & 0.008 & 0.357 & 0.081 & 0.200 & 0.250 & 0.250 & 21.0 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.050 & 0.009 & 0.312 & 0.049 & 0.222 & 0.500 & 0.250 & \textbf{444.1} \\
+\midrule
+\multirow{3}{*}{\texttt{Gemma-3-12B}} & \multirow{3}{*}{5:1 Sliding Window ($12.2\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.089 & 0.018 & 0.420 & 0.147 & 0.476 & 0.000 & 1.000 & 200.1 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.037 & 0.009 & 0.288 & 0.055 & 0.191 & 0.250 & 0.250 & 64.6 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.044 & \textbf{0.016} & 0.387 & 0.076 & 0.118 & 0.250 & 0.500 & 1067.7 \\
+\midrule
+\multirow{3}{*}{\texttt{Qwen2.5-14B-Instruct}} & \multirow{3}{*}{Dense GQA ($14.7\text{B}$)} 
+  & LLM-TLS~\cite{hu2024moments} & 0.096 & 0.019 & 0.493 & 0.184 & 0.619 & 0.000 & 1.000 & 227.5 \\
+  & & CHRONOS~\cite{wu2025unfolding} & 0.042 & 0.010 & 0.316 & 0.084 & 0.211 & 0.250 & 0.250 & 33.5 \\
+  & & \textbf{ReviTLS (Single-Scale)} & 0.039 & 0.006 & 0.443 & 0.165 & 0.316 & \textbf{0.750} & \textbf{0.000} & 706.3 \\
+\midrule
+\textbf{\texttt{Qwen2.5-7B + 14B}} & \textbf{Dual-Scale + CrossEnc + Gate} & \textbf{ReviTLS (Full)} & \textbf{0.081} & \underline{0.016} & \textbf{0.559} & \underline{0.187} & \textbf{0.571} & \textbf{0.750} & 0.250 & \underline{488.5} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar,
+    bar width=5.5pt,
+    width=\columnwidth,
+    height=4.8cm,
+    ymin=0, ymax=1.18,
+    ylabel={Score},
+    symbolic x coords={LLM-TLS, CHRONOS, Llama-8B, Gemma-12B, Qwen-14B, Qwen-7B, ReviTLS},
+    xtick=data,
+    x tick label style={font=\tiny, rotate=18, anchor=east},
+    y tick label style={font=\scriptsize},
+    ylabel style={font=\scriptsize\bfseries},
+    legend style={at={(0.5,1.03)}, anchor=south, legend columns=4, font=\tiny, draw=gray!50, inner sep=1.5pt},
+    ymajorgrids=true,
+    grid style={dashed, gray!35},
+    nodes near coords,
+    every node near coord/.append style={font=\tiny, rotate=90, anchor=west, /pgf/number format/fixed, /pgf/number format/precision=2}
+]
+\addplot[fill=blue!65, draw=blue!85!black] coordinates {
+    (LLM-TLS, 0.60) (CHRONOS, 0.19) (Llama-8B, 0.22) (Gemma-12B, 0.12) (Qwen-14B, 0.32) (Qwen-7B, 0.44) (ReviTLS, 0.57)
+};
+\addplot[fill=teal!70, draw=teal!90!black] coordinates {
+    (LLM-TLS, 0.41) (CHRONOS, 0.23) (Llama-8B, 0.31) (Gemma-12B, 0.39) (Qwen-14B, 0.44) (Qwen-7B, 0.54) (ReviTLS, 0.56)
+};
+\addplot[fill=orange!80, draw=orange!95!black] coordinates {
+    (LLM-TLS, 0.00) (CHRONOS, 0.25) (Llama-8B, 0.50) (Gemma-12B, 0.25) (Qwen-14B, 0.75) (Qwen-7B, 0.75) (ReviTLS, 0.75)
+};
+\addplot[fill=purple!65, draw=purple!85!black] coordinates {
+    (LLM-TLS, 0.00) (CHRONOS, 0.75) (Llama-8B, 0.75) (Gemma-12B, 0.50) (Qwen-14B, 1.00) (Qwen-7B, 1.00) (ReviTLS, 0.75)
+};
+\legend{Date-F1, Concat-R1, RRA, $1-\text{SFLR}$}
+\end{axis}
+\end{tikzpicture}
+\caption{Legacy single-topic (\texttt{T17/bpoil}, $164$ articles) backbone and attention-mechanism comparison (separate from full-corpus Table~\ref{tab:main_results}).}
+\label{fig:backbone_chart}
+\end{figure}
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
