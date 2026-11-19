@@ -17,39 +17,35 @@ class RevisionTestCase:
 def evaluate_revision_states(
     states: list[EventState], cases: list[RevisionTestCase]
 ) -> dict[str, float]:
-    """Evaluate how accurately final EventStates reflect revisions and suppress stale facts."""
+    """Evaluate case-linked final states; missing case evidence is unresolved, never a pass."""
     if not cases:
         return {"revision_resolution_accuracy": 0.0, "stale_fact_leakage_rate": 0.0}
 
     resolved_count = 0
     stale_leaks = 0
-    all_active_text = " ".join(
-        f"{s.event_date.isoformat() if s.event_date else ''} {s.canonical_summary}".lower()
-        for s in states
-        if s.status != EventStatus.RETRACTED
-    )
-
     for case in cases:
         case_states = [
             s for s in states if any(aid.startswith(case.case_id) for aid in s.supporting_article_ids)
         ]
-        if case_states:
-            combined_active_text = " ".join(
-                f"{s.event_date.isoformat() if s.event_date else ''} {s.canonical_summary}".lower()
-                for s in case_states
-                if s.status != EventStatus.RETRACTED
-            )
-        else:
-            combined_active_text = all_active_text
+        active_case_states = [s for s in case_states if s.status != EventStatus.RETRACTED]
+        combined_active_text = " ".join(
+            f"{s.event_date.isoformat() if s.event_date else ''} {s.canonical_summary}".lower()
+            for s in active_case_states
+        )
 
         stale_present = case.stale_fact_substring.lower() in combined_active_text
         if stale_present:
             stale_leaks += 1
 
         if case.should_be_retracted:
-            if not stale_present:
+            if case_states and any(s.status == EventStatus.RETRACTED for s in case_states) and not stale_present:
                 resolved_count += 1
-        elif case.expected_final_fact.lower() in combined_active_text and not stale_present:
+        elif (
+            case_states
+            and case.expected_final_fact
+            and case.expected_final_fact.lower() in combined_active_text
+            and not stale_present
+        ):
             resolved_count += 1
 
     total = len(cases)

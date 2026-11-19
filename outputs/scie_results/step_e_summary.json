@@ -604,17 +604,111 @@
   },
   "audit_and_bpoil": {
     "guarded_audit_retracted": {
-      "total_audited_retracted": 0,
-      "kept_tp": 0,
-      "kept_fp": 0,
-      "blocked_tp": 0,
-      "blocked_fp": 0,
-      "guarded_precision": 0.0
+      "status": "not_computed",
+      "reason": "Per-date guarded-retraction states were not saved; reconstructing this paired audit would require rerunning all 13 corpus topics. No zero-valued precision estimate is reported."
     },
     "bpoil_per_topic": {
-      "LLM-TLS (7B)": {},
-      "LLM-TLS (14B)": {},
-      "ReviTLS (Dual-Scale)": {}
+      "LLM-TLS (7B)": {
+        "date_f1": 0.4390243902439025,
+        "ar1": 0.14791191291843733,
+        "ar2": 0.0365746731089184,
+        "concat_r1": 0.46530872056015277,
+        "concat_r2": 0.17770700636942674,
+        "time_s": 730.4920041000008,
+        "num_articles": 1305
+      },
+      "LLM-TLS (14B)": {
+        "date_f1": 0.44705882352941173,
+        "ar1": 0.15503885115232305,
+        "ar2": 0.036035927672602906,
+        "concat_r1": 0.5572772551189817,
+        "concat_r2": 0.18715393133997782,
+        "time_s": 1604.6407646999987,
+        "num_articles": 1305
+      },
+      "ReviTLS (Dual-Scale)": {
+        "date_f1": 0.3142857142857143,
+        "ar1": 0.10050764143525828,
+        "ar2": 0.022150709544768863,
+        "concat_r1": 0.5536751704976003,
+        "concat_r2": 0.17437452615617893,
+        "time_s": 3113.2562308999118,
+        "num_articles": 1305,
+        "diagnostics": {
+          "total_articles": 1305,
+          "rho_triggered": 101,
+          "rho_llm_flag": 90,
+          "rho_lexicon_flag": 21,
+          "actions": {
+            "NEW_EVENT": 0,
+            "CORROBORATE": 167,
+            "UPDATE_PROGRESS": 114,
+            "REVISE_CONFLICT": 122
+          },
+          "total_states": 902,
+          "revised_count": 58,
+          "retracted_count": 4,
+          "sample_revised": [
+            {
+              "date": "2010-04-20",
+              "summary": "On April 20, 2010, an explosion occurred on the Deepwater Horizon oil rig in the Gulf of Mexico, resulting in the rig's sinking and an oil spill. The explosion led to the death of ",
+              "purged": [
+                "On April 21, 2010, an explosion at the Deepwater Horizon oil rig in the Gulf of Mexico led to the rig's sinking and an oil spill risk, with 11 workers missing and 17 injured."
+              ]
+            },
+            {
+              "date": "2010-06-01",
+              "summary": "Attorney General Eric H. Holder Jr. stated on June 1 that Justice Department lawyers were examining BP's actions related to the Gulf oil spill for possible civil and criminal viola",
+              "purged": [
+                "The US Coast Guard stated that no oil was leaking from a rig that sank off Louisiana, while BP vowed to contain any spills. Search efforts for 11 missing workers continued with low hopes.",
+                "On April 22, 2010, the Deepwater Horizon drilling platform sank off the coast of Louisiana, leading to concerns about a potential oil spill in the Gulf of Mexico."
+              ]
+            },
+            {
+              "date": "2010-04-20",
+              "summary": "On April 20, 2010, the Deepwater Horizon oil rig exploded in the Gulf of Mexico, leading to a significant oil spill that threatened the marine ecosystem and became the worst enviro",
+              "purged": [
+                "On April 20, 2010, a drilling rig named Deepwater Horizon exploded and sank in the Gulf of Mexico, leading to concerns about oil leakage and potential environmental damage."
+              ]
+            },
+            {
+              "date": "2010-11-10",
+              "summary": "An inspector general's report revealed that the White House altered a Department of the Interior report to suggest that independent experts had endorsed a drilling ban, which was n",
+              "purged": [
+                "An oil spill from a drilling rig leased by BP in the Gulf of Mexico has grown to about 1,500 square kilometers, raising fears of an environmental disaster, and has caused the death of 11 workers.",
+                "BP reported that more oil than initially estimated (5,000 barrels a day) was leaking from the Gulf of Mexico oil well, and the spill was threatening Florida and Cuba."
+              ]
+            },
+            {
+              "date": "2010-04-27",
+              "summary": "BP reported a $3.6 billion quarterly profit, surpassing expectations, but the Deepwater Horizon rig explosion overshadowed the positive financial performance.",
+              "purged": [
+                "BP Plc reported a more than doubling of first-quarter net profits, but the news was overshadowed by growing concerns over a worsening oil spill in the Gulf of Mexico, leading to a drop in the company's share price."
+              ]
+            }
+          ],
+          "sample_retracted": [
+            {
+              "date": "2010-04-29",
+              "summary": "A bird flying off a post near a barge carrying oil booms to assist in the containment of oil from the leaking Deepwater Horizon well was observed in the Gulf of Mexico near Venice,"
+            },
+            {
+              "date": "2010-06-16",
+              "summary": "BP Chairman Carl-Henric Svanberg met with President Obama in the Oval Office on June 16, 2010, to discuss the Gulf of Mexico oil spill. During the meeting, Svanberg attempted an ap"
+            },
+            {
+              "date": "2010-06-17",
+              "summary": "Rep. Joe Barton retracted his apology to BP CEO Tony Hayward after facing pressure from Republican leaders who threatened to remove him from a committee position."
+            },
+            {
+              "date": "2010-12-23",
+              "summary": "During the Deepwater Horizon oil spill, reports about Kevin Costner's company, CINC, developing a technology to separate oil from water were found to be false."
+            }
+          ]
+        }
+      }
     }
-  }
+  },
+  "revision_metric_version": 1,
+  "revision_metrics_status": "WITHDRAWN: historical metrics were produced by the pre-v2 evaluator, which searched unrelated states when case-linked states were absent. Recompute with --revision-metrics-only before citing revision-suite results."
 }

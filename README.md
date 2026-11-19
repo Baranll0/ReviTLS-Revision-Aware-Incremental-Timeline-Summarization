@@ -2,6 +2,8 @@
 
 **ReviTLS** is an incremental, revision-aware Topic Timeline Summarization (TLS) framework built to handle **new developments, numeric/date corrections, entity re-attributions, and rumor retractions** in evolving news streams.
 
+> **Evaluation notice (2026-11-19):** Historical RRA/SFLR scores and conclusions derived from them are withdrawn pending recalculation. The old evaluator could use unrelated states when a case-linked state was missing. See the Step-E note below for the isolated synthetic-only refresh command; do not use historical revision scores as current results.
+
 It synthesizes and extends two LLM-based TLS paradigms:
 - **LLM-TLS** (*Hu et al., ACL 2024*): Incremental streaming event graph construction.
 - **CHRONOS** (*Wu et al., NAACL 2025*): Iterative 5W1H self-questioning and query rewriting, adapted here as a **targeted conflict-verification module**.
@@ -537,16 +539,18 @@ git push origin main
 * **Yapılan İyileştirme:** `scripts/run_step_d_suite.py` içine genel ilerlemeyi (34 adım, `%`, geçen/kalan süre ve aktif aşama) tek satırda gösteren `Step-D Overall` `tqdm` çubuğu eklendi (`REVITLS_DISABLE_INNER_TQDM=1` ile iç içe çubuklar kapatıldı) ve çıktı `outputs/scie_results/step_d_run.log` dosyasına kaydedildi.
 * **Üretilen Çıktılar:** [`outputs/scie_results/step_d_summary.json`](outputs/scie_results/step_d_summary.json) & [`outputs/scie_results/step_d_report.md`](outputs/scie_results/step_d_report.md)
 
-#### 1. 3-Tekrarlı Önbelleksiz Revizyon Ablation'ı (`use_cache=False`, Ort. ± Std & McNemar $p$ vs Dual-Scale)
+#### 1. 3-Tekrarlı Önbelleksiz Revizyon Ablation'ı (`use_cache=False`, betimleyici)
 
-| Sistem | İzole-16 RRA | McNemar $p$ | Akış İçi-16 RRA | McNemar $p$ | Parametrik-8 RRA | Örtük-8 RRA |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Full Dual-Scale** | 0.875 ± 0.000 | 1.0000 | **1.000 ± 0.000** | 1.0000 | **1.000 ± 0.000** | 0.375 ± 0.000 |
-| **w/o 14B Verifier** | 0.688 ± 0.000 | 0.0352 | 0.688 ± 0.000 | 0.0001 | 0.500 ± 0.000 | 0.375 ± 0.000 |
-| **w/o Cross-Encoder** | 0.875 ± 0.000 | 1.0000 | 0.938 ± 0.000 | 0.2500 | **1.000 ± 0.000** | 0.375 ± 0.000 |
-| **w/o Conditional Gate** | **0.938 ± 0.000** | 0.2500 | 0.938 ± 0.000 | 0.2500 | **1.000 ± 0.000** | **0.875 ± 0.000** |
-| **Overwrite (No $P_k$)** | 0.812 ± 0.000 | 0.5078 | 0.812 ± 0.000 | 0.0039 | 0.875 ± 0.000 | 0.375 ± 0.000 |
-| **LLM-TLS + 90d + Latest + 14B** | 0.312 ± 0.000 | 0.0000 | 0.312 ± 0.000 | 0.0000 | 0.250 ± 0.000 | 0.250 ± 0.000 |
+> Bu eski rapordaki üç-tekrar McNemar p-değerleri yayımdaki çıkarımsal istatistik olarak kullanılmamalıdır: deterministik aynı senaryoların tekrarı bağımsız örneklem oluşturmaz. Güncel eşleştirilmiş tek-sayım karşılaştırma aşağıda Adım-E bölümündedir.
+
+| Sistem | İzole-16 RRA | Akış İçi-16 RRA | Parametrik-8 RRA | Örtük-8 RRA |
+| :--- | :---: | :---: | :---: | :---: |
+| **Full Dual-Scale** | 0.875 ± 0.000 | **1.000 ± 0.000** | **1.000 ± 0.000** | 0.375 ± 0.000 |
+| **w/o 14B Verifier** | 0.688 ± 0.000 | 0.688 ± 0.000 | 0.500 ± 0.000 | 0.375 ± 0.000 |
+| **w/o Cross-Encoder** | 0.875 ± 0.000 | 0.938 ± 0.000 | **1.000 ± 0.000** | 0.375 ± 0.000 |
+| **w/o Conditional Gate** | **0.938 ± 0.000** | 0.938 ± 0.000 | **1.000 ± 0.000** | **0.875 ± 0.000** |
+| **Overwrite (No $P_k$)** | 0.812 ± 0.000 | 0.812 ± 0.000 | 0.875 ± 0.000 | 0.375 ± 0.000 |
+| **LLM-TLS + 90d + Latest + 14B** | 0.312 ± 0.000 | 0.312 ± 0.000 | 0.250 ± 0.000 | 0.250 ± 0.000 |
 
 #### 2. Gerçek Önbelleksiz Gecikme (`Online Immediate` vs `Deferred Phase-2`, `16 Embedded`)
 
@@ -571,33 +575,26 @@ git push origin main
 * **`T17` (`n=8`):** `ReviTLS (Dual-Scale)` **`Date-F1 = 0.573 ± 0.288`**, **`AR-1 = 0.123 ± 0.044`**, `Concat-R1 = 0.432 ± 0.100` (`LLM-TLS 7B`: `0.555 / 0.106 / 0.394`; `LLM-TLS 14B`: `0.529 / 0.116 / 0.435`).
 * **Revizyon (`n=12`):** İzole **`0.8333`**, Akış İçi **`0.8333`**.
 
-### 19.11.2026 (Adım E — Tek-Sayım McNemar n=32, Distractor Eğrisi, Elma-Elma Fragmentasyon, Σc_k & Pencere Taraması)
+### 19.11.2026 (RRA/SFLR Değerlendirici Düzeltmesi ve Tek Hedefli Yenileme)
 
-Bu deney paketi RTX 5080 üzerinde çalıştırılmak üzere hazırlanmıştır. Gerçek çalışma süresi model sunucusu, önbellek durumu ve veri hazırlığına bağlıdır; aşağıdaki süreyi sabit bir garanti olarak değerlendirmeyin. Betik her tamamlanan aşamadan sonra `outputs/scie_results/step_e_summary.json` dosyasına checkpoint yazar.
+> **Önceki Step-E çalışması tamamlandı;** ancak aşağıdaki revizyon metrikleri evaluator düzeltmesi nedeniyle artık geçerli sayılmıyor. Makale/JSON düzeltmesi için `--fresh` veya tam Step-E paketini çalıştırmayın. Guarded-audit alt analizi ayrıca hesaplanmamış durumdadır.
 
-İlk çalıştırma için depo kök dizininde:
+> **Güncel değerlendirme düzeltmesi:** Eski RRA/SFLR ve bunlardan türetilen karşılaştırmalar geri çekilmiştir; eski evaluator, eşleşen senaryo state’i yokken ilgisiz state’leri tarayabiliyordu. Tek hedefli koşu 32 izolasyon, 8 parametrik ve 8 örtük ipucu vakasını 10 sistemde değerlendirir. Tam Step-E paketi, distractor sweep'i ve 13 konulu korpus çalışmaz. Model çağrısı yaptığı için süresi makine/model yüküne bağlıdır; garanti edilmemiştir. RTX 5080’deki mevcut iş bitmeden başlatmayın. Komut ve çalıştırma adımları aşağıdadır.
+
+5080 bilgisayarda, mevcut uzun iş bittikten sonra depo kök dizininde aşağıdaki hazırlığı ve **tek deney komutunu bir kez** çalıştırın. `--fresh`, pytest veya tam Step-E komutunu kullanmayın:
 
 ```powershell
 git pull origin main
 .\.venv\Scripts\Activate.ps1
 $env:PYTHONPATH = "."
-python -m pytest -v
-python scripts/run_step_e_suite.py --fresh
+python scripts/run_step_e_suite.py --revision-metrics-only
 ```
 
-Çalışma kesilirse, **aynı depo ve çıktı dosyaları korunarak** kaldığı aşamadan devam etmek için `--fresh` kullanmadan çalıştırın:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-$env:PYTHONPATH = "."
-python scripts/run_step_e_suite.py
-```
-
-`--fresh` yalnızca deneyleri bilerek sıfırdan başlatmak istediğinizde kullanılmalıdır. Çalışma tamamlandıktan sonra JSON çıktısını inceleyip sonuçlar makaleyle eşleştirildikten sonra kaydedin:
+Bu komut `expanded_isolated_and_rho` bölümünü yeniler ve her tamamlanan sistemi `outputs/scie_results/step_e_summary.json` dosyasına checkpoint eder. Kesinti olursa aynı komutu tekrar çalıştırmak tamamlanmış sistemleri atlayıp kaldığı yerden devam eder. Diğer tarihsel sentetik revision skorları geçersiz kalır; bu komut distractor sweep'i, diğer Step-E aşamalarını veya 13 konulu korpusları çalıştırmaz. Koşu bittiğinde güncellenen JSON'u GitHub'a geri göndermek için:
 
 ```powershell
 git add outputs/scie_results/step_e_summary.json
-git commit -m "results: add step-e single-count McNemar n=32, distractor curve, fragmentation, and window scan"
+git commit -m "results: refresh case-linked revision metrics"
 git push origin main
 ```
 * **Yapılan Düzeltmeler & Çalıştırma Notu:** `scripts/run_step_e_suite.py` içinde `RevisionType.RUMOR_RETRACTION` enum adı `RevisionType.RETRACTION` olarak ve `build_date_sum_timeline` içinde `s.slots.model_dump()` yerine `s.key_facts` kullanılacak şekilde düzeltildi (`PYTHONPATH=.` ve `REVITLS_DISABLE_INNER_TQDM=1` ile çalıştırıldı; çıktı `outputs/scie_results/step_e_run.log` dosyasına kaydedildi).
@@ -605,17 +602,17 @@ git push origin main
 
 #### 1. Tek-Sayım Exact McNemar ($n=32$ İzole: 16 `T17` + 16 `Crisis`) & $\rho$-Kaynak Ablation'ı
 
-| Sistem | İzole-32 RRA [95% CI] | İsabet | SFLR | McNemar $p$ (vs Dual) | Parametrik-8 RRA | Örtük-8 RRA |
+| Sistem | İzole-32 RRA [95% CI] | İsabet | SFLR | Nominal McNemar $p$ (unadjusted) | Parametrik-8 RRA | Örtük-8 RRA |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Full Dual-Scale** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | 0.375 |
-| **w/o 14B Verifier** | 0.688 [0.514, 0.820] | 22/32 | 0.219 | **0.0312** | 0.500 | 0.375 |
+| **w/o 14B Verifier** | 0.688 [0.514, 0.820] | 22/32 | 0.219 | 0.0312 | 0.500 | 0.375 |
 | **w/o Cross-Encoder** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | 0.375 |
 | **w/o Conditional Gate** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | **1.000** |
 | **Overwrite (No $P_k$)** | 0.719 [0.546, 0.844] | 23/32 | 0.250 | 0.0625 | 0.875 | 0.375 |
-| **w/o Tombstone Purge** | 0.250 [0.133, 0.421] | 8/32 | 0.719 | **0.0000** | 0.250 | 0.125 |
-| **LLM-TLS + 90d + Latest + 14B** | 0.312 [0.180, 0.486] | 10/32 | 0.594 | **0.0000** | 0.500 | 0.250 |
+| **w/o Tombstone Purge** | 0.250 [0.133, 0.421] | 8/32 | 0.719 | <0.0001 | 0.250 | 0.125 |
+| **LLM-TLS + 90d + Latest + 14B** | 0.312 [0.180, 0.486] | 10/32 | 0.594 | <0.0001 | 0.500 | 0.250 |
 | **`rho_llm_only` / `rho_lexicon_only`** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | — |
-| **`rho_none` (Sürekli Aynı-Gün)** | 0.094 [0.032, 0.242] | 3/32 | 0.906 | **0.0000** | 0.125 | — |
+| **`rho_none` (Sürekli Aynı-Gün)** | 0.094 [0.032, 0.242] | 3/32 | 0.906 | <0.0001 | 0.125 | — |
 
 #### 2. Distractor Yoğunluk Eğrisi ($d \in \{0, 20, 50, 150\}$ Gürültü Makalesi / Konu, 16 Senaryo)
 
@@ -625,10 +622,19 @@ git push origin main
 | **Overwrite (No $P_k$)** | 0.812 (13/16) / 0.188 | 0.812 (13/16) / 0.188 | 0.750 (12/16) / 0.250 | 0.688 (11/16) / 0.312 |
 | **LLM-TLS + 90d + Latest + 14B** | 0.312 (5/16) / 0.625 ($p=0.001$) | 0.250 (4/16) / 0.688 ($p=0.0005$) | 0.188 (3/16) / 0.812 ($p=0.0005$) | 0.125 (2/16) / 0.875 ($p=0.0002$) |
 
-#### 3. Elma-Elma Parçalanma & $\Sigma c_k$ (Eq. 6) Testi (`T17` & `Crisis`)
-* **`T17` (9 Konu):** Seçim öncesi toplam küme sayısı `LLM-TLS = 2.509` (`ort. c_k = 1.89`, `4.46` küme/refTarih) vs `ReviTLS = 2.886` (`ort. c_k = 1.17`). `ReviTLS` üzerinde **$\Sigma c_k$ toplamı** kullanıldığında `Date-F1` **0.544 → 0.573** (`LLM-TLS 0.542`'yi geçti), `AR-1` **0.120 → 0.126**, `Concat-R1` **0.446 → 0.450** yükseldi.
-* **`Crisis` (4 Konu):** Seçim öncesi `LLM-TLS = 7.916` küme (`18.78`/refTarih) vs `ReviTLS = 10.504` durum (`ort. c_k = 1.18`). **$\Sigma c_k$ toplamı** ile `ReviTLS` `Date-F1` **0.242 → 0.291** (+4.9 puan), `AR-1` **0.075 → 0.086** (`Concat-R1 = 0.487`) iyileşti.
+> Distractor-sweep McNemar $p$-values are nominal and unadjusted for the multiple systems and noise levels examined.
 
-#### 4. Gerçek Akış Pencere Taraması ($\Delta t_{\text{rev}}$ & $\Delta t_{\text{routine}}$)
+#### 3. Keşifsel Sonradan Seçim Tanısı: Elma-Elma Parçalanma & $\Sigma c_k$ (Eq. 6) (`T17` & `Crisis`)
+
+> Bu seçim karşılaştırması aynı tam korpus üzerinde sonradan hesaplanmıştır; bağımsız doğrulama kümesi kullanılmadığından birincil yöntem sonucu veya doğrulanmış iyileşme olarak yorumlanmamalıdır.
+* **`T17` (9 Konu):** Seçim öncesi toplam küme sayısı `LLM-TLS = 2.509` (`ort. c_k = 1.89`, `4.46` küme/refTarih) vs `ReviTLS = 2.886` (`ort. c_k = 1.17`). `ReviTLS` üzerinde **$\Sigma c_k$ toplamı** kullanıldığında `Date-F1` **0.544 → 0.573** (`LLM-TLS 0.542`'yi geçti), `AR-1` **0.120 → 0.126**, `Concat-R1` **0.446 → 0.450** yükseldi.
+* **`Crisis` (4 Konu):** Seçim öncesi `LLM-TLS = 7.916` küme (`18.78`/refTarih) vs `ReviTLS = 10.504` durum (`ort. c_k = 1.18`). **$\Sigma c_k$ toplamı** ile `ReviTLS` `Date-F1` **0.242 → 0.291** (+4.9 puan), `AR-1` **0.075 → 0.086** (`Concat-R1 = 0.487`). Crisis için toplam Date-F1 ($0.291$), LLM-TLS sonucunun ($0.320$) altında kalır.
+
+#### 4. Sınırlı Gerçek Akış Pencere Taraması ($\Delta t_{\text{rev}}$ & $\Delta t_{\text{routine}}$)
+
+> Revizyon penceresi T17 ortalamasında taranmıştır; rutin pencere karşılaştırması yalnızca `bpoil` ve `yemen` konularındadır. Bu küçük tarama evrensel bir pencere seçimi kanıtlamaz.
 * **`T17` $\Delta t_{\text{rev}} \in \{7, 30, 90\}$:** `7d: Date-F1 = 0.535` (`2.794` durum) / `30d: 0.534` (`2.863`) / **`90d: 0.544`** (`2.886`).
 * **Rutin Pencere ($\Delta t_{\text{routine}} \in \{0, 1, 3\}$):** `t17/bpoil` üzerinde **`dt_routine=0` (`0.314`)** > `dt_routine=1` (`0.300`) > `dt_routine=3` (`0.286`); `crisis/yemen` üzerinde `dt_routine=0` (`0.276`), `dt_routine=1` (`0.213`), `dt_routine=3` (`0.298`).
+
+
+**Adım-E veri denetimi:** JSON’daki eski `audit_and_bpoil` sıfırları geçerli ölçüm değildir: CSV sütun adı ve `bpoil` JSON yolu yanlış okunuyordu. `bpoil` skorları mevcut tam-korpus JSON’undan model çalıştırmadan alındı. Guarded-retraction için gereken tarih bazlı çıktılar checkpointlenmediği için bu eşleştirilmiş audit `not_computed` olarak işaretlendi ve makalede kullanılmadı. Step-E’nin tamamlanmış aşamaları geçerli; bu düzeltme için 5080’de yeniden çalışma gerekmiyor. Normal devam modu da bu audit’i otomatik olarak pahalı bir tam-korpus çalışmasına çevirmeyecek.

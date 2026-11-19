@@ -9,8 +9,9 @@ Fixes all statistical and diagnostic gaps from v11 review:
    ReviTLS repository states across all 13 topics (warm cache) + Sigma(c_k) Eq. 6 test.
 4. Real-stream T17 window sensitivity (delta_t_rev in {7, 30, 90}) & routine window
    scan (delta_t_routine in {0, 1, 3} on Crisis/yemen + T17/bpoil).
-5. Guarded Retract paired T17 test, audit TP/FP check, Implicit rho-path breakdown,
-   and bpoil per-topic score extraction.
+5. Cheap post-processing of cached bpoil metrics. The paired guarded-retraction audit
+   is marked unavailable because its per-date model outputs were not checkpointed;
+   it is deliberately not rerun as part of Step-E resume.
 
 Usage on GPU machine:
     python scripts/run_step_e_suite.py --fresh
@@ -19,13 +20,12 @@ Usage on GPU machine:
 from __future__ import annotations
 
 import argparse
-import csv
 from datetime import date
 import json
 import math
 from pathlib import Path
 import statistics
-from typing import Any
+from typing import Any, Callable
 
 from sentence_transformers import SentenceTransformer
 from tqdm.auto import tqdm
@@ -324,6 +324,8 @@ def run_expanded_isolated_and_rho(
     cfg_single: ReviTLSConfig,
     cfg_dual: ReviTLSConfig,
     embedder: SentenceTransformer,
+    resume_state: dict[str, Any] | None = None,
+    checkpoint: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     """Single-pass uncached (temp=0.0) over n=32 isolated + n=8 parametric + n=8 implicit + rho-source."""
     llm_7b = LLMClient(cfg_single.llm, use_cache=False)
@@ -361,9 +363,12 @@ def run_expanded_isolated_and_rho(
         ("rho_none", lambda: ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, rho_mode="none")),
     ]
 
-    hits_map: dict[str, dict[str, list[int]]] = {}
-    metrics_map: dict[str, dict[str, Any]] = {}
+    resume_state = resume_state or {}
+    hits_map: dict[str, dict[str, list[int]]] = dict(resume_state.get("hits_map", {}))
+    metrics_map: dict[str, dict[str, Any]] = dict(resume_state.get("metrics_map", {}))
     for name, factory in tqdm(systems, desc="[1/5] Expanded n=32 & rho-ablation", unit="sys"):
+        if name in hits_map and name in metrics_map:
+            continue
         iso_h: list[int] = []
         iso_sflr = 0.0
         for _topic, a_list, c_list in iso_streams:
@@ -403,6 +408,8 @@ def run_expanded_isolated_and_rho(
             "implicit_8_sflr": imp_sflr,
             "implicit_diag": imp_rho_diag,
         }
+        if checkpoint is not None:
+            checkpoint({"hits_map": hits_map, "metrics_map": metrics_map})
 
     dual_hits = hits_map["Full Dual-Scale"]
     for name in metrics_map:
@@ -558,66 +565,26 @@ def run_real_stream_window_and_routine_scan(cfg_dual: ReviTLSConfig, embedder: S
 
 
 def compute_audit_guarded_and_bpoil_details(
-    cfg_dual: ReviTLSConfig,
-    embedder: SentenceTransformer,
     summary_path: Path,
-    audit_csv_path: Path,
 ) -> dict[str, Any]:
-    """Check Guarded Retract impact on audited RETRACTED samples & extract bpoil Date-F1."""
-    llm_7b = LLMClient(cfg_dual.llm, use_cache=True)
-    llm_14b = LLMClient(cfg_dual.verifier_llm, use_cache=True) if cfg_dual.verifier_llm else llm_7b
+    """Extract cached bpoil metrics and explicitly mark the unsaved paired audit unavailable.
 
-    guarded_ret_dates: set[tuple[str, str]] = set()
-    for ds in ("t17", "crisis"):
-        proc_dir = Path("data/processed") / ds
-        raw_dir = Path("data/raw") / ds
-        for sf in sorted(proc_dir.glob("*.jsonl")):
-            topic = sf.stem
-            refs = load_reference_timelines(raw_dir / topic / "timelines.jsonl")
-            arts = filter_articles_by_timespan(load_articles(sf), [i for r in refs for i in r])
-            target_l = max(1, round(sum(len(r) for r in refs) / len(refs))) if refs else 30
-            _, st = ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, guarded_retract=True).run_stream(arts, num_dates=target_l)
-            for s in st:
-                if s.status == EventStatus.RETRACTED and s.event_date:
-                    guarded_ret_dates.add((topic, s.event_date.isoformat()))
-
-    ret_rows: list[dict[str, str]] = []
-    if audit_csv_path.exists():
-        with audit_csv_path.open("r", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                if row.get("status") == "RETRACTED":
-                    ret_rows.append(row)
-
-    kept_tp, kept_fp, blocked_tp, blocked_fp = 0, 0, 0, 0
-    for r in ret_rows:
-        lbl = (r.get("annotator_1_tp_fp") or "").strip().upper()
-        key = (r.get("topic", "").strip(), r.get("event_date", "").strip())
-        if key in guarded_ret_dates:
-            if lbl == "TP":
-                kept_tp += 1
-            elif lbl == "FP":
-                kept_fp += 1
-        else:
-            if lbl == "TP":
-                blocked_tp += 1
-            elif lbl == "FP":
-                blocked_fp += 1
-
+    The prior implementation reran all 13 corpus topics merely to recover per-date
+    guarded-retraction states. Those states are not checkpointed, so this analysis
+    cannot be reconstructed from existing artifacts without another full model run.
+    """
     bpoil_scores: dict[str, Any] = {}
     if summary_path.exists():
         raw = json.loads(summary_path.read_text(encoding="utf-8"))
+        t17_bpoil = raw.get("datasets", {}).get("t17", {}).get("per_topic", {}).get("bpoil", {})
         for sys_name in ("LLM-TLS (7B)", "LLM-TLS (14B)", "ReviTLS (Dual-Scale)"):
-            bp = raw.get("t17", {}).get("per_topic", {}).get("bpoil", {}).get(sys_name, {})
+            bp = t17_bpoil.get(sys_name, {})
             bpoil_scores[sys_name] = bp
 
     return {
         "guarded_audit_retracted": {
-            "total_audited_retracted": len(ret_rows),
-            "kept_tp": kept_tp,
-            "kept_fp": kept_fp,
-            "blocked_tp": blocked_tp,
-            "blocked_fp": blocked_fp,
-            "guarded_precision": round(kept_tp / max(1, kept_tp + kept_fp), 4),
+            "status": "not_computed",
+            "reason": "Per-date guarded-retraction states were not saved; reconstructing this paired audit would require rerunning all 13 corpus topics. No zero-valued precision estimate is reported.",
         },
         "bpoil_per_topic": bpoil_scores,
     }
@@ -629,35 +596,89 @@ def main() -> None:
     parser.add_argument("--dual-config", type=Path, default=Path("configs/hybrid_revitls.yaml"))
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/scie_results"))
     parser.add_argument("--fresh", action="store_true")
+    parser.add_argument(
+        "--revision-metrics-only",
+        action="store_true",
+        help=(
+            "Recompute the expanded isolated/parametric/implicit synthetic revision suite only; "
+            "skip full-corpus and distractor studies. This does not refresh embedded-sweep metrics."
+        ),
+    )
     args = parser.parse_args()
-
-    cfg_single = load_config(args.single_config)
-    cfg_dual = load_config(args.dual_config)
-    embedder = SentenceTransformer(cfg_dual.embedding.model_name, device=cfg_dual.embedding.device)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     out_json = args.output_dir / "step_e_summary.json"
     summary: dict[str, Any] = {} if args.fresh or not out_json.exists() else json.loads(out_json.read_text(encoding="utf-8"))
+    runtime: tuple[ReviTLSConfig, ReviTLSConfig, SentenceTransformer] | None = None
+
+    def get_runtime() -> tuple[ReviTLSConfig, ReviTLSConfig, SentenceTransformer]:
+        nonlocal runtime
+        if runtime is None:
+            cfg_single = load_config(args.single_config)
+            cfg_dual = load_config(args.dual_config)
+            embedder = SentenceTransformer(cfg_dual.embedding.model_name, device=cfg_dual.embedding.device)
+            runtime = (cfg_single, cfg_dual, embedder)
+        return runtime
+
+    if args.revision_metrics_only:
+        cfg_single, cfg_dual, embedder = get_runtime()
+        summary["revision_metric_sections_status"] = {
+            "expanded_isolated_and_rho": "refresh_in_progress",
+            "distractor_curve": "historical_pre_v2_withdrawn",
+            "other_existing_revision_metrics": "historical_pre_v2_withdrawn",
+        }
+
+        def checkpoint_revision_systems(state: dict[str, Any]) -> None:
+            summary["_revision_metrics_working"] = state
+            out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+        summary["expanded_isolated_and_rho"] = run_expanded_isolated_and_rho(
+            cfg_single,
+            cfg_dual,
+            embedder,
+            resume_state=summary.get("_revision_metrics_working"),
+            checkpoint=checkpoint_revision_systems,
+        )
+        summary.pop("_revision_metrics_working", None)
+        summary["revision_metric_version"] = 2
+        summary["revision_metric_sections_status"]["expanded_isolated_and_rho"] = "refreshed_with_case_linked_v2"
+        summary["revision_metrics_status"] = (
+            "Expanded isolated, parametric, implicit-cue, and rho-source metrics were refreshed with "
+            "case-linked evaluator v2. Historical RRA/SFLR values in other sections remain withdrawn."
+        )
+        out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        print(f"Updated controlled revision metrics only: {out_json}")
+        return
 
     if "expanded_isolated_and_rho" not in summary:
+        cfg_single, cfg_dual, embedder = get_runtime()
         summary["expanded_isolated_and_rho"] = run_expanded_isolated_and_rho(cfg_single, cfg_dual, embedder)
         out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     if "distractor_curve" not in summary:
+        _, cfg_dual, embedder = get_runtime()
         summary["distractor_curve"] = run_distractor_curve(cfg_dual, embedder, Path("data/processed/t17"))
         out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     if "apples_to_apples_frag" not in summary:
+        _, cfg_dual, embedder = get_runtime()
         summary["apples_to_apples_frag"] = run_apples_to_apples_frag_and_sumck(cfg_dual, embedder)
         out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     if "real_stream_windows" not in summary:
+        _, cfg_dual, embedder = get_runtime()
         summary["real_stream_windows"] = run_real_stream_window_and_routine_scan(cfg_dual, embedder)
         out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
-    if "audit_and_bpoil" not in summary:
+    audit_section = summary.get("audit_and_bpoil", {})
+    prior_audit = audit_section.get("guarded_audit_retracted", {}) if isinstance(audit_section, dict) else {}
+    prior_bpoil = audit_section.get("bpoil_per_topic", {}) if isinstance(audit_section, dict) else {}
+    bpoil_is_valid = isinstance(prior_bpoil, dict) and all(
+        bool(prior_bpoil.get(name)) for name in ("LLM-TLS (7B)", "LLM-TLS (14B)", "ReviTLS (Dual-Scale)")
+    )
+    if prior_audit.get("status") != "not_computed" or not bpoil_is_valid:
         summary["audit_and_bpoil"] = compute_audit_guarded_and_bpoil_details(
-            cfg_dual, embedder, args.output_dir / "summary.json", args.output_dir / "transition_audit.csv"
+            args.output_dir / "summary.json"
         )
         out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 

@@ -1,5 +1,7 @@
 # Step-D Experimental Report (Multi-Run Stats, True Latency, Fragmentation)
 
+> **Statistical note:** Treat this report's three-repeat outcomes as descriptive only. The McNemar $p$-values pool repeated runs of the same deterministic scenarios and are not valid independent-sample inference; they are withdrawn for manuscript claims. Use the single-count expanded paired analysis ($n=32$) in `step_e_summary.json` and the Step-E manuscript table instead.
+
 ## 1. 3-Run Uncached Revision Ablation (Mean +/- Std & McNemar p vs Dual-Scale)
 
 | System | Isolated-16 RRA | McNemar p | Embedded-16 RRA | McNemar p | Parametric-8 RRA | Implicit-8 RRA |

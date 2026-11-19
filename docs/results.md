@@ -1,6 +1,6 @@
 # ReviTLS Experimental Results
 
-> **Status:** This is a staged experiment log, not a single frozen leaderboard. Sections 1–3 report the exploratory `T17/bpoil` pilot; Section 4 records an earlier multi-topic run. For the manuscript's full span-filtered corpus results and later uncached ablations, consult [`paper/main.tex`](../paper/main.tex) and the dated JSON reports under [`outputs/scie_results/`](../outputs/scie_results/). Do not substitute the pilot scores below for the full-corpus scores in the paper. Step-E is tracked separately in the root README and should be incorporated only after its output has been reviewed.
+> **Status:** This is a staged experiment log, not a single frozen leaderboard. Sections 1–3 report the exploratory `T17/bpoil` pilot; Section 4 records an earlier multi-topic run. For the manuscript's full span-filtered corpus results and dated JSON reports, consult [`paper/main.tex`](../paper/main.tex) and [`outputs/scie_results/`](../outputs/scie_results/). Do not substitute pilot scores below for full-corpus scores. **All historical RRA/SFLR values and any claims based on them are withdrawn:** the evaluator was corrected to require case-linked states and the controlled revision suite must be rerun before these values can be cited. The guarded-retraction paired audit is separately `not_computed` because per-date guarded states were not saved; it is not a zero score.
 
 ## Experimental Setup
 
