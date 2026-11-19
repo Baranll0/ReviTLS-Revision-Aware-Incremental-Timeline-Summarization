@@ -164,8 +164,11 @@ class ReviTLSPipeline:
 
         is_rev_cand = self._is_revision_candidate(article, claim)
         if self.config.retrieval.strict_temporal_gate and not is_rev_cand:
+            rw = self.config.retrieval.routine_window_days
             candidates = [
-                (st, sc) for st, sc in candidates if st.event_date == claim.event_date
+                (st, sc)
+                for st, sc in candidates
+                if st.event_date is not None and claim.event_date is not None and abs((claim.event_date - st.event_date).days) <= rw
             ]
 
         if self._cross_encoder is not None and len(candidates) > 1:
@@ -216,7 +219,9 @@ class ReviTLSPipeline:
                 continue
             if (
                 self.config.retrieval.strict_temporal_gate
-                and state.event_date != claim.event_date
+                and state.event_date is not None
+                and claim.event_date is not None
+                and abs((claim.event_date - state.event_date).days) > self.config.retrieval.routine_window_days
                 and result.action != RevisionAction.REVISE_CONFLICT
             ):
                 continue

@@ -569,3 +569,18 @@ git push origin main
 #### 4. `bpoil`-Hariç Özet (`T17 n=8`, `Revision n=12`)
 * **`T17` (`n=8`):** `ReviTLS (Dual-Scale)` **`Date-F1 = 0.573 ± 0.288`**, **`AR-1 = 0.123 ± 0.044`**, `Concat-R1 = 0.432 ± 0.100` (`LLM-TLS 7B`: `0.555 / 0.106 / 0.394`; `LLM-TLS 14B`: `0.529 / 0.116 / 0.435`).
 * **Revizyon (`n=12`):** İzole **`0.8333`**, Akış İçi **`0.8333`**.
+
+### 19.11.2026 (Adım E — Tek-Sayım McNemar n=32, Distractor Eğrisi, Elma-Elma Fragmentasyon, Σc_k & Pencere Taraması)
+
+RTX 5080 makinesinde v11 değerlendirmesindeki tüm istatistik ve teşhis açıklarını kapatmak için (**~12–18 dk**, bölüm bazlı checkpoint alır):
+
+```powershell
+git pull origin main
+.\.venv\Scripts\Activate.ps1
+$env:PYTHONPATH = "."
+python -m pytest -v
+python scripts/run_step_e_suite.py --fresh
+git add outputs/scie_results/step_e_summary.json
+git commit -m "results: add step-e single-count McNemar n=32, distractor curve, fragmentation, and window scan"
+git push origin main
+```

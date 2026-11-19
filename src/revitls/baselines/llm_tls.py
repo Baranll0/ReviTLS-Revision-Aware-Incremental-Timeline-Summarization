@@ -151,6 +151,16 @@ class TopicLLMTLSBaseline:
             nodes_by_date[evt_date].append((assigned_cluster, summary, vec, art.article_id))
             bar.set_postfix(clusters=len(clusters), refresh=False)
 
+        # Record pre-truncation cluster diagnostics (apples-to-apples vs ReviTLS repository)
+        total_cl = len(clusters)
+        mean_cl_sz = (sum(len(c) for c in clusters) / total_cl) if total_cl else 0.0
+        uniq_cl_dates = len({c[0][1] for c in clusters if c})
+        self.last_diagnostics: dict[str, Any] = {
+            "total_clusters": total_cl,
+            "mean_cluster_size": round(mean_cl_sz, 2),
+            "unique_cluster_dates": uniq_cl_dates,
+        }
+
         # Rank clusters by node count and summarize
         ranked = sorted(clusters, key=len, reverse=True)[:num_dates]
         ranked.sort(key=lambda c: c[0][1])

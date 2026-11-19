@@ -23,6 +23,7 @@ class RetrievalConfig(BaseModel):
     top_k_clusters: int = 10
     allow_cross_date: bool = True
     max_date_window_days: int = 90
+    routine_window_days: int = 0
     similarity_threshold: float = 0.45
     strict_temporal_gate: bool = False
     cross_encoder_model: str | None = None
