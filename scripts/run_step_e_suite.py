@@ -96,7 +96,7 @@ CRISIS_EXPANSION_SUITES: dict[str, tuple[RevisionScenarioTemplate, ...]] = {
         ),
         RevisionScenarioTemplate(
             case_id="egypt_retract_port",
-            revision_type=RevisionType.RUMOR_RETRACTION,
+            revision_type=RevisionType.RETRACTION,
             event_date_offset_days=22,
             correction_delay_days=3,
             initial_title="Unconfirmed reports claim Suez Canal port closed to tankers",
@@ -151,7 +151,7 @@ CRISIS_EXPANSION_SUITES: dict[str, tuple[RevisionScenarioTemplate, ...]] = {
         ),
         RevisionScenarioTemplate(
             case_id="libya_retract_pipeline",
-            revision_type=RevisionType.RUMOR_RETRACTION,
+            revision_type=RevisionType.RETRACTION,
             event_date_offset_days=21,
             correction_delay_days=3,
             initial_title="Rumor claims Sirte coastal pipeline exploded overnight",
@@ -206,7 +206,7 @@ CRISIS_EXPANSION_SUITES: dict[str, tuple[RevisionScenarioTemplate, ...]] = {
         ),
         RevisionScenarioTemplate(
             case_id="syria_retract_airbase",
-            revision_type=RevisionType.RUMOR_RETRACTION,
+            revision_type=RevisionType.RETRACTION,
             event_date_offset_days=23,
             correction_delay_days=3,
             initial_title="Unconfirmed reports claim Aleppo airbase evacuated by staff",
@@ -261,7 +261,7 @@ CRISIS_EXPANSION_SUITES: dict[str, tuple[RevisionScenarioTemplate, ...]] = {
         ),
         RevisionScenarioTemplate(
             case_id="yemen_retract_embassy",
-            revision_type=RevisionType.RUMOR_RETRACTION,
+            revision_type=RevisionType.RETRACTION,
             event_date_offset_days=22,
             correction_delay_days=3,
             initial_title="Rumor claims foreign embassy compound in Sanaa stormed",
@@ -301,9 +301,9 @@ def build_date_sum_timeline(states: list[EventState], num_dates: int, w_c: float
         has_rev = any(s.status == EventStatus.REVISED for s in d_states)
         best_rep = max(
             d_states,
-            key=lambda s: (s.corroboration_count, len([v for v in s.slots.model_dump().values() if v])),
+            key=lambda s: (s.corroboration_count, len([v for v in s.key_facts.values() if v])),
         )
-        filled = sum(1 for v in best_rep.slots.model_dump().values() if v)
+        filled = min(6, sum(1 for v in best_rep.key_facts.values() if v))
         score = w_c * math.log1p(total_ck) + w_r * (1.0 if has_rev else 0.0) + (w_s / 6.0) * filled
         scored_dates.append((score, dt, best_rep))
 
