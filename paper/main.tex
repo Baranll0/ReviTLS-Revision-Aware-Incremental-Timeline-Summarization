@@ -109,11 +109,11 @@ To address both challenges, we propose \textbf{ReviTLS} (Fig.~\ref{fig:paradigm}
 
 Our study investigates three research questions: \textbf{RQ1:} Can conditional temporal gating resolve cross-date factual revisions and rumor retractions while preserving standard TLS quality? \textbf{RQ2:} How do model scale, selection rules, and gating affect state fragmentation and cross-date over-merging? \textbf{RQ3:} Does revision resolution reflect in-stream evidence rather than parametric pretraining memorization?
 
-Our main contributions are summarized as follows:
+Our main contributions are threefold:
 \begin{itemize}
-    \item We formulate non-monotonic timeline summarization and propose \textbf{ReviTLS}, modeling events as mutable $5\text{W}1\text{H}$ state nodes with explicit tombstone purging, conditional temporal gating, and streaming ingestion with deferred Phase-2 reconciliation.
-    \item We empirically characterize both \textit{Cross-Date Over-Merging} (under unconstrained $90$-day matching) and \textit{State Fragmentation} (in dense Crisis streams) via state-count diagnostics, evaluating a two-phase $7\text{B}/14\text{B}$ schedule against scale-matched, post-hoc, and overwrite-only baselines.
-    \item We provide a full-corpus evaluation across $13$ standard TLS topics ($17{,}679$ articles), alongside revision accuracy measured on controlled synthetic suites ($16$ multi-topic, $8$ counterfactual, and $8$ implicit-cue long-delay scenarios), component ablations, and real-stream error analyses.
+    \item \textbf{ReviTLS Framework:} We formulate non-monotonic TLS and model events as mutable $5\text{W}1\text{H}$ state nodes with tombstone purging, conditional temporal gating, and deferred Phase-2 reconciliation.
+    \item \textbf{Failure-Mode Diagnostics:} We characterize both \textit{Cross-Date Over-Merging} and \textit{State Fragmentation}, evaluating a two-phase $7\text{B}/14\text{B}$ schedule against scale-matched, post-hoc, and overwrite-only baselines.
+    \item \textbf{Full-Corpus \& Revision Evaluation:} We evaluate across $13$ standard topics ($17{,}679$ articles), controlled revision/counterfactual suites, component ablations, and a $95$-sample natural-stream audit.
 \end{itemize}
 
 \section{Related Work}
@@ -203,18 +203,17 @@ Non-monotonic information evolution has been studied across several related trad
 \label{tab:related_work}
 \renewcommand{\arraystretch}{1.10}
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}lccccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-\textbf{Method} & \textbf{Cross-Date} & \textbf{Claim} & \textbf{Mutable} & \textbf{Streaming} & \textbf{Revision} \\
- & \textbf{Linking} & \textbf{Retraction} & \textbf{History} & \textbf{Ingestion} & \textbf{Eval.} \\
+\textbf{Method} & \textbf{Cross-Date Linking} & \textbf{Claim Retraction} & \textbf{Mutable History} & \textbf{Streaming Ingestion} \\
 \midrule
-\textbf{DATEWISE / EGC}~\cite{ghalandari2020examining, li2021timeline} & $\times$ & $\times$ & $\times$ & $\times$ & $\times$ \\
-\textbf{CHRONOS}~\cite{wu2025unfolding} & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
-\textbf{DTELS / TR}~\cite{dtels2025, zhang2026timelinereasoner} & \checkmark & $\times$ & $\times$ & $\times$ & $\times$ \\
-\textbf{LLM-TLS}~\cite{hu2024moments} & $\times$ & $\times$ & $\times$ & \checkmark & $\times$ \\
-\textbf{ReviTLS (Ours)} & \checkmark & \checkmark & \checkmark & \checkmark$^*$ & \checkmark \\
+\textbf{DATEWISE / EGC}~\cite{ghalandari2020examining, li2021timeline} & $\times$ & $\times$ & $\times$ & $\times$ \\
+\textbf{CHRONOS}~\cite{wu2025unfolding} & \checkmark & $\times$ & $\times$ & $\times$ \\
+\textbf{DTELS / TR}~\cite{dtels2025, zhang2026timelinereasoner} & \checkmark & $\times$ & $\times$ & $\times$ \\
+\textbf{LLM-TLS}~\cite{hu2024moments} & $\times$ & $\times$ & $\times$ & \checkmark \\
+\textbf{ReviTLS (Ours)} & \checkmark & \checkmark & \checkmark & \checkmark$^*$ \\
 \bottomrule
-\multicolumn{6}{@{}l}{\scriptsize $^*$Streaming Phase-1 ingestion with deferred (or optional online) Phase-2 reconciliation.}
+\multicolumn{5}{@{}l}{\scriptsize $^*$Streaming Phase-1 ingestion with deferred (or optional online) Phase-2 reconciliation.}
 \end{tabular}%
 }
 \end{table}
