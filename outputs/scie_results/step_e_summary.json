@@ -95,7 +95,7 @@
       "iso_16_t17_rra": 0.9375,
       "param_8_rra": 1.0,
       "param_8_sflr": 0.0,
-      "implicit_8_rra": 1.0,
+      "implicit_8_rra": 0.75,
       "implicit_8_sflr": 0.0,
       "implicit_diag": {
         "rho_triggered": 2,
@@ -177,9 +177,9 @@
       ],
       "iso_32_sflr": 0.5938,
       "iso_16_t17_rra": 0.375,
-      "param_8_rra": 0.5,
+      "param_8_rra": 0.375,
       "param_8_sflr": 0.375,
-      "implicit_8_rra": 0.25,
+      "implicit_8_rra": 0.125,
       "implicit_8_sflr": 0.75,
       "implicit_diag": {
         "rho_triggered": null,
@@ -188,7 +188,7 @@
       "mcnemar_p_vs_dual": {
         "iso_32": 0.0,
         "iso_16_t17": 0.0039,
-        "param_8": 0.125
+        "param_8": 0.0625
       }
     },
     "rho_llm_only": {
@@ -232,15 +232,15 @@
       }
     },
     "rho_none": {
-      "iso_32_rra": 0.0938,
-      "iso_32_hits": "3/32",
+      "iso_32_rra": 0.0,
+      "iso_32_hits": "0/32",
       "iso_32_ci": [
-        0.032,
-        0.242
+        0.0,
+        0.107
       ],
       "iso_32_sflr": 0.9062,
       "iso_16_t17_rra": 0.0,
-      "param_8_rra": 0.125,
+      "param_8_rra": 0.0,
       "param_8_sflr": 0.875,
       "implicit_8_rra": null,
       "implicit_8_sflr": null,
@@ -248,7 +248,7 @@
       "mcnemar_p_vs_dual": {
         "iso_32": 0.0,
         "iso_16_t17": 0.0001,
-        "param_8": 0.0156
+        "param_8": 0.0078
       }
     }
   },
@@ -709,6 +709,11 @@
       }
     }
   },
-  "revision_metric_version": 1,
-  "revision_metrics_status": "WITHDRAWN: historical metrics were produced by the pre-v2 evaluator, which searched unrelated states when case-linked states were absent. Recompute with --revision-metrics-only before citing revision-suite results."
+  "revision_metric_version": 2,
+  "revision_metrics_status": "Expanded isolated, parametric, implicit-cue, and rho-source metrics were refreshed with case-linked evaluator v2. Historical RRA/SFLR values in other sections remain withdrawn.",
+  "revision_metric_sections_status": {
+    "expanded_isolated_and_rho": "refreshed_with_case_linked_v2",
+    "distractor_curve": "historical_pre_v2_withdrawn",
+    "other_existing_revision_metrics": "historical_pre_v2_withdrawn"
+  }
 }
