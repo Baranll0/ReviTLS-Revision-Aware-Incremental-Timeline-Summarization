@@ -1,0 +1,620 @@
+{
+  "expanded_isolated_and_rho": {
+    "Full Dual-Scale": {
+      "iso_32_rra": 0.875,
+      "iso_32_hits": "28/32",
+      "iso_32_ci": [
+        0.719,
+        0.95
+      ],
+      "iso_32_sflr": 0.0938,
+      "iso_16_t17_rra": 0.9375,
+      "param_8_rra": 1.0,
+      "param_8_sflr": 0.0,
+      "implicit_8_rra": 0.375,
+      "implicit_8_sflr": 0.625,
+      "implicit_diag": {
+        "rho_triggered": 2,
+        "actions": {
+          "NEW_EVENT": 0,
+          "CORROBORATE": 8,
+          "UPDATE_PROGRESS": 0,
+          "REVISE_CONFLICT": 2
+        }
+      },
+      "mcnemar_p_vs_dual": {
+        "iso_32": 1.0,
+        "iso_16_t17": 1.0,
+        "param_8": 1.0
+      }
+    },
+    "w/o 14B Verifier": {
+      "iso_32_rra": 0.6875,
+      "iso_32_hits": "22/32",
+      "iso_32_ci": [
+        0.514,
+        0.82
+      ],
+      "iso_32_sflr": 0.2188,
+      "iso_16_t17_rra": 0.75,
+      "param_8_rra": 0.5,
+      "param_8_sflr": 0.375,
+      "implicit_8_rra": 0.375,
+      "implicit_8_sflr": 0.625,
+      "implicit_diag": {
+        "rho_triggered": 2,
+        "actions": {
+          "NEW_EVENT": 0,
+          "CORROBORATE": 8,
+          "UPDATE_PROGRESS": 0,
+          "REVISE_CONFLICT": 2
+        }
+      },
+      "mcnemar_p_vs_dual": {
+        "iso_32": 0.0312,
+        "iso_16_t17": 0.25,
+        "param_8": 0.125
+      }
+    },
+    "w/o Cross-Encoder": {
+      "iso_32_rra": 0.875,
+      "iso_32_hits": "28/32",
+      "iso_32_ci": [
+        0.719,
+        0.95
+      ],
+      "iso_32_sflr": 0.0938,
+      "iso_16_t17_rra": 0.9375,
+      "param_8_rra": 1.0,
+      "param_8_sflr": 0.0,
+      "implicit_8_rra": 0.375,
+      "implicit_8_sflr": 0.625,
+      "implicit_diag": {
+        "rho_triggered": 2,
+        "actions": {
+          "NEW_EVENT": 0,
+          "CORROBORATE": 8,
+          "UPDATE_PROGRESS": 0,
+          "REVISE_CONFLICT": 2
+        }
+      },
+      "mcnemar_p_vs_dual": {
+        "iso_32": 1.0,
+        "iso_16_t17": 1.0,
+        "param_8": 1.0
+      }
+    },
+    "w/o Conditional Gate": {
+      "iso_32_rra": 0.875,
+      "iso_32_hits": "28/32",
+      "iso_32_ci": [
+        0.719,
+        0.95
+      ],
+      "iso_32_sflr": 0.0938,
+      "iso_16_t17_rra": 0.9375,
+      "param_8_rra": 1.0,
+      "param_8_sflr": 0.0,
+      "implicit_8_rra": 1.0,
+      "implicit_8_sflr": 0.0,
+      "implicit_diag": {
+        "rho_triggered": 2,
+        "actions": {
+          "NEW_EVENT": 0,
+          "CORROBORATE": 8,
+          "UPDATE_PROGRESS": 0,
+          "REVISE_CONFLICT": 8
+        }
+      },
+      "mcnemar_p_vs_dual": {
+        "iso_32": 1.0,
+        "iso_16_t17": 1.0,
+        "param_8": 1.0
+      }
+    },
+    "Overwrite (No P_k)": {
+      "iso_32_rra": 0.7188,
+      "iso_32_hits": "23/32",
+      "iso_32_ci": [
+        0.546,
+        0.844
+      ],
+      "iso_32_sflr": 0.25,
+      "iso_16_t17_rra": 0.75,
+      "param_8_rra": 0.875,
+      "param_8_sflr": 0.0,
+      "implicit_8_rra": 0.375,
+      "implicit_8_sflr": 0.625,
+      "implicit_diag": {
+        "rho_triggered": 2,
+        "actions": {
+          "NEW_EVENT": 0,
+          "CORROBORATE": 8,
+          "UPDATE_PROGRESS": 0,
+          "REVISE_CONFLICT": 2
+        }
+      },
+      "mcnemar_p_vs_dual": {
+        "iso_32": 0.0625,
+        "iso_16_t17": 0.25,
+        "param_8": 1.0
+      }
+    },
+    "w/o Tombstone Purge": {
+      "iso_32_rra": 0.25,
+      "iso_32_hits": "8/32",
+      "iso_32_ci": [
+        0.133,
+        0.421
+      ],
+      "iso_32_sflr": 0.7188,
+      "iso_16_t17_rra": 0.25,
+      "param_8_rra": 0.25,
+      "param_8_sflr": 0.625,
+      "implicit_8_rra": 0.125,
+      "implicit_8_sflr": 0.875,
+      "implicit_diag": {
+        "rho_triggered": 2,
+        "actions": {
+          "NEW_EVENT": 0,
+          "CORROBORATE": 8,
+          "UPDATE_PROGRESS": 2,
+          "REVISE_CONFLICT": 0
+        }
+      },
+      "mcnemar_p_vs_dual": {
+        "iso_32": 0.0,
+        "iso_16_t17": 0.001,
+        "param_8": 0.0312
+      }
+    },
+    "LLM-TLS + 90d + Latest + 14B": {
+      "iso_32_rra": 0.3125,
+      "iso_32_hits": "10/32",
+      "iso_32_ci": [
+        0.18,
+        0.486
+      ],
+      "iso_32_sflr": 0.5938,
+      "iso_16_t17_rra": 0.375,
+      "param_8_rra": 0.5,
+      "param_8_sflr": 0.375,
+      "implicit_8_rra": 0.25,
+      "implicit_8_sflr": 0.75,
+      "implicit_diag": {
+        "rho_triggered": null,
+        "actions": null
+      },
+      "mcnemar_p_vs_dual": {
+        "iso_32": 0.0,
+        "iso_16_t17": 0.0039,
+        "param_8": 0.125
+      }
+    },
+    "rho_llm_only": {
+      "iso_32_rra": 0.875,
+      "iso_32_hits": "28/32",
+      "iso_32_ci": [
+        0.719,
+        0.95
+      ],
+      "iso_32_sflr": 0.0938,
+      "iso_16_t17_rra": 0.9375,
+      "param_8_rra": 1.0,
+      "param_8_sflr": 0.0,
+      "implicit_8_rra": null,
+      "implicit_8_sflr": null,
+      "implicit_diag": null,
+      "mcnemar_p_vs_dual": {
+        "iso_32": 1.0,
+        "iso_16_t17": 1.0,
+        "param_8": 1.0
+      }
+    },
+    "rho_lexicon_only": {
+      "iso_32_rra": 0.875,
+      "iso_32_hits": "28/32",
+      "iso_32_ci": [
+        0.719,
+        0.95
+      ],
+      "iso_32_sflr": 0.0938,
+      "iso_16_t17_rra": 0.9375,
+      "param_8_rra": 1.0,
+      "param_8_sflr": 0.0,
+      "implicit_8_rra": null,
+      "implicit_8_sflr": null,
+      "implicit_diag": null,
+      "mcnemar_p_vs_dual": {
+        "iso_32": 1.0,
+        "iso_16_t17": 1.0,
+        "param_8": 1.0
+      }
+    },
+    "rho_none": {
+      "iso_32_rra": 0.0938,
+      "iso_32_hits": "3/32",
+      "iso_32_ci": [
+        0.032,
+        0.242
+      ],
+      "iso_32_sflr": 0.9062,
+      "iso_16_t17_rra": 0.0,
+      "param_8_rra": 0.125,
+      "param_8_sflr": 0.875,
+      "implicit_8_rra": null,
+      "implicit_8_sflr": null,
+      "implicit_diag": null,
+      "mcnemar_p_vs_dual": {
+        "iso_32": 0.0,
+        "iso_16_t17": 0.0001,
+        "param_8": 0.0156
+      }
+    }
+  },
+  "distractor_curve": {
+    "0": {
+      "Full Dual-Scale": {
+        "rra": 1.0,
+        "hits": "16/16",
+        "sflr": 0.0,
+        "mcnemar_p_vs_dual": 1.0
+      },
+      "Overwrite (No P_k)": {
+        "rra": 0.8125,
+        "hits": "13/16",
+        "sflr": 0.1875,
+        "mcnemar_p_vs_dual": 0.25
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "rra": 0.3125,
+        "hits": "5/16",
+        "sflr": 0.625,
+        "mcnemar_p_vs_dual": 0.001
+      }
+    },
+    "20": {
+      "Full Dual-Scale": {
+        "rra": 1.0,
+        "hits": "16/16",
+        "sflr": 0.0,
+        "mcnemar_p_vs_dual": 1.0
+      },
+      "Overwrite (No P_k)": {
+        "rra": 0.8125,
+        "hits": "13/16",
+        "sflr": 0.1875,
+        "mcnemar_p_vs_dual": 0.25
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "rra": 0.25,
+        "hits": "4/16",
+        "sflr": 0.6875,
+        "mcnemar_p_vs_dual": 0.0005
+      }
+    },
+    "50": {
+      "Full Dual-Scale": {
+        "rra": 0.9375,
+        "hits": "15/16",
+        "sflr": 0.0625,
+        "mcnemar_p_vs_dual": 1.0
+      },
+      "Overwrite (No P_k)": {
+        "rra": 0.75,
+        "hits": "12/16",
+        "sflr": 0.25,
+        "mcnemar_p_vs_dual": 0.25
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "rra": 0.1875,
+        "hits": "3/16",
+        "sflr": 0.8125,
+        "mcnemar_p_vs_dual": 0.0005
+      }
+    },
+    "150": {
+      "Full Dual-Scale": {
+        "rra": 0.9375,
+        "hits": "15/16",
+        "sflr": 0.0625,
+        "mcnemar_p_vs_dual": 1.0
+      },
+      "Overwrite (No P_k)": {
+        "rra": 0.6875,
+        "hits": "11/16",
+        "sflr": 0.3125,
+        "mcnemar_p_vs_dual": 0.125
+      },
+      "LLM-TLS + 90d + Latest + 14B": {
+        "rra": 0.125,
+        "hits": "2/16",
+        "sflr": 0.875,
+        "mcnemar_p_vs_dual": 0.0002
+      }
+    }
+  },
+  "apples_to_apples_frag": {
+    "t17": {
+      "per_topic": {
+        "bpoil": {
+          "unique_ref_dates": 118,
+          "llmtls_all_clusters": 748,
+          "llmtls_mean_c_k": 1.74,
+          "llmtls_clusters_per_ref_date": 6.34,
+          "llmtls_date_f1": 0.439,
+          "revitls_all_states": 902,
+          "revitls_mean_c_k": 1.19,
+          "revitls_states_per_ref_date": 7.64,
+          "revitls_max_date_f1": 0.3143,
+          "revitls_sumck_date_f1": 0.4,
+          "revitls_sumck_ar1": 0.115,
+          "revitls_sumck_concat_r1": 0.5569
+        },
+        "egypt": {
+          "unique_ref_dates": 20,
+          "llmtls_all_clusters": 105,
+          "llmtls_mean_c_k": 2.06,
+          "llmtls_clusters_per_ref_date": 5.25,
+          "llmtls_date_f1": 0.8571,
+          "revitls_all_states": 148,
+          "revitls_mean_c_k": 1.25,
+          "revitls_states_per_ref_date": 7.4,
+          "revitls_max_date_f1": 0.9,
+          "revitls_sumck_date_f1": 1.0,
+          "revitls_sumck_ar1": 0.2085,
+          "revitls_sumck_concat_r1": 0.4777
+        },
+        "finan": {
+          "unique_ref_dates": 65,
+          "llmtls_all_clusters": 109,
+          "llmtls_mean_c_k": 1.09,
+          "llmtls_clusters_per_ref_date": 1.68,
+          "llmtls_date_f1": 0.4948,
+          "revitls_all_states": 111,
+          "revitls_mean_c_k": 1.03,
+          "revitls_states_per_ref_date": 1.71,
+          "revitls_max_date_f1": 0.6984,
+          "revitls_sumck_date_f1": 0.6984,
+          "revitls_sumck_ar1": 0.1104,
+          "revitls_sumck_concat_r1": 0.2823
+        },
+        "h1n1": {
+          "unique_ref_dates": 21,
+          "llmtls_all_clusters": 90,
+          "llmtls_mean_c_k": 1.78,
+          "llmtls_clusters_per_ref_date": 4.29,
+          "llmtls_date_f1": 0.8,
+          "revitls_all_states": 102,
+          "revitls_mean_c_k": 1.27,
+          "revitls_states_per_ref_date": 4.86,
+          "revitls_max_date_f1": 0.6667,
+          "revitls_sumck_date_f1": 0.7778,
+          "revitls_sumck_ar1": 0.1771,
+          "revitls_sumck_concat_r1": 0.4672
+        },
+        "haiti": {
+          "unique_ref_dates": 11,
+          "llmtls_all_clusters": 39,
+          "llmtls_mean_c_k": 5.54,
+          "llmtls_clusters_per_ref_date": 3.55,
+          "llmtls_date_f1": 0.9091,
+          "revitls_all_states": 114,
+          "revitls_mean_c_k": 1.52,
+          "revitls_states_per_ref_date": 10.36,
+          "revitls_max_date_f1": 1.0,
+          "revitls_sumck_date_f1": 0.9091,
+          "revitls_sumck_ar1": 0.1457,
+          "revitls_sumck_concat_r1": 0.2584
+        },
+        "iraq": {
+          "unique_ref_dates": 155,
+          "llmtls_all_clusters": 303,
+          "llmtls_mean_c_k": 1.04,
+          "llmtls_clusters_per_ref_date": 1.95,
+          "llmtls_date_f1": 0.3346,
+          "revitls_all_states": 295,
+          "revitls_mean_c_k": 1.01,
+          "revitls_states_per_ref_date": 1.9,
+          "revitls_max_date_f1": 0.4581,
+          "revitls_sumck_date_f1": 0.4194,
+          "revitls_sumck_ar1": 0.1155,
+          "revitls_sumck_concat_r1": 0.5266
+        },
+        "libya": {
+          "unique_ref_dates": 59,
+          "llmtls_all_clusters": 509,
+          "llmtls_mean_c_k": 1.41,
+          "llmtls_clusters_per_ref_date": 8.63,
+          "llmtls_date_f1": 0.4615,
+          "revitls_all_states": 596,
+          "revitls_mean_c_k": 1.09,
+          "revitls_states_per_ref_date": 10.1,
+          "revitls_max_date_f1": 0.338,
+          "revitls_sumck_date_f1": 0.3662,
+          "revitls_sumck_ar1": 0.0803,
+          "revitls_sumck_concat_r1": 0.4934
+        },
+        "mj": {
+          "unique_ref_dates": 38,
+          "llmtls_all_clusters": 96,
+          "llmtls_mean_c_k": 1.25,
+          "llmtls_clusters_per_ref_date": 2.53,
+          "llmtls_date_f1": 0.3529,
+          "revitls_all_states": 85,
+          "revitls_mean_c_k": 1.18,
+          "revitls_states_per_ref_date": 2.24,
+          "revitls_max_date_f1": 0.2895,
+          "revitls_sumck_date_f1": 0.4211,
+          "revitls_sumck_ar1": 0.1439,
+          "revitls_sumck_concat_r1": 0.5281
+        },
+        "syria": {
+          "unique_ref_dates": 86,
+          "llmtls_all_clusters": 510,
+          "llmtls_mean_c_k": 1.13,
+          "llmtls_clusters_per_ref_date": 5.93,
+          "llmtls_date_f1": 0.2295,
+          "revitls_all_states": 533,
+          "revitls_mean_c_k": 1.03,
+          "revitls_states_per_ref_date": 6.2,
+          "revitls_max_date_f1": 0.2295,
+          "revitls_sumck_date_f1": 0.1667,
+          "revitls_sumck_ar1": 0.0362,
+          "revitls_sumck_concat_r1": 0.4571
+        }
+      },
+      "summary": {
+        "llmtls_all_clusters_sum": 2509,
+        "llmtls_mean_c_k_avg": 1.89,
+        "llmtls_clusters_per_ref_date_avg": 4.46,
+        "llmtls_date_f1_mean": 0.5421,
+        "revitls_all_states_sum": 2886,
+        "revitls_mean_c_k_avg": 1.17,
+        "revitls_max_date_f1_mean": 0.5438,
+        "revitls_sumck_date_f1_mean": 0.5732,
+        "revitls_sumck_ar1_mean": 0.1258,
+        "revitls_sumck_concat_r1_mean": 0.4497
+      }
+    },
+    "crisis": {
+      "per_topic": {
+        "egypt": {
+          "unique_ref_dates": 122,
+          "llmtls_all_clusters": 1831,
+          "llmtls_mean_c_k": 2.01,
+          "llmtls_clusters_per_ref_date": 15.01,
+          "llmtls_date_f1": 0.4074,
+          "revitls_all_states": 2659,
+          "revitls_mean_c_k": 1.23,
+          "revitls_states_per_ref_date": 21.8,
+          "revitls_max_date_f1": 0.2807,
+          "revitls_sumck_date_f1": 0.3509,
+          "revitls_sumck_ar1": 0.0964,
+          "revitls_sumck_concat_r1": 0.4833
+        },
+        "libya": {
+          "unique_ref_dates": 118,
+          "llmtls_all_clusters": 1711,
+          "llmtls_mean_c_k": 1.77,
+          "llmtls_clusters_per_ref_date": 14.5,
+          "llmtls_date_f1": 0.3667,
+          "revitls_all_states": 2456,
+          "revitls_mean_c_k": 1.12,
+          "revitls_states_per_ref_date": 20.81,
+          "revitls_max_date_f1": 0.2558,
+          "revitls_sumck_date_f1": 0.2581,
+          "revitls_sumck_ar1": 0.0787,
+          "revitls_sumck_concat_r1": 0.4857
+        },
+        "syria": {
+          "unique_ref_dates": 106,
+          "llmtls_all_clusters": 2881,
+          "llmtls_mean_c_k": 1.72,
+          "llmtls_clusters_per_ref_date": 27.18,
+          "llmtls_date_f1": 0.1053,
+          "revitls_all_states": 3662,
+          "revitls_mean_c_k": 1.21,
+          "revitls_states_per_ref_date": 34.55,
+          "revitls_max_date_f1": 0.1538,
+          "revitls_sumck_date_f1": 0.1538,
+          "revitls_sumck_ar1": 0.0526,
+          "revitls_sumck_concat_r1": 0.48
+        },
+        "yemen": {
+          "unique_ref_dates": 81,
+          "llmtls_all_clusters": 1493,
+          "llmtls_mean_c_k": 1.51,
+          "llmtls_clusters_per_ref_date": 18.43,
+          "llmtls_date_f1": 0.4,
+          "revitls_all_states": 1727,
+          "revitls_mean_c_k": 1.17,
+          "revitls_states_per_ref_date": 21.32,
+          "revitls_max_date_f1": 0.2759,
+          "revitls_sumck_date_f1": 0.4,
+          "revitls_sumck_ar1": 0.1147,
+          "revitls_sumck_concat_r1": 0.499
+        }
+      },
+      "summary": {
+        "llmtls_all_clusters_sum": 7916,
+        "llmtls_mean_c_k_avg": 1.75,
+        "llmtls_clusters_per_ref_date_avg": 18.78,
+        "llmtls_date_f1_mean": 0.3199,
+        "revitls_all_states_sum": 10504,
+        "revitls_mean_c_k_avg": 1.18,
+        "revitls_max_date_f1_mean": 0.2415,
+        "revitls_sumck_date_f1_mean": 0.2907,
+        "revitls_sumck_ar1_mean": 0.0856,
+        "revitls_sumck_concat_r1_mean": 0.487
+      }
+    }
+  },
+  "real_stream_windows": {
+    "t17_rev_window": {
+      "7d": {
+        "t17_date_f1_mean": 0.5351,
+        "t17_total_states": 2794
+      },
+      "30d": {
+        "t17_date_f1_mean": 0.5343,
+        "t17_total_states": 2863
+      },
+      "90d": {
+        "t17_date_f1_mean": 0.5438,
+        "t17_total_states": 2886
+      }
+    },
+    "routine_window_scan": {
+      "t17/bpoil": {
+        "dt_routine_0": {
+          "date_f1": 0.3143,
+          "total_states": 902,
+          "mean_c_k": 1.19
+        },
+        "dt_routine_1": {
+          "date_f1": 0.3,
+          "total_states": 808,
+          "mean_c_k": 1.19
+        },
+        "dt_routine_3": {
+          "date_f1": 0.2857,
+          "total_states": 744,
+          "mean_c_k": 1.2
+        }
+      },
+      "crisis/yemen": {
+        "dt_routine_0": {
+          "date_f1": 0.2759,
+          "total_states": 1727,
+          "mean_c_k": 1.17
+        },
+        "dt_routine_1": {
+          "date_f1": 0.2128,
+          "total_states": 1633,
+          "mean_c_k": 1.17
+        },
+        "dt_routine_3": {
+          "date_f1": 0.2979,
+          "total_states": 1584,
+          "mean_c_k": 1.18
+        }
+      }
+    }
+  },
+  "audit_and_bpoil": {
+    "guarded_audit_retracted": {
+      "total_audited_retracted": 0,
+      "kept_tp": 0,
+      "kept_fp": 0,
+      "blocked_tp": 0,
+      "blocked_fp": 0,
+      "guarded_precision": 0.0
+    },
+    "bpoil_per_topic": {
+      "LLM-TLS (7B)": {},
+      "LLM-TLS (14B)": {},
+      "ReviTLS (Dual-Scale)": {}
+    }
+  }
+}

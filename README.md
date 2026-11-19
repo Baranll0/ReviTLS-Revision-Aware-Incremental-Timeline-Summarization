@@ -584,3 +584,35 @@ git add outputs/scie_results/step_e_summary.json
 git commit -m "results: add step-e single-count McNemar n=32, distractor curve, fragmentation, and window scan"
 git push origin main
 ```
+* **Yapılan Düzeltmeler & Çalıştırma Notu:** `scripts/run_step_e_suite.py` içinde `RevisionType.RUMOR_RETRACTION` enum adı `RevisionType.RETRACTION` olarak ve `build_date_sum_timeline` içinde `s.slots.model_dump()` yerine `s.key_facts` kullanılacak şekilde düzeltildi (`PYTHONPATH=.` ve `REVITLS_DISABLE_INNER_TQDM=1` ile çalıştırıldı; çıktı `outputs/scie_results/step_e_run.log` dosyasına kaydedildi).
+* **Üretilen Çıktı:** [`outputs/scie_results/step_e_summary.json`](outputs/scie_results/step_e_summary.json)
+
+#### 1. Tek-Sayım Exact McNemar ($n=32$ İzole: 16 `T17` + 16 `Crisis`) & $\rho$-Kaynak Ablation'ı
+
+| Sistem | İzole-32 RRA [95% CI] | İsabet | SFLR | McNemar $p$ (vs Dual) | Parametrik-8 RRA | Örtük-8 RRA |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Full Dual-Scale** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | 0.375 |
+| **w/o 14B Verifier** | 0.688 [0.514, 0.820] | 22/32 | 0.219 | **0.0312** | 0.500 | 0.375 |
+| **w/o Cross-Encoder** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | 0.375 |
+| **w/o Conditional Gate** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | **1.000** |
+| **Overwrite (No $P_k$)** | 0.719 [0.546, 0.844] | 23/32 | 0.250 | 0.0625 | 0.875 | 0.375 |
+| **w/o Tombstone Purge** | 0.250 [0.133, 0.421] | 8/32 | 0.719 | **0.0000** | 0.250 | 0.125 |
+| **LLM-TLS + 90d + Latest + 14B** | 0.312 [0.180, 0.486] | 10/32 | 0.594 | **0.0000** | 0.500 | 0.250 |
+| **`rho_llm_only` / `rho_lexicon_only`** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | — |
+| **`rho_none` (Sürekli Aynı-Gün)** | 0.094 [0.032, 0.242] | 3/32 | 0.906 | **0.0000** | 0.125 | — |
+
+#### 2. Distractor Yoğunluk Eğrisi ($d \in \{0, 20, 50, 150\}$ Gürültü Makalesi / Konu, 16 Senaryo)
+
+| Sistem | $d=0$ RRA / SFLR | $d=20$ RRA / SFLR | $d=50$ RRA / SFLR | $d=150$ RRA / SFLR |
+| :--- | :---: | :---: | :---: | :---: |
+| **Full Dual-Scale** | **1.000 (16/16)** / **0.000** | **1.000 (16/16)** / **0.000** | **0.938 (15/16)** / **0.062** | **0.938 (15/16)** / **0.062** |
+| **Overwrite (No $P_k$)** | 0.812 (13/16) / 0.188 | 0.812 (13/16) / 0.188 | 0.750 (12/16) / 0.250 | 0.688 (11/16) / 0.312 |
+| **LLM-TLS + 90d + Latest + 14B** | 0.312 (5/16) / 0.625 ($p=0.001$) | 0.250 (4/16) / 0.688 ($p=0.0005$) | 0.188 (3/16) / 0.812 ($p=0.0005$) | 0.125 (2/16) / 0.875 ($p=0.0002$) |
+
+#### 3. Elma-Elma Parçalanma & $\Sigma c_k$ (Eq. 6) Testi (`T17` & `Crisis`)
+* **`T17` (9 Konu):** Seçim öncesi toplam küme sayısı `LLM-TLS = 2.509` (`ort. c_k = 1.89`, `4.46` küme/refTarih) vs `ReviTLS = 2.886` (`ort. c_k = 1.17`). `ReviTLS` üzerinde **$\Sigma c_k$ toplamı** kullanıldığında `Date-F1` **0.544 → 0.573** (`LLM-TLS 0.542`'yi geçti), `AR-1` **0.120 → 0.126**, `Concat-R1` **0.446 → 0.450** yükseldi.
+* **`Crisis` (4 Konu):** Seçim öncesi `LLM-TLS = 7.916` küme (`18.78`/refTarih) vs `ReviTLS = 10.504` durum (`ort. c_k = 1.18`). **$\Sigma c_k$ toplamı** ile `ReviTLS` `Date-F1` **0.242 → 0.291** (+4.9 puan), `AR-1` **0.075 → 0.086** (`Concat-R1 = 0.487`) iyileşti.
+
+#### 4. Gerçek Akış Pencere Taraması ($\Delta t_{\text{rev}}$ & $\Delta t_{\text{routine}}$)
+* **`T17` $\Delta t_{\text{rev}} \in \{7, 30, 90\}$:** `7d: Date-F1 = 0.535` (`2.794` durum) / `30d: 0.534` (`2.863`) / **`90d: 0.544`** (`2.886`).
+* **Rutin Pencere ($\Delta t_{\text{routine}} \in \{0, 1, 3\}$):** `t17/bpoil` üzerinde **`dt_routine=0` (`0.314`)** > `dt_routine=1` (`0.300`) > `dt_routine=3` (`0.286`); `crisis/yemen` üzerinde `dt_routine=0` (`0.276`), `dt_routine=1` (`0.213`), `dt_routine=3` (`0.298`).
