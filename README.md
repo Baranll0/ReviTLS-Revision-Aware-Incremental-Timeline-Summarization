@@ -600,19 +600,21 @@ git push origin main
 * **Yapılan Düzeltmeler & Çalıştırma Notu:** `scripts/run_step_e_suite.py` içinde `RevisionType.RUMOR_RETRACTION` enum adı `RevisionType.RETRACTION` olarak ve `build_date_sum_timeline` içinde `s.slots.model_dump()` yerine `s.key_facts` kullanılacak şekilde düzeltildi (`PYTHONPATH=.` ve `REVITLS_DISABLE_INNER_TQDM=1` ile çalıştırıldı; çıktı `outputs/scie_results/step_e_run.log` dosyasına kaydedildi).
 * **Üretilen Çıktı:** [`outputs/scie_results/step_e_summary.json`](outputs/scie_results/step_e_summary.json)
 
-#### 1. Tek-Sayım Exact McNemar ($n=32$ İzole: 16 `T17` + 16 `Crisis`) & $\rho$-Kaynak Ablation'ı
+#### 1. Tek-Sayım Exact McNemar ($n=32$ İzole: 16 `T17` + 16 `Crisis`) & $\rho$-Kaynak Ablation'ı *(Yenilendi: 19.11.2026 — `--revision-metrics-only`, Commit `0927834`)*
+
+> Düzeltilmiş vaka-bağlantılı (`case-linked`) evaluator ile `outputs/scie_results/step_e_summary.json` (`expanded_isolated_and_rho`) yenilendi. `rho_none` artık ilgisiz düğümlerden sahte eşleşme almadığı için tam `0.000` (`0/32` ve `0/8`) olarak ölçüldü.
 
 | Sistem | İzole-32 RRA [95% CI] | İsabet | SFLR | Nominal McNemar $p$ (unadjusted) | Parametrik-8 RRA | Örtük-8 RRA |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Full Dual-Scale** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | 0.375 |
-| **w/o 14B Verifier** | 0.688 [0.514, 0.820] | 22/32 | 0.219 | 0.0312 | 0.500 | 0.375 |
+| **w/o 14B Verifier** | 0.688 [0.514, 0.820] | 22/32 | 0.219 | **0.0312** | 0.500 | 0.375 |
 | **w/o Cross-Encoder** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | 0.375 |
-| **w/o Conditional Gate** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | **1.000** |
+| **w/o Conditional Gate** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | **0.750** |
 | **Overwrite (No $P_k$)** | 0.719 [0.546, 0.844] | 23/32 | 0.250 | 0.0625 | 0.875 | 0.375 |
-| **w/o Tombstone Purge** | 0.250 [0.133, 0.421] | 8/32 | 0.719 | <0.0001 | 0.250 | 0.125 |
-| **LLM-TLS + 90d + Latest + 14B** | 0.312 [0.180, 0.486] | 10/32 | 0.594 | <0.0001 | 0.500 | 0.250 |
+| **w/o Tombstone Purge** | 0.250 [0.133, 0.421] | 8/32 | 0.719 | **<0.0001** | 0.250 | 0.125 |
+| **LLM-TLS + 90d + Latest + 14B** | 0.312 [0.180, 0.486] | 10/32 | 0.594 | **<0.0001** | 0.375 | 0.125 |
 | **`rho_llm_only` / `rho_lexicon_only`** | **0.875** [0.719, 0.950] | **28/32** | **0.094** | 1.0000 | **1.000** | — |
-| **`rho_none` (Sürekli Aynı-Gün)** | 0.094 [0.032, 0.242] | 3/32 | 0.906 | <0.0001 | 0.125 | — |
+| **`rho_none` (Sürekli Aynı-Gün)** | 0.000 [0.000, 0.107] | 0/32 | 0.906 | **<0.0001** | 0.000 | — |
 
 #### 2. Distractor Yoğunluk Eğrisi ($d \in \{0, 20, 50, 150\}$ Gürültü Makalesi / Konu, 16 Senaryo)
 
