@@ -19,9 +19,10 @@ revision-aware-tls/
 ├── data/                            # Raw & processed corpora (ignored by git)
 ├── docs/
 │   ├── architecture.md              # Technical design & gap analysis
-│   └── results.md                   # Experimental benchmark results & analysis
+│   └── results.md                   # Staged pilot and experiment log (scope is labeled)
 ├── outputs/
-│   └── bpoil_rev_eval.json          # Saved benchmark evaluation metrics
+│   ├── bpoil_rev_eval.json          # Exploratory single-topic pilot metrics
+│   └── scie_results/                # Multi-topic results, audits, and checkpoints
 ├── scripts/
 │   ├── download_datasets.ps1        # Downloads T17, Crisis, and Open-TLS
 │   ├── prepare_datasets.py          # Normalizes raw .jsonl.gz into chronological streams
@@ -42,7 +43,7 @@ revision-aware-tls/
 
 ## Experimental Results (`T17/bpoil` + Revision Stress-Test)
 
-Evaluated on an **NVIDIA GeForce RTX 5080** using `qwen2.5:7b-instruct-q4_K_M` (Ollama) and `BAAI/bge-base-en-v1.5` embeddings (full details in [`docs/results.md`](docs/results.md) and raw metrics in [`outputs/bpoil_rev_eval.json`](outputs/bpoil_rev_eval.json)):
+Exploratory `T17/bpoil` pilot evaluated on an **NVIDIA GeForce RTX 5080** using `qwen2.5:7b-instruct-q4_K_M` (Ollama) and `BAAI/bge-base-en-v1.5` embeddings. These scores are not the full-corpus manuscript results; the staged experiment log is in [`docs/results.md`](docs/results.md), and the multi-topic evaluation is reported in [`paper/main.tex`](paper/main.tex) and [`outputs/scie_results/`](outputs/scie_results/):
 
 | System | Date-F1 (↑) | Align-R1 (↑) | Align-R2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | RRA (↑) | SFLR (↓) | Time (s) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -572,7 +573,9 @@ git push origin main
 
 ### 19.11.2026 (Adım E — Tek-Sayım McNemar n=32, Distractor Eğrisi, Elma-Elma Fragmentasyon, Σc_k & Pencere Taraması)
 
-RTX 5080 makinesinde v11 değerlendirmesindeki tüm istatistik ve teşhis açıklarını kapatmak için (**~12–18 dk**, bölüm bazlı checkpoint alır):
+Bu deney paketi RTX 5080 üzerinde çalıştırılmak üzere hazırlanmıştır. Gerçek çalışma süresi model sunucusu, önbellek durumu ve veri hazırlığına bağlıdır; aşağıdaki süreyi sabit bir garanti olarak değerlendirmeyin. Betik her tamamlanan aşamadan sonra `outputs/scie_results/step_e_summary.json` dosyasına checkpoint yazar.
+
+İlk çalıştırma için depo kök dizininde:
 
 ```powershell
 git pull origin main
@@ -580,6 +583,19 @@ git pull origin main
 $env:PYTHONPATH = "."
 python -m pytest -v
 python scripts/run_step_e_suite.py --fresh
+```
+
+Çalışma kesilirse, **aynı depo ve çıktı dosyaları korunarak** kaldığı aşamadan devam etmek için `--fresh` kullanmadan çalıştırın:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+$env:PYTHONPATH = "."
+python scripts/run_step_e_suite.py
+```
+
+`--fresh` yalnızca deneyleri bilerek sıfırdan başlatmak istediğinizde kullanılmalıdır. Çalışma tamamlandıktan sonra JSON çıktısını inceleyip sonuçlar makaleyle eşleştirildikten sonra kaydedin:
+
+```powershell
 git add outputs/scie_results/step_e_summary.json
 git commit -m "results: add step-e single-count McNemar n=32, distractor curve, fragmentation, and window scan"
 git push origin main

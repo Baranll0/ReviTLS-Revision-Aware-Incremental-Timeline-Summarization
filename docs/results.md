@@ -1,5 +1,7 @@
 # ReviTLS Experimental Results
 
+> **Status:** This is a staged experiment log, not a single frozen leaderboard. Sections 1–3 report the exploratory `T17/bpoil` pilot; Section 4 records an earlier multi-topic run. For the manuscript's full span-filtered corpus results and later uncached ablations, consult [`paper/main.tex`](../paper/main.tex) and the dated JSON reports under [`outputs/scie_results/`](../outputs/scie_results/). Do not substitute the pilot scores below for the full-corpus scores in the paper. Step-E is tracked separately in the root README and should be incorporated only after its output has been reviewed.
+
 ## Experimental Setup
 
 | Component | Specification |
