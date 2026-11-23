@@ -2,6 +2,16 @@
 \toprule
 \textbf{Variant vs.\ full} & $\Delta$ pass rate [95\% CI] & McNemar $p$ & Holm $p$ \\
 \midrule
-\multicolumn{4}{c}{\textit{pending}} \\
+w/o 14B verifier & -0.100 [-0.164, -0.036] & 0.0074 & 0.0222 \\
+w/o cross-encoder & +0.018 [-0.000, +0.045] & 0.5000 & 1.0000 \\
+w/o conditional gate & +0.118 [+0.064, +0.182] & 0.0002 & 0.0012 \\
+w/o structural probe & -0.136 [-0.200, -0.073] & 0.0001 & 0.0004 \\
+overwrite only (no P\_k) & -0.000 [-0.000, -0.000] & 1.0000 & 1.0000 \\
+w/o tombstone purge & -0.391 [-0.482, -0.300] & 0.0000 & 0.0000 \\
+rho = LLM flag only & -0.182 [-0.255, -0.109] & 0.0000 & 0.0000 \\
+rho = lexicon only & -0.145 [-0.227, -0.073] & 0.0009 & 0.0034 \\
+rho = none & -0.391 [-0.482, -0.300] & 0.0000 & 0.0000 \\
+LLM-TLS (7B) & -0.382 [-0.473, -0.291] & 0.0000 & 0.0000 \\
+LLM-TLS + 90d + latest + 14B & -0.345 [-0.446, -0.245] & 0.0000 & 0.0000 \\
 \bottomrule
 \end{tabular}
