@@ -11,7 +11,6 @@ from revitls.schemas import (
     ExtractedEvent,
     RevisionAction,
     RevisionRecord,
-    RevisionType,
 )
 
 
@@ -53,12 +52,6 @@ def _purge_stale_clauses(summary: str) -> str:
         cleaned,
         flags=re.IGNORECASE,
     )
-    cleaned = re.sub(
-        r"ruptured\s+submerged\s+intake\s+baffle",
-        "submerged intake baffle rupture",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
     return cleaned.strip()
 
 
@@ -87,6 +80,7 @@ class EventStateManager:
             status=EventStatus.ACTIVE,
             entities=list(event.entities),
             key_facts=dict(event.key_facts),
+            slots=dict(event.slots),
             supporting_article_ids=[event.source_article_id],
             corroboration_count=1,
             last_updated=event.publish_date,
@@ -114,48 +108,20 @@ class EventStateManager:
         prev_date = state.event_date
 
         low_sum = f"{event.summary} {resolved_summary or ''}".lower()
-        has_negated_occurrence = any(
-            w in low_sum
-            for w in (
-                "debunk",
-                "false rumor",
-                "false report",
-                "no secondary",
-                "no pipeline",
-                "no incident",
-                "no nationwide",
-                "no mandatory",
-                "no debris",
-                "no subsea",
-                "reports were false",
-                "never occurred",
-                "did not occur",
+        has_negated_occurrence = bool(
+            re.search(
+                r"debunk|false (?:rumou?r|report|alarm)|reports? (?:were|was) false|never (?:occurred|happened)"
+                r"|no[^.]{0,50}(?:occurred|took place|happened)|did not (?:occur|happen|take place)",
+                low_sum,
             )
         )
-        is_cause_or_fact_revision = not has_negated_occurrence and (
-            classification.revision_type
-            in {
-                RevisionType.NUMERIC_FACT,
-                RevisionType.DATE_CORRECTION,
-                RevisionType.ENTITY_ATTRIBUTION,
-            }
-            or any(
-                w in low_sum
-                for w in (
-                    "caused the",
-                    "caused by",
-                    "maintenance error",
-                    "barrels per day",
-                    "took place on",
-                    "hearing occurred on",
-                )
-            )
-        )
-        is_retraction = not is_cause_or_fact_revision and (
-            has_negated_occurrence
-            or classification.revision_type == RevisionType.RETRACTION
-            or (resolved_status == EventStatus.RETRACTED)
-        )
+        # The verifier's evidence-grounded status takes precedence. Lexical
+        # negation in a summary is not sufficient to retract an event: it may
+        # describe a denial, quotation, or correction about a real milestone.
+        # A RETRACTED lifecycle transition is allowed only when the verifier
+        # returned RETRACTED after source-quote validation. Classifier labels and
+        # lexical cues alone cannot irreversibly remove an event.
+        is_retraction = resolved_status == EventStatus.RETRACTED
 
         if classification.action == RevisionAction.UPDATE_PROGRESS:
             if is_retraction and not self.disable_retract:
@@ -199,17 +165,7 @@ class EventStateManager:
                         new_summary = clean_res
                 else:
                     new_summary = clean_evt
-            explicit_date_match = re.search(
-                r"(?:took place on|occurred on|held on|landed on|met on|detected on|issued on|convened on)\s+(\d{4}-\d{2}-\d{2})",
-                f"{event.summary} {new_summary}",
-                flags=re.IGNORECASE,
-            )
-            explicit_date = (
-                date.fromisoformat(explicit_date_match.group(1))
-                if explicit_date_match
-                else None
-            )
-            new_date = explicit_date or resolved_date or event.event_date or state.event_date
+            new_date = resolved_date or event.event_date or state.event_date
             if is_retraction and not self.disable_retract:
                 if self.guarded_retract and state.corroboration_count >= 3 and not has_negated_occurrence:
                     state.status = EventStatus.REVISED
@@ -227,6 +183,7 @@ class EventStateManager:
         state.last_updated = max(state.last_updated, event.publish_date)
         state.entities = sorted(set(state.entities) | set(event.entities))
         state.key_facts.update(event.key_facts)
+        state.slots.update(event.slots)
 
         state.revision_history.append(
             RevisionRecord(
@@ -237,6 +194,7 @@ class EventStateManager:
                 new_summary=new_summary,
                 previous_date=prev_date,
                 new_date=new_date,
+                new_status=state.status,
                 rationale=classification.rationale,
             )
         )

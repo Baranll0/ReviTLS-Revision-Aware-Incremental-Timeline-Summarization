@@ -99,12 +99,12 @@ def test_cross_date_revision_and_retraction_filtering() -> None:
         [updated, rumor_state],
         [
             RevisionTestCase(
-                case_id="c1",
+                case_id="art_1",
                 expected_final_fact="14 people were injured",
                 stale_fact_substring="5 people were injured",
             ),
             RevisionTestCase(
-                case_id="c2",
+                case_id="art_3",
                 expected_final_fact="",
                 stale_fact_substring="second nearby plant reportedly exploded",
                 should_be_retracted=True,

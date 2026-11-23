@@ -117,6 +117,7 @@ class DeterministicRevisionMockLLM:
                     "resolved_summary": "Authorities confirmed no pipeline incident occurred at Harbor Terminal.",
                     "resolved_date": None,
                     "status": "RETRACTED",
+                    "retraction_evidence": "confirmed no secondary pipeline rupture occurred at Harbor Terminal",
                     "rationale": "Official retraction.",
                 }
             if "5,000 barrels" in header:

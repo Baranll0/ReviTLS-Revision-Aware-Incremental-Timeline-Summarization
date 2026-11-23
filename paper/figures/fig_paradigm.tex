@@ -1,0 +1,36 @@
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+    font=\scriptsize,
+    box/.style={rectangle, rounded corners=2.5pt, draw=black!75, thick, inner sep=3.5pt, align=center},
+    failbox/.style={box, fill=red!8, draw=red!70!black},
+    warnbox/.style={box, fill=orange!10, draw=orange!80!black},
+    okbox/.style={box, fill=green!10, draw=green!65!black},
+    arrow/.style={-Stealth, thick}
+]
+% Panel A
+\node[anchor=west, font=\scriptsize\bfseries] at (-0.1, 4.35) {(a) Conventional Incremental TLS (LLM-TLS~\cite{hu2024moments}): Same-Day Restriction};
+\node[failbox, text width=2.95cm] (a1) at (1.42, 3.50) {\textbf{2010-04-24}: Coast Guard\\reports initial estimate\\\textit{1,000 bbl/day}};
+\node[failbox, text width=2.95cm] (a2) at (6.28, 3.50) {\textbf{2010-04-28}: NOAA estimates\\at least \textbf{5,000 bbl/day}};
+\draw[arrow, dashed, red!75!black] (a1) -- node[above, font=\tiny\bfseries] {No Cross-Date} node[below, font=\tiny\bfseries] {Link} (a2);
+\node[anchor=west, font=\tiny, text=red!75!black] at (-0.05, 2.65) {$\Rightarrow$ \textbf{Stale Fact Leakage:} Early \textit{1,000 bbl/day} estimate remains in the timeline.};
+
+% Panel B
+\node[anchor=west, font=\scriptsize\bfseries] at (-0.1, 2.10) {(b) Unconstrained 90-Day Matching (Single-Scale Ablation): Over-Merging};
+\node[warnbox, text width=2.95cm] (b1) at (1.42, 1.25) {\textbf{2010-04-20}: Rig blowout\\\& absorbed May/June\\milestones};
+\node[warnbox, text width=2.95cm] (b2) at (6.28, 1.25) {\textbf{2010-05-02}: New slick\\trajectory \& dome\\deployment};
+\draw[arrow, orange!85!black] (b2) -- node[above, font=\tiny\bfseries] {Merged as} node[below, font=\tiny\bfseries] {Progress} (b1);
+\node[anchor=west, font=\tiny, text=orange!85!black] at (-0.05, 0.40) {$\Rightarrow$ \textbf{Cross-Date Collapse:} Distinct daily milestones collapse into early cluster ($\text{Date-F1}$ drops).};
+
+% Panel C
+\node[anchor=west, font=\scriptsize\bfseries] at (-0.1, -0.15) {(c) Proposed ReviTLS: Conditional Temporal Gate \& Mutable EventState};
+\node[okbox, text width=2.90cm] (c1) at (1.40, -1.00) {\textbf{2010-04-22} [\texttt{REVISED}]\\Updated to \textbf{5,000 bbl/d}\\(\textit{1,000} superseded)};
+\node[okbox, text width=2.10cm] (c2) at (4.30, -1.00) {\textbf{2010-05-02}\\New Milestone\\{[\texttt{ACTIVE}]}};
+\node[box, fill=gray!18, draw=gray!70, dashed, text width=2.05cm] (c3) at (6.72, -1.00) {\textbf{2010-05-20}\\False rumor\\{[\texttt{RETRACTED}]}};
+\node[anchor=west, font=\tiny, text=green!50!black] at (-0.05, -1.85) {$\Rightarrow$ \textbf{Revision-Aware:} Superseded facts removed from the active state, rumors retracted, milestone dates preserved.};
+\end{tikzpicture}%
+}
+\caption{Schematic comparison of incremental timeline summarization paradigms. Historical spill estimates in (a) follow the Coast Guard's official chronology~\cite{uscg2011onscene}; the event date in (c) is distinct from the later publication date of its correction. (a) Same-day clustering cannot link cross-date corrections and retains outdated claims. (b) Unconstrained cross-date matching over-merges distinct daily developments. (c) \textbf{ReviTLS} selectively opens cross-date retrieval for revision candidates and updates mutable event states.}
+\label{fig:paradigm}
+\end{figure}

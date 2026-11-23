@@ -1,4 +1,4 @@
-# ReviTLS Default Configuration (tuned for RTX 5070 12GB VRAM)
+# ReviTLS default configuration (reported runs: RTX 5080, 16 GB VRAM)
 
 llm:
   # Works with Ollama (http://localhost:11434/v1), vLLM (http://localhost:8000/v1), or API
@@ -16,6 +16,7 @@ embedding:
 
 retrieval:
   top_k_clusters: 10
+  routine_candidate_k: 3
   # Unlike LLM-TLS's strict same-date filter, allow cross-date retrieval for late corrections
   allow_cross_date: true
   max_date_window_days: 90

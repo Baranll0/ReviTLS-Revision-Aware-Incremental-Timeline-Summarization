@@ -1,0 +1,68 @@
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    font=\scriptsize,
+    block/.style={rectangle, rounded corners=2.5pt, draw=black!80, thick, minimum height=0.82cm, align=center, inner sep=3.5pt},
+    phase1/.style={block, fill=blue!8, draw=blue!65!black},
+    gate/.style={diamond, aspect=2.15, draw=orange!85!black, thick, fill=orange!12, align=center, inner sep=1.5pt},
+    phase2/.style={block, fill=purple!8, draw=purple!70!black},
+    state/.style={block, fill=green!10, draw=green!60!black},
+    membox/.style={rectangle, rounded corners=3pt, draw=teal!80!black, thick, fill=teal!6, align=left, inner sep=4.5pt},
+    retract/.style={block, fill=gray!20, draw=gray!70!black, dashed},
+    arrow/.style={-Stealth, thick, draw=black!75}
+]
+
+% ================= PHASE 1 =================
+\node[anchor=west, font=\footnotesize\bfseries, text=blue!75!black] at (-0.15, 6.45) {PHASE 1: Resident 7B Structured $5\text{W}1\text{H}$ Event Extraction \& Conditional Dual-Horizon Temporal Gating};
+
+\node[block, fill=gray!14, text width=2.0cm] (stream) at (0.95, 4.45) {\textbf{Article Stream}\\Article $(d_i, t_i)$};
+\node[phase1, text width=2.8cm] (extractor) at (4.10, 4.45) {\textbf{Qwen2.5-7B ($\theta_1$)}\\$5\text{W}1\text{H}$ Event $m_{i,j}$\\Entities $\mathcal{N}_{i,j}$, Date $\tau_{i,j}$};
+\node[gate, text width=1.95cm] (revgate) at (7.65, 4.45) {\textbf{Revision Cue}\\$\rho_{i,j} = 1$?\\{\tiny lex.\,$\lor$\,LLM\,$\lor$\,struct.}};
+
+\node[phase1, text width=3.15cm] (sameday) at (11.75, 5.25) {\textbf{Strict Same-Day Gate}\\$|\tau_{i,j} - \tau_k| = 0$ (\textit{Eq.~\ref{eq:temporal_gate}})\\Bi-Encoder Retrieval};
+\node[phase1, text width=3.15cm] (deferq) at (11.75, 3.65) {\textbf{90-Day Revision Gate}\\$0 \le t_i - \tau_k \le 90\text{d}$ (\textit{Eq.~\ref{eq:temporal_gate}})\\Shortlist $\mathcal{R}_1 \rightarrow \mathcal{Q}_{\text{rev}}$};
+
+\node[state, text width=3.35cm] (sameday_act) at (15.70, 5.25) {\textbf{Routine Transitions ($\theta_1$)}\\{\tiny $\bullet$ \texttt{NEW\_EVENT} ($c=1$)}\\{\tiny $\bullet$ \texttt{CORROBORATE} ($c\!+\!+$)}\\{\tiny $\bullet$ \texttt{UPDATE\_PROGRESS} / \texttt{REVISE\_CONFLICT}}};
+
+\draw[arrow] (stream) -- (extractor);
+\draw[arrow] (extractor) -- (revgate);
+\draw[arrow] (revgate.north east) -- node[above, sloped, font=\tiny\bfseries, text=blue!75!black] {No ($\rho=0$)} (sameday.west);
+\draw[arrow] (revgate.south east) -- node[below, sloped, font=\tiny\bfseries, text=orange!85!black] {Yes ($\rho=1$)} (deferq.west);
+\draw[arrow] (sameday) -- (sameday_act);
+
+% ================= MIDDLE: MUTABLE EVENTSTATE MEMORY =================
+\node[membox, text width=17.15cm] (memschema) at (8.60, 1.70) {
+    \textbf{Mutable EventState Repository $\mathcal{M} = \{e_1, \dots, e_K\}$ \quad --- \quad Structured State Representation:}
+    $e_k = \big\langle \tau_k \text{ (Canonical Date)},\; \mathcal{W}_k \text{ ($5\text{W}1\text{H}$ Slots)},\; \mathcal{F}_k \text{ (Retained Claims)},\; \mathcal{H}_k \text{ (Revision Log)},\; \sigma_k \in \{\texttt{ACTIVE}, \texttt{REVISED}, \texttt{RETRACTED}\},\; c_k \text{ (Article Support Count)} \big\rangle$ \hfill \textbf{$\mathcal{H}_k$ is append-only}
+};
+
+\coordinate (qbus) at ([yshift=0.26cm]memschema.north);
+\draw[arrow, teal!80!black] (sameday_act.south) -- (sameday_act.south |- memschema.north);
+
+% ================= PHASE 2 =================
+\node[anchor=west, font=\footnotesize\bfseries, text=purple!75!black] at (-0.15, 0.48) {PHASE 2: Chronological Replay, Cross-Encoder Reranking, Resident 14B Conflict Verification \& Supersession};
+
+\node[phase2, text width=2.70cm] (crossenc) at (1.30, -1.35) {\textbf{Cross-Encoder $\phi_{\text{ce}}$}\\MiniLM-L-6-v2 +\\Lexical Overlap (\textit{Eq.~\ref{eq:hybrid_rerank}})};
+\node[phase2, text width=2.45cm] (cls14b) at (4.65, -1.35) {\textbf{Qwen2.5-14B ($\theta_2$)}\\4-Way Transition\\Classifier};
+\node[phase2, text width=2.90cm] (verifier) at (8.65, -1.35) {\textbf{Targeted $5\text{W}1\text{H}$ Verifier}\\Self-Questioning\\Conflict Resolution};
+
+\node[state, text width=3.35cm] (purge) at (12.75, -0.68) {\textbf{Supersede \& Update}\\Log old summary in $\mathcal{H}_k$\\Replace active claims $\mathcal{F}_k$\\Status: $\sigma_k \leftarrow \texttt{REVISED}$};
+\node[retract, text width=3.35cm] (retracted) at (12.75, -2.08) {\textbf{Event Retraction}\\Verbatim source quote required\\Status: $\sigma_k \leftarrow \texttt{RETRACTED}$};
+
+\node[state, fill=green!18, text width=2.25cm] (ranker) at (16.15, -1.35) {\textbf{Timeline}\\\textbf{Construction}\\Filter $\sigma_k \neq \texttt{RETRACTED}$\\Rank \& Sort $\mathcal{T}$};
+
+\draw[arrow, purple!75!black] (deferq.south) -- (deferq.south |- qbus) -- (-0.48, 0 |- qbus) -- (-0.48, -1.35) -- (crossenc.west);
+\draw[arrow] (crossenc) -- (cls14b);
+\draw[arrow] (cls14b) -- node[above, font=\tiny\bfseries] {\texttt{REVISE}} (verifier);
+\draw[arrow] (verifier.east) -- (purge.west);
+\draw[arrow] (verifier.east) -- (retracted.west);
+\draw[arrow, teal!80!black] (purge.north) -- (purge.north |- memschema.south);
+\draw[arrow, teal!80!black] (ranker.north |- memschema.south) -- (ranker.north);
+\draw[arrow] (purge.east) -- (ranker.west);
+
+\end{tikzpicture}%
+}
+\caption{Overview of \textbf{ReviTLS}. Phase~1 extracts structured claims with a $7\text{B}$ model, clusters routine same-day claims, and queues claims whose revision cue $\rho$ fires (lexicon, LLM flag, or structural probe). Phase~2 replays the stream chronologically: cached routine transitions are re-applied in order, and each queued claim is re-retrieved, reranked, and verified by a $14\text{B}$ model against the state and evidence available at its publication time only. A \texttt{RETRACTED} label is accepted only with a verbatim source quote. The cross-encoder reranks any shortlist with more than one candidate in both phases.}
+\label{fig:architecture}
+\end{figure*}

@@ -171,7 +171,7 @@ def build_systems(
                 ("LLM-TLS + 90d + Latest", TopicLLMTLSBaseline(llm=llm_7b, embedder=embedder, window_days=90, selection_mode="latest")),
                 ("LLM-TLS (Recency-TR)", TopicLLMTLSBaseline(llm=llm_7b, embedder=embedder, selection_mode="recency_textrank")),
                 ("LLM-TLS + PostHoc-14B", TopicLLMTLSBaseline(llm=llm_7b, embedder=embedder, post_hoc_verifier_llm=llm_14b)),
-                ("ReviTLS (TextRank Sel.)", ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, selection_mode="textrank")),
+                ("ReviTLS (TextRank Sel.)", ReviTLSPipeline(cfg_dual, llm=llm_7b, embedder=embedder, verifier_llm=llm_14b, selection_mode="corroboration")),
             ]
         )
     return systems

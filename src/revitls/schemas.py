@@ -54,6 +54,7 @@ class ExtractedEvent(BaseModel):
     summary: str
     entities: list[str] = Field(default_factory=list)
     key_facts: dict[str, str] = Field(default_factory=dict)
+    slots: dict[str, str] = Field(default_factory=dict)
     is_correction_or_update: bool = False
 
 
@@ -68,6 +69,7 @@ class RevisionRecord(BaseModel):
     new_summary: str
     previous_date: Optional[date] = None
     new_date: Optional[date] = None
+    new_status: EventStatus = EventStatus.ACTIVE
     rationale: str = ""
 
 
@@ -81,6 +83,7 @@ class EventState(BaseModel):
     status: EventStatus = EventStatus.ACTIVE
     entities: list[str] = Field(default_factory=list)
     key_facts: dict[str, str] = Field(default_factory=dict)
+    slots: dict[str, str] = Field(default_factory=dict)
     supporting_article_ids: list[str] = Field(default_factory=list)
     corroboration_count: int = 1
     last_updated: date

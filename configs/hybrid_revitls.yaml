@@ -1,7 +1,9 @@
-# ReviTLS-Hybrid Configuration:
-# 1. Dual-Scale Qwen2.5 Specialization: Fast 7B Extractor + Deep 14B Conflict Verifier
-# 2. Cross-Attention Pairwise Reranker (cross-encoder/ms-marco-MiniLM-L-6-v2) + Lexical Overlap Gate
-# 3. Strict Same-Day Temporal Gate + Date-Deduplicated Milestone Selection (maximizes Date-F1 & RRA)
+# ReviTLS dual-scale configuration (the system evaluated in the paper):
+# 1. Qwen2.5-7B extractor / routine classifier + Qwen2.5-14B conflict verifier (deferred Phase 2)
+# 2. Cross-encoder reranking (cross-encoder/ms-marco-MiniLM-L-6-v2) + lexical overlap
+# 3. Conditional dual-horizon gate: same-day for routine claims, 90 days for revision candidates
+# 4. Structural revision probe (rho_struct) for cue-free numeric/date corrections
+# 5. Date-deduplicated milestone selection with the salience score of Eq. (6)
 
 llm:
   base_url: "http://localhost:11434/v1"
@@ -24,11 +26,13 @@ embedding:
 
 retrieval:
   top_k_clusters: 10
+  routine_candidate_k: 3
   allow_cross_date: true
   max_date_window_days: 90
   similarity_threshold: 0.45
   strict_temporal_gate: true
   cross_encoder_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  implicit_probe: true
 
 verifier:
   enable_targeted_verification: true

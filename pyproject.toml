@@ -25,6 +25,7 @@ gpu = [
     "accelerate>=0.30",
 ]
 eval = [
+    "scipy>=1.11",
     "tilse>=0.1.5",
 ]
 ui = [

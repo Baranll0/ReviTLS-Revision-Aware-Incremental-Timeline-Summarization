@@ -21,12 +21,19 @@ class EmbeddingConfig(BaseModel):
 
 class RetrievalConfig(BaseModel):
     top_k_clusters: int = 10
+    routine_candidate_k: int = Field(default=3, ge=1)
     allow_cross_date: bool = True
     max_date_window_days: int = 90
     routine_window_days: int = 0
     similarity_threshold: float = 0.45
     strict_temporal_gate: bool = False
     cross_encoder_model: str | None = None
+    corroboration_bonus: float = 0.12
+    # Structural revision probe (rho_struct): flag a routine claim as a revision candidate when a
+    # similar cross-date state reports a different value for the same measure or a nearby event date.
+    implicit_probe: bool = False
+    implicit_probe_sim: float = 0.70
+    implicit_probe_date_gap_days: int = 7
 
 
 class VerifierConfig(BaseModel):
@@ -39,6 +46,9 @@ class TimelineConfig(BaseModel):
     default_num_dates: int = 20
     exclude_retracted: bool = True
     deduplicate_dates: bool = False
+    w_corroboration: float = 0.55
+    w_revised: float = 0.15
+    w_slots: float = 0.30
 
 
 class ReviTLSConfig(BaseModel):

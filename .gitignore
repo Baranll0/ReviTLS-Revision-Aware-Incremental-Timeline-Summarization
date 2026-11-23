@@ -22,6 +22,10 @@ outputs/*
 !outputs/*.md
 !outputs/scie_results/
 !outputs/scie_results/*.json
+!outputs/final/
+!outputs/final/*.json
+!outputs/final/*.csv
+!outputs/final/*.md
 checkpoints/
 *.jsonl
 *.sqlite3
@@ -32,3 +36,12 @@ chroma_db/
 .vscode/
 .idea/
 .DS_Store
+outputs/dry/
+paper/texput.log
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/tmp/
+tmp/

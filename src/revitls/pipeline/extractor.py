@@ -14,6 +14,9 @@ EXTRACTOR_SYSTEM_PROMPT = (
 )
 
 
+SLOT_KEYS = ("who", "what", "where", "why", "how")
+
+
 class EventExtractor:
     """Distills incoming articles into structured event claims."""
 
@@ -28,6 +31,7 @@ class EventExtractor:
             f"Content:\n{article.content[:4000]}\n\n"
             "Return JSON with keys: event_date (YYYY-MM-DD or null), summary (1-2 sentences), "
             "entities (list of strings), key_facts (dict of attribute->value), "
+            "slots (dict with optional string keys who, what, where, why, how; omit unknown), "
             "is_correction_or_update (boolean)."
         )
         default_payload = {
@@ -35,6 +39,7 @@ class EventExtractor:
             "summary": article.title or article.content[:240],
             "entities": [],
             "key_facts": {},
+            "slots": {},
             "is_correction_or_update": False,
         }
         if hasattr(self.llm, "complete_json_safe"):
@@ -48,12 +53,20 @@ class EventExtractor:
             except ValueError:
                 parsed_date = None
 
+        raw_slots = data.get("slots") if isinstance(data.get("slots"), dict) else {}
+        raw_facts = data.get("key_facts") if isinstance(data.get("key_facts"), dict) else {}
+        raw_entities = data.get("entities") if isinstance(data.get("entities"), list) else []
         return ExtractedEvent(
             source_article_id=article.article_id,
             publish_date=article.publish_date,
             event_date=parsed_date or article.publish_date,
             summary=str(data.get("summary", article.title)).strip(),
-            entities=[str(e) for e in data.get("entities", [])],
-            key_facts={str(k): str(v) for k, v in (data.get("key_facts") or {}).items()},
+            entities=[str(e) for e in raw_entities],
+            key_facts={str(k): str(v) for k, v in raw_facts.items()},
+            slots={
+                str(k).lower(): str(v).strip()
+                for k, v in raw_slots.items()
+                if str(k).lower() in SLOT_KEYS and str(v).strip() and str(v).strip().lower() != "null"
+            },
             is_correction_or_update=bool(data.get("is_correction_or_update", False)),
         )
