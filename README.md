@@ -67,13 +67,13 @@ Routine decisions are cached in Phase 1 and not recomputed after a revision. AR/
 
 ## 23.11.2026 — RTX 5080 makinesinde çalıştırılacaklar
 
-Dal: `revision-v2`. Kod ve prompt'lar bu commit'ten sonra **değiştirilmemeli** (held-out suite ancak sistem dondurulmuşsa geçerli). Ayrıntı: [`docs/RUN_ON_5080.md`](docs/RUN_ON_5080.md).
+Dal: `main`. Kod ve prompt'lar bu commit'ten sonra **değiştirilmemeli** (held-out suite ancak sistem dondurulmuşsa geçerli). Ayrıntı: [`docs/RUN_ON_5080.md`](docs/RUN_ON_5080.md).
 
 ```powershell
 # 0) Kurulum (bir kez)
 git clone https://github.com/Baranll0/ReviTLS-Revision-Aware-Incremental-Timeline-Summarization
 cd ReviTLS-Revision-Aware-Incremental-Timeline-Summarization
-git checkout revision-v2
+git checkout main
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install torch --index-url https://download.pytorch.org/whl/cu128

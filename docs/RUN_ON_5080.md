@@ -9,7 +9,7 @@ Everything below produces the numbers that the paper reads from `paper/generated
 ```powershell
 git clone https://github.com/Baranll0/ReviTLS-Revision-Aware-Incremental-Timeline-Summarization
 cd ReviTLS-Revision-Aware-Incremental-Timeline-Summarization
-git checkout revision-v2
+git checkout main
 
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
