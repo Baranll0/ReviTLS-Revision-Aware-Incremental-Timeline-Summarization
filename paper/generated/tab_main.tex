@@ -2,6 +2,15 @@
 \toprule
 \textbf{Corpus} & \textbf{Method} & \textbf{AR-1} $\uparrow$ & \textbf{AR-2} $\uparrow$ & \textbf{Concat-R1} $\uparrow$ & \textbf{Concat-R2} $\uparrow$ & \textbf{Date-F1} $\uparrow$ & \textbf{Time (s)} $\downarrow$ \\
 \midrule
-\multicolumn{8}{c}{\textit{pending}} \\
+\multirow{10}{*}{\textbf{T17} ($n=9$)} & LLM-TLS (7B) & 0.099{\tiny$\pm$0.038} & 0.022{\tiny$\pm$0.009} & 0.369{\tiny$\pm$0.104} & 0.109{\tiny$\pm$0.033} & \textbf{0.487}{\tiny$\pm$0.259} & 236.1 \\
+  & LLM-TLS (14B) & \textbf{0.107}{\tiny$\pm$0.047} & \underline{0.022}{\tiny$\pm$0.012} & 0.410{\tiny$\pm$0.108} & \underline{0.118}{\tiny$\pm$0.039} & \underline{0.469}{\tiny$\pm$0.272} & 577.8 \\
+  & LLM-TLS + 90d + Latest & 0.071{\tiny$\pm$0.023} & 0.012{\tiny$\pm$0.006} & 0.363{\tiny$\pm$0.108} & 0.097{\tiny$\pm$0.035} & 0.391{\tiny$\pm$0.230} & 259.9 \\
+  & LLM-TLS (Recency-TR) & 0.101{\tiny$\pm$0.039} & \textbf{0.025}{\tiny$\pm$0.011} & 0.380{\tiny$\pm$0.097} & 0.114{\tiny$\pm$0.027} & \textbf{0.487}{\tiny$\pm$0.259} & 236.1 \\
+  & LLM-TLS + PostHoc-14B & 0.099{\tiny$\pm$0.038} & 0.022{\tiny$\pm$0.009} & 0.369{\tiny$\pm$0.104} & 0.109{\tiny$\pm$0.033} & \textbf{0.487}{\tiny$\pm$0.259} & 274.7 \\
+  & CHRONOS (7B, impl.-limited) & 0.047{\tiny$\pm$0.034} & 0.009{\tiny$\pm$0.008} & 0.158{\tiny$\pm$0.110} & 0.046{\tiny$\pm$0.030} & 0.268{\tiny$\pm$0.246} & \textbf{30.5} \\
+  & CHRONOS (14B, impl.-limited) & 0.041{\tiny$\pm$0.023} & 0.007{\tiny$\pm$0.004} & 0.145{\tiny$\pm$0.088} & 0.041{\tiny$\pm$0.019} & 0.215{\tiny$\pm$0.165} & \underline{46.7} \\
+  & ReviTLS (Single-Scale) & 0.098{\tiny$\pm$0.041} & 0.021{\tiny$\pm$0.008} & \textbf{0.428}{\tiny$\pm$0.069} & \textbf{0.125}{\tiny$\pm$0.023} & 0.422{\tiny$\pm$0.225} & 1278.4 \\
+  & ReviTLS (Corroboration Sel.) & 0.086{\tiny$\pm$0.041} & 0.015{\tiny$\pm$0.007} & \underline{0.418}{\tiny$\pm$0.086} & 0.114{\tiny$\pm$0.026} & 0.390{\tiny$\pm$0.265} & 1916.9 \\
+  & ReviTLS (Dual-Scale) & \underline{0.103}{\tiny$\pm$0.053} & 0.017{\tiny$\pm$0.008} & 0.416{\tiny$\pm$0.090} & 0.115{\tiny$\pm$0.029} & 0.457{\tiny$\pm$0.312} & 1915.8 \\
 \bottomrule
 \end{tabular}

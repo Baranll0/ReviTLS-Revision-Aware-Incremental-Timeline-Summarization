@@ -2,6 +2,13 @@
 \toprule
 \textbf{Corpus} & \textbf{Dual-Scale vs.} & \textbf{Metric} & $\Delta$ & \textbf{Wilcoxon $p$} & \textbf{Holm $p$} \\
 \midrule
-\multicolumn{6}{c}{\textit{pending}} \\
+T17 & LLM-TLS (7B) & Date-F1 & -0.030 & 0.641 & 1.000 \\
+T17 & LLM-TLS (7B) & Concat-R1 & +0.047 & 0.020 & 0.137 \\
+T17 & LLM-TLS (14B) & Date-F1 & -0.012 & 0.734 & 1.000 \\
+T17 & LLM-TLS (14B) & Concat-R1 & +0.007 & 0.820 & 1.000 \\
+T17 & CHRONOS (7B) & Date-F1 & +0.190 & 0.020 & 0.137 \\
+T17 & CHRONOS (7B) & Concat-R1 & +0.258 & 0.004 & 0.031 \\
+T17 & ReviTLS (Single-Scale) & Date-F1 & +0.035 & 0.570 & 1.000 \\
+T17 & ReviTLS (Single-Scale) & Concat-R1 & -0.011 & 0.426 & 1.000 \\
 \bottomrule
 \end{tabular}
