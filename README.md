@@ -108,3 +108,58 @@ git add outputs/final paper/generated; git commit -m "results: full corpus, audi
 ```
 
 Her aşamada çalıştırmadan önce çalışma ağacı temiz olmalı (script bunu kontrol eder). Sonuçlar `outputs/final/` altında toplanır; makale tabloları `paper/generated/` içine otomatik yazılır.
+
+---
+
+## Final Results (2026-11-25 — RTX 5080, Frozen System)
+
+All tables below are generated directly from [`outputs/final/heldout.json`](outputs/final/heldout.json) and [`outputs/final/summary.json`](outputs/final/summary.json) into `paper/generated/`.
+
+### 1. Held-Out Revision Suite (`110` Chains: `80` Positive + `30` Negative Controls)
+
+| System | Pos. RRA [95% CI] | SFLR (↓) | Neg. Pass (↑) | False Retr. (↓) | Timeline RRA |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **ReviTLS (full)** | 0.537 [0.43, 0.64] (43/80) | 0.450 | **1.000** (30/30) | **0.000** | 0.550 |
+| **w/o 14B verifier** | 0.400 [0.30, 0.51] (32/80) | 0.512 | **1.000** (30/30) | **0.000** | 0.463 |
+| **w/o cross-encoder** | 0.562 [0.45, 0.67] (45/80) | 0.425 | **1.000** (30/30) | **0.000** | 0.575 |
+| **w/o conditional gate** | **0.700** [0.59, 0.79] (56/80) | **0.275** | **1.000** (30/30) | **0.000** | **0.725** |
+| **w/o structural probe** | 0.350 [0.25, 0.46] (28/80) | 0.637 | **1.000** (30/30) | **0.000** | 0.362 |
+| **overwrite only (no $P_k$)** | 0.537 [0.43, 0.64] (43/80) | 0.450 | **1.000** (30/30) | **0.000** | 0.550 |
+| **w/o tombstone purge** | 0.000 [0.00, 0.05] (0/80) | 1.000 | **1.000** (30/30) | **0.000** | 0.000 |
+| **rho = LLM flag only** | 0.287 [0.20, 0.39] (23/80) | 0.713 | **1.000** (30/30) | **0.000** | 0.287 |
+| **rho = lexicon only** | 0.338 [0.24, 0.45] (27/80) | 0.650 | **1.000** (30/30) | **0.000** | 0.350 |
+| **rho = none** | 0.000 [0.00, 0.05] (0/80) | 1.000 | **1.000** (30/30) | **0.000** | 0.000 |
+| **LLM-TLS (7B)** | 0.013 [0.00, 0.07] (1/80) | 0.988 | **1.000** (30/30) | **0.000** | 0.013 |
+| **LLM-TLS + 90d + latest + 14B** | 0.062 [0.03, 0.14] (5/80) | 0.912 | **1.000** (30/30) | **0.000** | 0.087 |
+
+### 2. Full-Corpus TLS Results (`T17` $n=9$, `Crisis` $n=4$)
+
+| Corpus | Method | AR-1 (↑) | AR-2 (↑) | Concat-R1 (↑) | Concat-R2 (↑) | Date-F1 (↑) | Time (s) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **T17** ($n=9$) | **LLM-TLS (7B)** | 0.099 ± 0.038 | 0.022 ± 0.009 | 0.369 ± 0.104 | 0.109 ± 0.033 | **0.487 ± 0.259** | 236.1 |
+| **T17** ($n=9$) | **LLM-TLS (14B)** | **0.107 ± 0.047** | 0.022 ± 0.012 | 0.410 ± 0.108 | 0.118 ± 0.039 | 0.469 ± 0.272 | 577.8 |
+| **T17** ($n=9$) | **LLM-TLS + 90d + Latest** | 0.071 ± 0.023 | 0.012 ± 0.006 | 0.363 ± 0.108 | 0.097 ± 0.035 | 0.391 ± 0.230 | 259.9 |
+| **T17** ($n=9$) | **LLM-TLS (Recency-TR)** | 0.101 ± 0.039 | **0.025 ± 0.011** | 0.380 ± 0.097 | 0.114 ± 0.027 | **0.487 ± 0.259** | 236.1 |
+| **T17** ($n=9$) | **LLM-TLS + PostHoc-14B** | 0.099 ± 0.038 | 0.022 ± 0.009 | 0.369 ± 0.104 | 0.109 ± 0.033 | **0.487 ± 0.259** | 274.7 |
+| **T17** ($n=9$) | **CHRONOS (7B / 14B, impl.-limited)** | 0.047 / 0.041 | 0.009 / 0.007 | 0.158 / 0.145 | 0.046 / 0.041 | 0.268 / 0.215 | **30.5** / 46.7 |
+| **T17** ($n=9$) | **ReviTLS (Single-Scale)** | 0.098 ± 0.041 | 0.021 ± 0.008 | **0.428 ± 0.069** | **0.125 ± 0.023** | 0.422 ± 0.225 | 1278.4 |
+| **T17** ($n=9$) | **ReviTLS (Corroboration Sel.)** | 0.086 ± 0.041 | 0.015 ± 0.007 | 0.418 ± 0.086 | 0.114 ± 0.026 | 0.390 ± 0.265 | 1916.9 |
+| **T17** ($n=9$) | **ReviTLS (Dual-Scale)** | 0.103 ± 0.053 | 0.017 ± 0.008 | 0.416 ± 0.090 | 0.115 ± 0.029 | 0.457 ± 0.312 | 1915.8 |
+| **Crisis** ($n=4$) | **LLM-TLS (7B)** | 0.040 ± 0.027 | **0.010 ± 0.009** | 0.236 ± 0.065 | 0.057 ± 0.020 | 0.120 ± 0.080 | 1800.7 |
+| **Crisis** ($n=4$) | **LLM-TLS (14B)** | **0.040 ± 0.028** | 0.009 ± 0.008 | **0.253 ± 0.065** | **0.065 ± 0.024** | **0.125 ± 0.086** | 4524.8 |
+| **Crisis** ($n=4$) | **LLM-TLS + 90d + Latest** | 0.022 ± 0.013 | 0.003 ± 0.003 | 0.225 ± 0.051 | 0.049 ± 0.014 | 0.070 ± 0.061 | 1923.2 |
+| **Crisis** ($n=4$) | **LLM-TLS (Recency-TR)** | 0.036 ± 0.026 | 0.008 ± 0.008 | 0.235 ± 0.058 | 0.056 ± 0.017 | 0.120 ± 0.080 | 1800.8 |
+| **Crisis** ($n=4$) | **LLM-TLS + PostHoc-14B** | 0.039 ± 0.027 | 0.009 ± 0.009 | 0.238 ± 0.066 | 0.058 ± 0.021 | 0.120 ± 0.080 | 1814.2 |
+| **Crisis** ($n=4$) | **CHRONOS (7B / 14B, impl.-limited)** | 0.010 / 0.011 | 0.001 / 0.002 | 0.125 / 0.105 | 0.020 / 0.021 | 0.031 / 0.023 | **58.4** / 73.7 |
+| **Crisis** ($n=4$) | **ReviTLS (Single-Scale)** | 0.030 ± 0.019 | 0.007 ± 0.006 | 0.228 ± 0.060 | 0.061 ± 0.015 | 0.095 ± 0.063 | 9321.3 |
+| **Crisis** ($n=4$) | **ReviTLS (Corroboration Sel.)** | 0.022 ± 0.013 | 0.004 ± 0.002 | 0.243 ± 0.057 | 0.056 ± 0.016 | 0.072 ± 0.049 | 14703.3 |
+| **Crisis** ($n=4$) | **ReviTLS (Dual-Scale)** | 0.025 ± 0.016 | 0.005 ± 0.004 | 0.247 ± 0.053 | 0.057 ± 0.016 | 0.081 ± 0.054 | 14695.7 |
+
+### 3. `T17` ($n=9$) Ablations, Fragmentation & `bpoil`-Excluded ($n=8$)
+
+* **T17 Ablations (`tab_ablation_t17.tex`):** `Dual-Scale` (`Date-F1 = 0.457`, `AR-1 = 0.103`, `Concat-R1 = 0.416`, `1915.8s`), `w/o 14B Verifier` (`0.476 / 0.106 / 0.421`, `1525.2s`), `w/o Cross-Encoder` (`0.454 / 0.099 / 0.409`, `2078.4s`), `w/o Conditional Gate` (`0.444 / 0.099 / 0.397`, `1822.2s`), `w/o Structural Probe` (`0.489 / 0.112 / 0.427`, `1246.0s`), `w/o Tombstone Purge` (`0.507 / 0.114 / 0.370`, `1754.1s`), `Guarded Retract` & `Disable Retract` (`0.457 / 0.103 / 0.416`).
+* **State Fragmentation (`tab_frag.tex`):**
+  - `T17`: `LLM-TLS (7B)` `399` states (`mean c_k = 5.25`, `0.70/ref_date`) vs `ReviTLS (Dual-Scale)` `2,227` states (`mean c_k = 1.17`, `3.89/ref_date`).
+  - `Crisis`: `LLM-TLS (7B)` `73` states (`mean c_k = 21.54`, `0.17/ref_date`) vs `ReviTLS (Dual-Scale)` `8,093` states (`mean c_k = 1.18`, `18.95/ref_date`).
+* **`bpoil`-Excluded `T17` ($n=8$, `tab_nobpoil.tex`):** `LLM-TLS (7B)` (`0.505 / 0.099 / 0.370`), `LLM-TLS (14B)` (`0.489 / 0.109 / 0.414`), `ReviTLS (Single-Scale)` (`0.446 / 0.102 / 0.436`), `ReviTLS (Dual-Scale)` (`0.492 / 0.109 / 0.424`).
+* **Random Transition Audit (`-Stage audit`):** **65** stratified samples exported to [`outputs/final/transition_audit_random.csv`](outputs/final/transition_audit_random.csv) (awaiting independent 2-annotator `TP`/`FP` labels + `scripts/summarize_random_audit.py`).
